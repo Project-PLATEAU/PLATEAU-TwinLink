@@ -1,0 +1,44 @@
+{
+	"FileVersion": 3,
+	"Version": 3,
+	"VersionName": "1.0.0",
+	"FriendlyName": "PLATEAU TwinLink",
+	"Description": "",
+	"Category": "Geospatial",
+	"CreatedBy": "Ministry of Land, Infrastructure and Transport",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"EngineVersion": [ "5.2.0" ],
+	"Modules": [
+		{
+			"Name": "TwinLink",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"WhitelistPlatforms": [ "Win64" ]
+		},
+		{
+			"Name": "TwinLinkWidgets",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"WhitelistPlatforms": [ "Win64" ]
+		},
+		{
+			"Name": "TwinLinkEditor",
+			"Type": "Editor",
+			"LoadingPhase": "Default",
+			"WhitelistPlatforms": [ "Win64" ]
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "SunPosition",
+			"Enabled": true
+		}
+	]
+}
