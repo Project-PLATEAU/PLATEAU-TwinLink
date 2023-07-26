@@ -6,6 +6,9 @@
 #include "GameFramework/Character.h"
 #include "TwinLinkWorldViewer.generated.h"
 
+/**
+ * @brief 視点操作機能を提供するカメラを搭載したキャラクタークラス
+*/
 UCLASS()
 class TWINLINK_API ATwinLinkWorldViewer : public ACharacter {
     GENERATED_BODY()

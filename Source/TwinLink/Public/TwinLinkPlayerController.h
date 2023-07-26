@@ -7,7 +7,8 @@
 #include "TwinLinkPlayerController.generated.h"
 
 /**
- * 
+ * TwinLinkで使用するプレイヤーコントローラー
+ * とりあえず初期設定用に作成
  */
 UCLASS()
 class TWINLINK_API ATwinLinkPlayerController : public APlayerController
