@@ -23,4 +23,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Nav")
 	static void SetCanEverAffectNavigationAllActors(UWorld* World, bool Relevant);
+
+    UFUNCTION(BlueprintCallable, Category = "Nav")
+    static FString GetNavMeshBuildingMessage(UWorld* World);
 };

@@ -8,6 +8,7 @@
 #include "Components/BrushComponent.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "NavigationSystem.h"
+#include "TwinLink/Public/TwinLinkNavSystem.h"
 namespace
 {
 	template<class F>
@@ -152,12 +153,23 @@ namespace
 }
 
 
-void UTwinLinkEditorNavSystem::MakeNavMesh(UWorld* world)
+void UTwinLinkEditorNavSystem::MakeNavMesh(UWorld* World)
 {
-    auto BbBox = ::ApplyNavMeshAffect(world);
+    auto BbBox = ::ApplyNavMeshAffect(World);
     TArray<AActor*> AllActors;
-    UGameplayStatics::GetAllActorsOfClass(world, ANavMeshBoundsVolume::StaticClass(), AllActors);
-    
+    UGameplayStatics::GetAllActorsOfClass(World, ANavMeshBoundsVolume::StaticClass(), AllActors);
+
+    TArray<AActor*> NavSystemActors;
+    UGameplayStatics::GetAllActorsOfClass(World, ATwinLinkNavSystem::StaticClass(), NavSystemActors);
+
+    ATwinLinkNavSystem* NavSystemActor = nullptr;
+    if (NavSystemActors.Num() > 0) {
+        NavSystemActor = Cast<ATwinLinkNavSystem>(NavSystemActors[0]);
+    }
+    else {
+        NavSystemActor = Cast<ATwinLinkNavSystem>(SpawnActorFromClass(ATwinLinkNavSystem::StaticClass(), FVector::Zero(), FRotator::ZeroRotator));
+    }
+
 	if (BbBox.has_value() == false)
 	{
         for (auto Actor : AllActors)
@@ -178,10 +190,21 @@ void UTwinLinkEditorNavSystem::MakeNavMesh(UWorld* world)
 		FVector scale = extent / brush_bounds.BoxExtent;
         Volume->SetActorLocation(center);
         Volume->SetActorScale3D(scale);
-		UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world);
+		UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(World);
 		if (NavSys)
 		{
 			NavSys->OnNavigationBoundsUpdated(Volume);
+            TScriptDelegate<FWeakObjectPtr> exec;           
+            TFunction<void()> e = [Volume]() {
+                UKismetSystemLibrary::PrintString(Volume, "NavMesh Done");
+            };
+            exec.BindUFunction(NavSystemActor, "NavSystemActor");
+            NavSys->OnNavigationGenerationFinishedDelegate.Add(exec);
+            auto OnDone = FOnNavigationInitDone::FDelegate::CreateLambda([&]() 
+                {
+                    UKismetSystemLibrary::PrintString(Volume, "NavMesh Done");
+                });
+            NavSys->OnNavigationInitDone.Add(OnDone);
 		}
 	}
 }
@@ -195,4 +218,31 @@ void UTwinLinkEditorNavSystem::SetCanEverAffectNavigationAllActors(UWorld* World
 	for (auto Actor : Actors) {
         ::SetCanEverAffectNavigationRecursively(Actor, Relevant);
 	}
+}
+
+FString UTwinLinkEditorNavSystem::GetNavMeshBuildingMessage(UWorld* World)
+{
+    // https://docs.unrealengine.com/5.2/en-US/API/Runtime/NavigationSystem/UNavigationSystemV1/
+    UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(World);
+
+    if (!NavSys)
+        return "No NavSystem";
+    // https://docs.unrealengine.com/5.0/ja/optimizing-navigation-mesh-generation-speed-in-unreal-engine/
+
+    // https://docs.unrealengine.com/5.0/ja/optimizing-navigation-mesh-generation-speed-in-unreal-engine/
+    // ナビメッシュ生成中
+    if (NavSys->IsNavigationBuildInProgress()) 
+    {
+        // ...を描画するためのもの
+        auto TimeSec = World->GetTimeSeconds();
+        auto DotNum = ((int)TimeSec) % 3 + 1;
+        FString ret = "Building";        
+        ret.Append(FString::ChrN(DotNum, '.'));
+        return ret;
+    }
+    if (NavSys->IsNavigationDirty())
+        return "NavMesh Data is Dirty";
+    if (NavSys->IsNavigationBuilt(World->GetWorldSettings()))
+        return "Completed";
+    return "Invalid Error";
 }
