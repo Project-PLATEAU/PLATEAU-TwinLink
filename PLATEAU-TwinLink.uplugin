@@ -29,6 +29,12 @@
 			"WhitelistPlatforms": [ "Win64" ]
 		},
 		{
+			"Name": "TwinLinkGizmo",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"WhitelistPlatforms": [ "Win64" ]
+		},
+		{
 			"Name": "TwinLinkEditor",
 			"Type": "Editor",
 			"LoadingPhase": "Default",
