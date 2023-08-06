@@ -4,10 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
-#include <NavMesh/NavMeshBoundsVolume.h>
-#include <NavMesh/NavMeshBoundsVolume.h>
-#include <optional>
-#include <NavigationSystemTypes.h>
+#include "NavigationData.h"
 #include "TwinLinkNavSystem.generated.h"
 class APLATEAUInstancedCityModel;
 class ANavMeshBoundsVolume;
@@ -19,8 +16,20 @@ class TWINLINK_API ATwinLinkNavSystem : public AActor
 {
 	GENERATED_BODY()
 public:
-    // パス検索
-    void RequestFindPath(FVector Start, FVector End);
+    ATwinLinkNavSystem();
 
-public:
+    // パス検索
+    FPathFindingResult RequestFindPath(const FVector& Start, const FVector& End);
+
+    virtual void Tick(float DeltaSeconds) override;
+private:
+    // デバッグ用) パス検索のデバッグ表示を行うかどうか
+    UPROPERTY(EditAnywhere, Category = Test)
+    bool DebugCallFindPath = false;
+    // デバッグ用) スタート位置
+    FWeakObjectPtr DebugFindPathStart;
+    // デバッグ用) 目的地
+    FWeakObjectPtr DebugFindPathEnd;
+    // デバッグ描画実行
+    void DebugDraw();
 };

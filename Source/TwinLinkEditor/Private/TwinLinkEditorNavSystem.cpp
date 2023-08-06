@@ -12,7 +12,7 @@
 namespace
 {
 	template<class F>
-	void ForeachDesendant(USceneComponent* Self, INT32 nest, F&& func) 
+	void ForeachDescendant(USceneComponent* Self, INT32 nest, F&& func) 
 	{
 		if (nest < 0)
 			return;
@@ -23,7 +23,7 @@ namespace
 		}
 		for (auto Child : Self->GetAttachChildren())
 		{
-			ForeachDesendant(Child, nest - 1, std::forward<F>(func));
+			ForeachDescendant(Child, nest - 1, std::forward<F>(func));
 		}
 	}
 
@@ -36,7 +36,7 @@ namespace
 
         TArray<USceneComponent*> SceneComponents;
         Actor->GetComponents(SceneComponents);
-        for (auto Comp : SceneComponents)
+        for (const auto Comp : SceneComponents)
             Comp->SetCanEverAffectNavigation(Relevant);
     }
 
@@ -49,7 +49,7 @@ namespace
         Comp->SetCanEverAffectNavigation(false);
         TArray<USceneComponent*> ChildComponents;
         Comp->GetChildrenComponents(true, ChildComponents);
-        for (auto Child : ChildComponents)
+        for (const auto Child : ChildComponents)
             Child->SetCanEverAffectNavigation(false);
     }
 
@@ -61,17 +61,16 @@ namespace
         if (!Actor)
             return Aabb;
 
-        auto RootComp = Actor->GetRootComponent();
+        const auto RootComp = Actor->GetRootComponent();
         TArray<USceneComponent*> ChildComponent;
         RootComp->GetChildrenComponents(false, ChildComponent);
 
-        ::ForeachDesendant(RootComp, 1,
+        ::ForeachDescendant(RootComp, 1,
             [&Aabb, Actor](USceneComponent* Self) mutable {
                 FString MeshName;
                 Self->GetName(MeshName);
                 // tranという名前は道メッシュ
-                const auto IsRoad = MeshName.Contains("tran");
-                if (IsRoad) {
+                if (MeshName.Contains("tran")) {
                     // tran以下は以下のようにLODごとに階層分けされている
                     // https://synesthesias.atlassian.net/browse/KUKANIDBIM-43
                     // ナビメッシュの対象になっているのはLOD1のみ
@@ -123,11 +122,11 @@ namespace
         return Aabb;
     }
 
-    std::optional<FBox> ApplyNavMeshAffect(UWorld* world) {
-        if (!world)
+    std::optional<FBox> ApplyNavMeshAffect(UWorld* World) {
+        if (!World)
             return std::nullopt;
         TArray<AActor*> AllActors;
-        UGameplayStatics::GetAllActorsOfClass(world, AActor::StaticClass(), AllActors);
+        UGameplayStatics::GetAllActorsOfClass(World, AActor::StaticClass(), AllActors);
 
         std::optional<FBox> Ret = std::nullopt;
         for (auto Actor : AllActors) {
@@ -155,7 +154,7 @@ namespace
 
 void UTwinLinkEditorNavSystem::MakeNavMesh(UWorld* World)
 {
-    auto BbBox = ::ApplyNavMeshAffect(World);
+    const auto BbBox = ::ApplyNavMeshAffect(World);
     TArray<AActor*> AllActors;
     UGameplayStatics::GetAllActorsOfClass(World, ANavMeshBoundsVolume::StaticClass(), AllActors);
 
@@ -181,17 +180,17 @@ void UTwinLinkEditorNavSystem::MakeNavMesh(UWorld* World)
         if (AllActors.Num() > 0)
             Volume = Cast<ANavMeshBoundsVolume>(AllActors[0]);
         else
-            Volume = Cast<ANavMeshBoundsVolume>(SpawnActorFromClass(ANavMeshBoundsVolume::StaticClass(), FVector::Zero(), FRotator::ZeroRotator));
+            Volume = Cast<ANavMeshBoundsVolume>(
+                SpawnActorFromClass(ANavMeshBoundsVolume::StaticClass(), FVector::Zero(), FRotator::ZeroRotator));
 
-		auto center = BbBox->GetCenter();
-		auto extent = BbBox->GetExtent();
-		auto brush_bounds = Volume->Brush->Bounds;
+        const auto Center = BbBox->GetCenter();
+        const auto Extent = BbBox->GetExtent();
+        const auto BrushBounds = Volume->Brush->Bounds;
 
-		FVector scale = extent / brush_bounds.BoxExtent;
-        Volume->SetActorLocation(center);
-        Volume->SetActorScale3D(scale);
-		UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(World);
-		if (NavSys)
+        const FVector Scale = Extent / BrushBounds.BoxExtent;
+        Volume->SetActorLocation(Center);
+        Volume->SetActorScale3D(Scale);
+        if (UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(World))
 		{
 			NavSys->OnNavigationBoundsUpdated(Volume);
             TScriptDelegate<FWeakObjectPtr> exec;           
@@ -215,7 +214,7 @@ void UTwinLinkEditorNavSystem::SetCanEverAffectNavigationAllActors(UWorld* World
      
 	TArray<AActor*> Actors;
 	UGameplayStatics::GetAllActorsOfClass(World, AActor::StaticClass(), Actors);
-	for (auto Actor : Actors) {
+	for (const auto Actor : Actors) {
         ::SetCanEverAffectNavigationRecursively(Actor, Relevant);
 	}
 }
@@ -234,8 +233,8 @@ FString UTwinLinkEditorNavSystem::GetNavMeshBuildingMessage(UWorld* World)
     if (NavSys->IsNavigationBuildInProgress()) 
     {
         // ...を描画するためのもの
-        auto TimeSec = World->GetTimeSeconds();
-        auto DotNum = ((int)TimeSec) % 3 + 1;
+        const auto TimeSec = World->GetTimeSeconds();
+        const auto DotNum = ((int)TimeSec) % 3 + 1;
         FString ret = "Building";        
         ret.Append(FString::ChrN(DotNum, '.'));
         return ret;
