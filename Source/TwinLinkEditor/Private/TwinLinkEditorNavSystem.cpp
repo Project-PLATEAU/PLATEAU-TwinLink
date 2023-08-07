@@ -85,8 +85,8 @@ namespace
                         if (LodName.StartsWith("LOD1")) {
                             TArray<USceneComponent*> ChildComponents;
                             Lod->GetChildrenComponents(true, ChildComponents);
-                            for (auto Child : ChildComponents) {
-                                auto StaMeshComp = Cast<UStaticMeshComponent>(Child);
+                            for (const auto Child : ChildComponents) {
+                                const auto StaMeshComp = Cast<UStaticMeshComponent>(Child);
                                 if (!StaMeshComp)
                                     continue;
                                 StaMeshComp->SetCanEverAffectNavigation(true);
@@ -122,16 +122,15 @@ namespace
         return Aabb;
     }
 
-    std::optional<FBox> ApplyNavMeshAffect(UWorld* World) {
+    std::optional<FBox> ApplyNavMeshAffect(const UWorld* World) {
         if (!World)
             return std::nullopt;
         TArray<AActor*> AllActors;
         UGameplayStatics::GetAllActorsOfClass(World, AActor::StaticClass(), AllActors);
 
         std::optional<FBox> Ret = std::nullopt;
-        for (auto Actor : AllActors) {
-            auto CityModel = Cast<APLATEAUInstancedCityModel>(Actor);
-            if (CityModel) {
+        for (const auto Actor : AllActors) {
+            if (auto CityModel = Cast<APLATEAUInstancedCityModel>(Actor)) {
                 auto Aabb = ApplyNavMeshAffect(Cast<APLATEAUInstancedCityModel>(Actor));
                 if (!Aabb.has_value())
                     continue;
@@ -149,6 +148,23 @@ namespace
         }
         return Ret;
     }
+
+    /*
+     * World->PersistentLevelの中からTでキャスト可能なものを線形探索
+     *
+     */
+    template<class T>
+    auto FindFirstPersistentLevelActor(UWorld* World) -> std::enable_if_t< std::is_base_of_v<AActor, T>, T* >
+	{
+        if (!World || !World->PersistentLevel)
+            return nullptr;
+        for(auto& Actor : World->PersistentLevel->Actors)
+        {
+            if (auto Ret = Cast<T>(Actor))
+                return Ret;
+        }
+        return nullptr;
+	}
 }
 
 
@@ -161,7 +177,7 @@ void UTwinLinkEditorNavSystem::MakeNavMesh(UWorld* World)
     TArray<AActor*> NavSystemActors;
     UGameplayStatics::GetAllActorsOfClass(World, ATwinLinkNavSystem::StaticClass(), NavSystemActors);
 
-    ATwinLinkNavSystem* NavSystemActor = nullptr;
+    const ATwinLinkNavSystem* NavSystemActor = nullptr;
     if (NavSystemActors.Num() > 0) {
         NavSystemActor = Cast<ATwinLinkNavSystem>(NavSystemActors[0]);
     }
@@ -171,7 +187,7 @@ void UTwinLinkEditorNavSystem::MakeNavMesh(UWorld* World)
 
 	if (BbBox.has_value() == false)
 	{
-        for (auto Actor : AllActors)
+        for (const auto Actor : AllActors)
             Actor->Destroy();
 	}
 	else
@@ -192,18 +208,8 @@ void UTwinLinkEditorNavSystem::MakeNavMesh(UWorld* World)
         Volume->SetActorScale3D(Scale);
         if (UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(World))
 		{
-			NavSys->OnNavigationBoundsUpdated(Volume);
-            TScriptDelegate<FWeakObjectPtr> exec;           
-            TFunction<void()> e = [Volume]() {
-                UKismetSystemLibrary::PrintString(Volume, "NavMesh Done");
-            };
-            exec.BindUFunction(NavSystemActor, "NavSystemActor");
-            NavSys->OnNavigationGenerationFinishedDelegate.Add(exec);
-            auto OnDone = FOnNavigationInitDone::FDelegate::CreateLambda([&]() 
-                {
-                    UKismetSystemLibrary::PrintString(Volume, "NavMesh Done");
-                });
-            NavSys->OnNavigationInitDone.Add(OnDone);
+            NavSys->OnNavigationBoundsUpdated(Volume);
+            NavSys->Build();
 		}
 	}
 }
@@ -221,12 +227,45 @@ void UTwinLinkEditorNavSystem::SetCanEverAffectNavigationAllActors(UWorld* World
 
 FString UTwinLinkEditorNavSystem::GetNavMeshBuildingMessage(UWorld* World)
 {
+    // まだ実行すらしていない
+    const auto NavSystem = ::FindFirstPersistentLevelActor<ATwinLinkNavSystem>(World);
+    if (!NavSystem)
+        return "";
+
+    // モデルを読み込んでいない
+    const auto CityModel = ::FindFirstPersistentLevelActor<APLATEAUInstancedCityModel>(World);
+    if (!CityModel)
+        return "City Model not found";
+
+    //
+    auto bExistLoadModel = false;
+    ::ForeachDescendant(CityModel->GetRootComponent(), 1,
+        [&bExistLoadModel](const USceneComponent* Self) mutable 
+        {
+            FString MeshName;
+            Self->GetName(MeshName);
+            // tranという名前は道メッシュ
+            if (MeshName.Contains("tran") == false)
+                return;
+
+            for (auto Lod : Self->GetAttachChildren()) 
+            {
+                FString LodName;
+                Lod->GetName(LodName);
+                if (LodName.StartsWith("LOD1") == false)
+                    continue;
+                bExistLoadModel = true;
+                return;
+            }
+        });
+    // 道モデルが見つからない
+    if (bExistLoadModel == false)
+        return "Load Model not found";
+
     // https://docs.unrealengine.com/5.2/en-US/API/Runtime/NavigationSystem/UNavigationSystemV1/
     UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(World);
-
     if (!NavSys)
-        return "No NavSystem";
-    // https://docs.unrealengine.com/5.0/ja/optimizing-navigation-mesh-generation-speed-in-unreal-engine/
+        return "NavSystem not found";
 
     // https://docs.unrealengine.com/5.0/ja/optimizing-navigation-mesh-generation-speed-in-unreal-engine/
     // ナビメッシュ生成中
