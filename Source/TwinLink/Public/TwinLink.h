@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -6,6 +6,8 @@
 #include "Modules/ModuleManager.h"
 
 #include "TwinLink.generated.h"
+
+DECLARE_EVENT(FTwinLinkModule, DelEvOnChangedAdminMode)
 
 class TWINLINK_API FTwinLinkModule : public IModuleInterface {
 public:
@@ -38,6 +40,13 @@ public:
     * @brief 管理者モードが有効かどうかを取得します。
     */
     bool IsAdminModeEnabled() const;
+
+public:
+    /** 管理者モード有効化時に呼ばれる **/
+    DelEvOnChangedAdminMode OnActiveAdminMode;
+
+    /** 管理者モード無効化時に呼ばれる **/
+    DelEvOnChangedAdminMode OnInactiveAdminMode;
 
 private:
     bool bAdminMode = false;
