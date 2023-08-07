@@ -8,6 +8,7 @@
 #include "Components/BrushComponent.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "NavigationSystem.h"
+#include "PLATEAUCityModelLoader.h"
 #include "TwinLink/Public/TwinLinkNavSystem.h"
 namespace
 {
@@ -165,6 +166,108 @@ namespace
         }
         return nullptr;
 	}
+
+    struct NavMeshBuildProgress
+	{
+        // ナビメッシュビルド完了
+        bool bIsBuildComplete;
+
+        // 失敗 or 途中の場合のエラーメッセージ
+        FString Message;
+
+        NavMeshBuildProgress(bool bComplete, const FString& Msg)
+            : bIsBuildComplete(bComplete)
+            , Message(Msg)
+        {           
+        }
+
+        /*
+         * エラー or 途中
+         */
+        static NavMeshBuildProgress Error(const FString& Msg){
+            return NavMeshBuildProgress(false, Msg);
+        }
+
+        /*
+         * 成功
+         */
+        static NavMeshBuildProgress Complete() {
+            return NavMeshBuildProgress(true, "");
+        }
+        static NavMeshBuildProgress CheckProgress(UWorld* World)
+        {
+            // まだ実行すらしていない
+            const auto TwinLinkNavSys = ::FindFirstPersistentLevelActor<ATwinLinkNavSystem>(World);
+            if (!TwinLinkNavSys)
+                return  Error("");
+
+            // モデルを読み込んでいない
+            const auto CityModel = ::FindFirstPersistentLevelActor<APLATEAUInstancedCityModel>(World);
+            if (!CityModel)
+                return  Error("City Model not found");
+
+            const auto CityModelLoader = ::FindFirstPersistentLevelActor<APLATEAUCityModelLoader>(World);
+            if(!CityModelLoader)
+                return  Error("City Model not found");
+
+            if (CityModelLoader->Phase != ECityModelLoadingPhase::Finished)
+                return Error("City Model Loading");
+
+            //
+            auto bExistLoadModel = false;
+            ::ForeachDescendant(CityModel->GetRootComponent(), 1,
+                [&bExistLoadModel](const USceneComponent* Self) mutable {
+                    FString MeshName;
+                    Self->GetName(MeshName);
+                    // tranという名前は道メッシュ
+                    if (MeshName.Contains("tran") == false)
+                        return;
+
+                    for (const auto Lod : Self->GetAttachChildren()) {
+                        FString LodName;
+                        Lod->GetName(LodName);
+                        if (LodName.StartsWith("LOD1") == false)
+                            continue;
+                        bExistLoadModel = true;
+                        return;
+                    }
+                });
+            // 道モデルが見つからない
+            if (bExistLoadModel == false)
+                return Error("Load Model not found");
+
+            // https://docs.unrealengine.com/5.2/en-US/API/Runtime/NavigationSystem/UNavigationSystemV1/
+            UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(World);
+            if (!NavSys)
+                return Error("NavSystem not found");
+
+            // https://docs.unrealengine.com/5.0/ja/optimizing-navigation-mesh-generation-speed-in-unreal-engine/
+            // ナビメッシュ生成中
+            if (NavSys->IsNavigationBuildInProgress()) {
+                // ...を描画するためのもの
+                const auto TimeSec = World->GetTimeSeconds();
+                const auto DotNum = ((int)TimeSec) % 3 + 1;
+                FString ret = "Building";
+                ret.Append(FString::ChrN(DotNum, '.'));
+                return Error(ret);
+            }
+
+            // ナビメッシュボリュームが作られていなければ実行されていない
+            const auto Volume = ::FindFirstPersistentLevelActor<ANavMeshBoundsVolume>(World);
+            if (!Volume)
+                return Error("");
+            //if (NavSys->IsNavigationDirty())
+            //    return Error("NavMesh Data is Dirty");
+
+            // 成功
+            if (NavSys->IsNavigationBuilt(World->GetWorldSettings()))
+                return Complete();
+
+            // その他エラー(ここには来ないはず)
+            return Error("Invalid Error");
+        }
+	};
+
 }
 
 
@@ -227,60 +330,12 @@ void UTwinLinkEditorNavSystem::SetCanEverAffectNavigationAllActors(UWorld* World
 
 FString UTwinLinkEditorNavSystem::GetNavMeshBuildingMessage(UWorld* World)
 {
-    // まだ実行すらしていない
-    const auto NavSystem = ::FindFirstPersistentLevelActor<ATwinLinkNavSystem>(World);
-    if (!NavSystem)
-        return "";
+    auto Ret = ::NavMeshBuildProgress::CheckProgress(World);
+    return Ret.Message;
+}
 
-    // モデルを読み込んでいない
-    const auto CityModel = ::FindFirstPersistentLevelActor<APLATEAUInstancedCityModel>(World);
-    if (!CityModel)
-        return "City Model not found";
-
-    //
-    auto bExistLoadModel = false;
-    ::ForeachDescendant(CityModel->GetRootComponent(), 1,
-        [&bExistLoadModel](const USceneComponent* Self) mutable 
-        {
-            FString MeshName;
-            Self->GetName(MeshName);
-            // tranという名前は道メッシュ
-            if (MeshName.Contains("tran") == false)
-                return;
-
-            for (auto Lod : Self->GetAttachChildren()) 
-            {
-                FString LodName;
-                Lod->GetName(LodName);
-                if (LodName.StartsWith("LOD1") == false)
-                    continue;
-                bExistLoadModel = true;
-                return;
-            }
-        });
-    // 道モデルが見つからない
-    if (bExistLoadModel == false)
-        return "Load Model not found";
-
-    // https://docs.unrealengine.com/5.2/en-US/API/Runtime/NavigationSystem/UNavigationSystemV1/
-    UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(World);
-    if (!NavSys)
-        return "NavSystem not found";
-
-    // https://docs.unrealengine.com/5.0/ja/optimizing-navigation-mesh-generation-speed-in-unreal-engine/
-    // ナビメッシュ生成中
-    if (NavSys->IsNavigationBuildInProgress()) 
-    {
-        // ...を描画するためのもの
-        const auto TimeSec = World->GetTimeSeconds();
-        const auto DotNum = ((int)TimeSec) % 3 + 1;
-        FString ret = "Building";        
-        ret.Append(FString::ChrN(DotNum, '.'));
-        return ret;
-    }
-    if (NavSys->IsNavigationDirty())
-        return "NavMesh Data is Dirty";
-    if (NavSys->IsNavigationBuilt(World->GetWorldSettings()))
-        return "Completed";
-    return "Invalid Error";
+bool UTwinLinkEditorNavSystem::IsNavMeshBuilt(UWorld* World)
+{
+    auto Ret = ::NavMeshBuildProgress::CheckProgress(World);
+    return Ret.bIsBuildComplete;   
 }
