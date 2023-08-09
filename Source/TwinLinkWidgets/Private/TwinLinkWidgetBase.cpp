@@ -18,7 +18,7 @@ void UTwinLinkWidgetBase::SetupAdminSystem() {
     // 管理者モード有効化時のイベント登録
     check(OnActiveAdminModeHnd.IsValid() == false);
     OnActiveAdminModeHnd = Mod.OnActiveAdminMode.AddLambda([this]() {
-        OnActiveAdministorMode();
+        OnActiveAdministratorMode();
         });
 
     // 管理者モード無効化時のイベント登録

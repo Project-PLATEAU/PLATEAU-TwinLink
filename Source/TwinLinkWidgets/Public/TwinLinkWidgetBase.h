@@ -46,7 +46,7 @@ public:
      * @param bIsActive 
     */
     UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
-        void OnActiveAdministorMode();
+        void OnActiveAdministratorMode();
 
     /**
      * @brief 管理者モード無効化時に呼ばれる
