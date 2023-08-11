@@ -9,12 +9,11 @@
 class APLATEAUInstancedCityModel;
 class ANavMeshBoundsVolume;
 /**
- * 
+ *
  */
 UCLASS()
-class TWINLINK_API ATwinLinkNavSystem : public AActor
-{
-	GENERATED_BODY()
+class TWINLINK_API ATwinLinkNavSystem : public AActor {
+    GENERATED_BODY()
 public:
     ATwinLinkNavSystem();
 
@@ -32,10 +31,10 @@ public:
 private:
     // デバッグ用) パス検索のデバッグ表示を行うかどうか
     UPROPERTY(EditAnywhere, Category = Test)
-    bool DebugCallFindPath = false;
+        bool DebugCallFindPath = false;
     // デバッグ用) パス検索のデバッグ表示の際の描画オフセット
     UPROPERTY(EditAnywhere, Category = Test)
-    float DebugFindPathUpOffset = 4000;
+        float DebugFindPathUpOffset = 4000;
 
     FNavPathQueryDelegate DebugPathFindDelegate;
     // デバッグ用) スタート位置

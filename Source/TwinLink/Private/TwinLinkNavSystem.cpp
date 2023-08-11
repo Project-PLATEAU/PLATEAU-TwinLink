@@ -1,8 +1,7 @@
 #include "TwinLinkNavSystem.h"
 #include "NavigationSystem.h"
 
-ATwinLinkNavSystem::ATwinLinkNavSystem()
-{
+ATwinLinkNavSystem::ATwinLinkNavSystem() {
     PrimaryActorTick.bCanEverTick = true;
     RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 }
@@ -15,8 +14,7 @@ FPathFindingResult ATwinLinkNavSystem::RequestFindPath(const FVector& Start, con
     return NavSys->FindPathSync(Query, EPathFindingMode::Regular);
 }
 
-bool ATwinLinkNavSystem::CreateFindPathRequest(const FVector& Start, const FVector& End, FPathFindingQuery& OutRequest)
-{
+bool ATwinLinkNavSystem::CreateFindPathRequest(const FVector& Start, const FVector& End, FPathFindingQuery& OutRequest) {
     const UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
     if (!NavSys)
         return false;
@@ -32,27 +30,22 @@ bool ATwinLinkNavSystem::CreateFindPathRequest(const FVector& Start, const FVect
     return true;
 }
 
-void ATwinLinkNavSystem::Tick(float DeltaSeconds)
-{
+void ATwinLinkNavSystem::Tick(float DeltaSeconds) {
     Super::Tick(DeltaSeconds);
 #ifdef WITH_EDITOR
     DebugDraw();
 #endif
 }
 
-void ATwinLinkNavSystem::DebugDraw()
-{
+void ATwinLinkNavSystem::DebugDraw() {
 #ifdef WITH_EDITOR
     UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
     if (!NavSys)
         return;
-    if (DebugCallFindPath) 
-    {
+    if (DebugCallFindPath) {
         using LocatorType = AActor;
-        auto CreateLocatorOrSkip = [self = this](FWeakObjectPtr& Out,  const TCHAR* Name)-> LocatorType*
-        {
-            if (Out.IsValid() == false)
-            {
+        auto CreateLocatorOrSkip = [self = this](FWeakObjectPtr& Out, const TCHAR* Name)-> LocatorType* {
+            if (Out.IsValid() == false) {
                 FActorSpawnParameters Params;
                 Params.Owner = self;
 
@@ -67,14 +60,13 @@ void ATwinLinkNavSystem::DebugDraw()
                     Ret->SetRootComponent(Root);
                 }
                 Ret->AttachToActor(self, FAttachmentTransformRules::KeepWorldTransform, Name);
-                Out = Ret;                
+                Out = Ret;
             }
             return Cast<LocatorType>(Out.Get());
         };
         const auto StartLocator = CreateLocatorOrSkip(DebugFindPathStart, TEXT("DebugPathFindStart"));
-        const auto EndLocator   = CreateLocatorOrSkip(DebugFindPathEnd, TEXT("DebugPathFindEnd"));
-        if(StartLocator && EndLocator)
-        {
+        const auto EndLocator = CreateLocatorOrSkip(DebugFindPathEnd, TEXT("DebugPathFindEnd"));
+        if (StartLocator && EndLocator) {
             //FPathFindingQuery Query;
             //CreateFindPathRequest(StartLocator->GetActorLocation(), EndLocator->GetActorLocation(), Query);
             //DebugPathFindDelegate.BindLambda([this](unsigned, ENavigationQueryResult::Type Type, TSharedPtr<FNavigationPath> Path)
@@ -96,7 +88,7 @@ void ATwinLinkNavSystem::DebugDraw()
                 }
             }
         }
-        
+
     }
 #endif
 }

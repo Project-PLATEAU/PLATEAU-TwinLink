@@ -10,23 +10,19 @@
 #include "NavigationSystem.h"
 #include "PLATEAUCityModelLoader.h"
 #include "TwinLink/Public/TwinLinkNavSystem.h"
-namespace
-{
-	template<class F>
-	void ForeachDescendant(USceneComponent* Self, INT32 nest, F&& func) 
-	{
-		if (nest < 0)
-			return;
-		if (nest == 0)
-		{
-			func(Self);
-			return;
-		}
-		for (auto Child : Self->GetAttachChildren())
-		{
-			ForeachDescendant(Child, nest - 1, std::forward<F>(func));
-		}
-	}
+namespace {
+    template<class F>
+    void ForeachDescendant(USceneComponent* Self, INT32 nest, F&& func) {
+        if (nest < 0)
+            return;
+        if (nest == 0) {
+            func(Self);
+            return;
+        }
+        for (auto Child : Self->GetAttachChildren()) {
+            ForeachDescendant(Child, nest - 1, std::forward<F>(func));
+        }
+    }
 
     /*
     * @brief : Actor以下の全ComponentのSetCanEverAffectNavigationを設定する
@@ -155,20 +151,17 @@ namespace
      *
      */
     template<class T>
-    auto FindFirstPersistentLevelActor(UWorld* World) -> std::enable_if_t< std::is_base_of_v<AActor, T>, T* >
-	{
+    auto FindFirstPersistentLevelActor(UWorld* World) -> std::enable_if_t< std::is_base_of_v<AActor, T>, T* > {
         if (!World || !World->PersistentLevel)
             return nullptr;
-        for(auto& Actor : World->PersistentLevel->Actors)
-        {
+        for (auto& Actor : World->PersistentLevel->Actors) {
             if (auto Ret = Cast<T>(Actor))
                 return Ret;
         }
         return nullptr;
-	}
+    }
 
-    struct NavMeshBuildProgress
-	{
+    struct NavMeshBuildProgress {
         // ナビメッシュビルド完了
         bool bIsBuildComplete;
 
@@ -177,14 +170,13 @@ namespace
 
         NavMeshBuildProgress(bool bComplete, const FString& Msg)
             : bIsBuildComplete(bComplete)
-            , Message(Msg)
-        {           
+            , Message(Msg) {
         }
 
         /*
          * エラー or 途中
          */
-        static NavMeshBuildProgress Error(const FString& Msg){
+        static NavMeshBuildProgress Error(const FString& Msg) {
             return NavMeshBuildProgress(false, Msg);
         }
 
@@ -194,8 +186,7 @@ namespace
         static NavMeshBuildProgress Complete() {
             return NavMeshBuildProgress(true, "");
         }
-        static NavMeshBuildProgress CheckProgress(UWorld* World)
-        {
+        static NavMeshBuildProgress CheckProgress(UWorld* World) {
             // まだ実行すらしていない
             const auto TwinLinkNavSys = ::FindFirstPersistentLevelActor<ATwinLinkNavSystem>(World);
             if (!TwinLinkNavSys)
@@ -207,7 +198,7 @@ namespace
                 return  Error("City Model not found");
 
             const auto CityModelLoader = ::FindFirstPersistentLevelActor<APLATEAUCityModelLoader>(World);
-            if(!CityModelLoader)
+            if (!CityModelLoader)
                 return  Error("City Model not found");
 
             if (CityModelLoader->Phase != ECityModelLoadingPhase::Finished)
@@ -266,13 +257,12 @@ namespace
             // その他エラー(ここには来ないはず)
             return Error("Invalid Error");
         }
-	};
+    };
 
 }
 
 
-void UTwinLinkEditorNavSystem::MakeNavMesh(UWorld* World)
-{
+void UTwinLinkEditorNavSystem::MakeNavMesh(UWorld* World) {
     const auto BbBox = ::ApplyNavMeshAffect(World);
     TArray<AActor*> AllActors;
     UGameplayStatics::GetAllActorsOfClass(World, ANavMeshBoundsVolume::StaticClass(), AllActors);
@@ -288,13 +278,11 @@ void UTwinLinkEditorNavSystem::MakeNavMesh(UWorld* World)
         NavSystemActor = Cast<ATwinLinkNavSystem>(SpawnActorFromClass(ATwinLinkNavSystem::StaticClass(), FVector::Zero(), FRotator::ZeroRotator));
     }
 
-	if (BbBox.has_value() == false)
-	{
+    if (BbBox.has_value() == false) {
         for (const auto Actor : AllActors)
             Actor->Destroy();
-	}
-	else
-	{
+    }
+    else {
         ANavMeshBoundsVolume* Volume = nullptr;
         if (AllActors.Num() > 0)
             Volume = Cast<ANavMeshBoundsVolume>(AllActors[0]);
@@ -309,33 +297,29 @@ void UTwinLinkEditorNavSystem::MakeNavMesh(UWorld* World)
         const FVector Scale = Extent / BrushBounds.BoxExtent;
         Volume->SetActorLocation(Center);
         Volume->SetActorScale3D(Scale);
-        if (UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(World))
-		{
+        if (UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(World)) {
             NavSys->OnNavigationBoundsUpdated(Volume);
             NavSys->Build();
-		}
-	}
+        }
+    }
 }
-void UTwinLinkEditorNavSystem::SetCanEverAffectNavigationAllActors(UWorld* World, bool Relevant)
-{
-	if (!World)
-		return;
-     
-	TArray<AActor*> Actors;
-	UGameplayStatics::GetAllActorsOfClass(World, AActor::StaticClass(), Actors);
-	for (const auto Actor : Actors) {
+void UTwinLinkEditorNavSystem::SetCanEverAffectNavigationAllActors(UWorld* World, bool Relevant) {
+    if (!World)
+        return;
+
+    TArray<AActor*> Actors;
+    UGameplayStatics::GetAllActorsOfClass(World, AActor::StaticClass(), Actors);
+    for (const auto Actor : Actors) {
         ::SetCanEverAffectNavigationRecursively(Actor, Relevant);
-	}
+    }
 }
 
-FString UTwinLinkEditorNavSystem::GetNavMeshBuildingMessage(UWorld* World)
-{
+FString UTwinLinkEditorNavSystem::GetNavMeshBuildingMessage(UWorld* World) {
     auto Ret = ::NavMeshBuildProgress::CheckProgress(World);
     return Ret.Message;
 }
 
-bool UTwinLinkEditorNavSystem::IsNavMeshBuilt(UWorld* World)
-{
+bool UTwinLinkEditorNavSystem::IsNavMeshBuilt(UWorld* World) {
     auto Ret = ::NavMeshBuildProgress::CheckProgress(World);
-    return Ret.bIsBuildComplete;   
+    return Ret.bIsBuildComplete;
 }
