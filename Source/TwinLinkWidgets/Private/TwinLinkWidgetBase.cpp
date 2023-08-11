@@ -5,6 +5,16 @@
 
 #include "TwinLink.h"
 
+void UTwinLinkWidgetBase::NativeConstruct() {
+    Super::NativeConstruct();
+    SetupLinkageWithAdminMode();
+}
+
+void UTwinLinkWidgetBase::NativeDestruct() {
+    FinalizeLinkageWithAdminMode();
+    Super::NativeDestruct();
+}
+
 void UTwinLinkWidgetBase::DebugChangeAdminMod() {
     auto& Mod = FTwinLinkModule::Get();
 
