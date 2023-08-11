@@ -26,33 +26,20 @@ public:
      * @brief 管理者モード関係の初期設定
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
-        void SetupAdminSystem();
+        void SetupLinkageWithAdminMode();
 
     /**
      * @brief 管理者モード関係の終了時処理
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
-        void FinalizeAdminSystem();
+        void FinalizeLinkageWithAdminMode();
 
     /**
      * @brief ウィジェットを管理者モードに同期する
      * @param bIsActiveAdminMode 現在の管理者モード
     */
     UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
-        void SyncWidgetToAdminMode(const bool bIsActiveAdminMode);
-
-    /**
-     * @brief 管理者モード有効化時に呼ばれる
-     * @param bIsActive 
-    */
-    UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
-        void OnActiveAdministratorMode();
-
-    /**
-     * @brief 管理者モード無効化時に呼ばれる
-    */
-    UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
-        void OnInactiveAdministratorMode();
+        void SyncWidgetOnAdminMode(const bool bIsActiveAdminMode);
 
 private:
     // 登録デリゲードの管理Handle
