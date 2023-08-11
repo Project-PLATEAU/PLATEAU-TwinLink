@@ -45,6 +45,7 @@ public class TwinLink : ModuleRules
                 "UMG",
                 "Json",
                 "JsonUtilities",
+                "NavigationSystem",
                 // ... add private dependencies that you statically link with here ...	
             }
         );

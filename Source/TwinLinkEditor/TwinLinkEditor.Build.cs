@@ -50,6 +50,9 @@ public class TwinLinkEditor : ModuleRules
                 "UMG",
                 "UMGEditor",
                 "WorkspaceMenuStructure",
+                "NavigationSystem",
+                "PLATEAURuntime",
+                "EditorScriptingUtilities"
                 // ... add private dependencies that you statically link with here ...	
             }
             );
