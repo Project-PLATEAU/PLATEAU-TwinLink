@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -20,6 +20,14 @@ public:
      * \return 
      */
     static FString CreateViewPointFilePath(const FString FileName);
+
+    /**
+     * アセット配置情報ファイルへのパスを作成する.
+     *
+     * \param FileName　拡張子付きのファイル名
+     * \return
+     */
+    static FString CreateAssetPlacementFilePath(const FString FileName);
 
 private:
     static FString GetProjSaveDir();
