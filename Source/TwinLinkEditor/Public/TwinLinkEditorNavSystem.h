@@ -7,11 +7,14 @@
 #include "EditorLevelLibrary.h"
 #include <NavMesh/NavMeshBoundsVolume.h>
 #include <optional>
+
+#include "Subsystems/EditorActorSubsystem.h"
 #include "TwinLinkEditorNavSystem.generated.h"
 class APLATEAUInstancedCityModel;
 class ANavMeshBoundsVolume;
 /**
- *
+ * @brief : エディタ側のナビメッシュ関係を管理するクラス
+ *        : `PLATEAUモデルからナビメッシュの生成等
  */
 UCLASS()
 class TWINLINKEDITOR_API UTwinLinkEditorNavSystem : public UEditorLevelLibrary {
@@ -24,10 +27,13 @@ public:
      * NavigationSystemにBuildを要求
      */
     UFUNCTION(BlueprintCallable, Category = "Nav")
-        static void MakeNavMesh(UWorld* world);
+        static void MakeNavMesh(UEditorActorSubsystem* Editor, UWorld* World);
 
+    /*
+     * ワールドの全StaticMeshに対してbRelevantで指定した値でCanEverAffectNavigationを実行する
+     */
     UFUNCTION(BlueprintCallable, Category = "Nav")
-        static void SetCanEverAffectNavigationAllActors(UWorld* World, bool Relevant);
+        static void SetCanEverAffectNavigationAllActors(UWorld* World, bool bRelevant);
 
     /*
      * ナビメッシュ生成済みかのエラーメッセージを返す

@@ -8,8 +8,8 @@
 #include "TwinLinkNavSystem.generated.h"
 class APLATEAUInstancedCityModel;
 class ANavMeshBoundsVolume;
-/**
- *
+/*
+ * @brief : パス検索などランタイム中のナビメッシュ関係を管理するクラス.
  */
 UCLASS()
 class TWINLINK_API ATwinLinkNavSystem : public AActor {
@@ -18,7 +18,7 @@ public:
     ATwinLinkNavSystem();
 
     /*
-     * @brief : パス検索
+     * @brief : 指定した2点間のパス検索を行う
      */
     FPathFindingResult RequestFindPath(const FVector& Start, const FVector& End);
 

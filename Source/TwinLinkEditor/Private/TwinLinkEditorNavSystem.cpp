@@ -195,19 +195,18 @@ namespace {
             // モデルを読み込んでいない
             const auto CityModel = ::FindFirstPersistentLevelActor<APLATEAUInstancedCityModel>(World);
             if (!CityModel)
-                return  Error("City Model not found");
+                return  Error(TEXT("3D都市モデルが読み込前れていません"));
 
             const auto CityModelLoader = ::FindFirstPersistentLevelActor<APLATEAUCityModelLoader>(World);
             if (!CityModelLoader)
-                return  Error("City Model not found");
+                return  Error(TEXT("3D都市モデルが読み込前れていません"));
 
             if (CityModelLoader->Phase != ECityModelLoadingPhase::Finished)
-                return Error("City Model Loading");
+                return Error(TEXT("3D都市モデルのインポートがまだ完了していません"));
 
-            //
-            auto bExistLoadModel = false;
+            auto bExistRoadModel = false;
             ::ForeachDescendant(CityModel->GetRootComponent(), 1,
-                [&bExistLoadModel](const USceneComponent* Self) mutable {
+                [&bExistRoadModel](const USceneComponent* Self) mutable {
                     FString MeshName;
                     Self->GetName(MeshName);
                     // tranという名前は道メッシュ
@@ -219,18 +218,18 @@ namespace {
                         Lod->GetName(LodName);
                         if (LodName.StartsWith("LOD1") == false)
                             continue;
-                        bExistLoadModel = true;
+                        bExistRoadModel = true;
                         return;
                     }
                 });
             // 道モデルが見つからない
-            if (bExistLoadModel == false)
-                return Error("Load Model not found");
+            if (bExistRoadModel == false)
+                return Error(TEXT("3D都市モデルにLOD1道路モデルが含まれていません"));
 
             // https://docs.unrealengine.com/5.2/en-US/API/Runtime/NavigationSystem/UNavigationSystemV1/
             UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(World);
             if (!NavSys)
-                return Error("NavSystem not found");
+                return Error(TEXT("NavSystem not found"));
 
             // https://docs.unrealengine.com/5.0/ja/optimizing-navigation-mesh-generation-speed-in-unreal-engine/
             // ナビメッシュ生成中
@@ -238,7 +237,7 @@ namespace {
                 // ...を描画するためのもの
                 const auto TimeSec = World->GetTimeSeconds();
                 const auto DotNum = ((int)TimeSec) % 3 + 1;
-                FString ret = "Building";
+                FString ret = TEXT("ビルド中");
                 ret.Append(FString::ChrN(DotNum, '.'));
                 return Error(ret);
             }
@@ -247,22 +246,20 @@ namespace {
             const auto Volume = ::FindFirstPersistentLevelActor<ANavMeshBoundsVolume>(World);
             if (!Volume)
                 return Error("");
-            //if (NavSys->IsNavigationDirty())
-            //    return Error("NavMesh Data is Dirty");
 
             // 成功
             if (NavSys->IsNavigationBuilt(World->GetWorldSettings()))
                 return Complete();
 
             // その他エラー(ここには来ないはず)
-            return Error("Invalid Error");
+            return Error(TEXT("Invalid Error"));
         }
     };
 
 }
 
 
-void UTwinLinkEditorNavSystem::MakeNavMesh(UWorld* World) {
+void UTwinLinkEditorNavSystem::MakeNavMesh(UEditorActorSubsystem* Editor, UWorld* World) {
     const auto BbBox = ::ApplyNavMeshAffect(World);
     TArray<AActor*> AllActors;
     UGameplayStatics::GetAllActorsOfClass(World, ANavMeshBoundsVolume::StaticClass(), AllActors);
@@ -270,12 +267,9 @@ void UTwinLinkEditorNavSystem::MakeNavMesh(UWorld* World) {
     TArray<AActor*> NavSystemActors;
     UGameplayStatics::GetAllActorsOfClass(World, ATwinLinkNavSystem::StaticClass(), NavSystemActors);
 
-    const ATwinLinkNavSystem* NavSystemActor = nullptr;
-    if (NavSystemActors.Num() > 0) {
-        NavSystemActor = Cast<ATwinLinkNavSystem>(NavSystemActors[0]);
-    }
-    else {
-        NavSystemActor = Cast<ATwinLinkNavSystem>(SpawnActorFromClass(ATwinLinkNavSystem::StaticClass(), FVector::Zero(), FRotator::ZeroRotator));
+    // NavSystemActorが存在しない場合は作成する
+    if (NavSystemActors.Num() == 0) {
+        Editor->SpawnActorFromClass(ATwinLinkNavSystem::StaticClass(), FVector::Zero(), FRotator::ZeroRotator);
     }
 
     if (BbBox.has_value() == false) {
@@ -283,12 +277,13 @@ void UTwinLinkEditorNavSystem::MakeNavMesh(UWorld* World) {
             Actor->Destroy();
     }
     else {
+
         ANavMeshBoundsVolume* Volume = nullptr;
         if (AllActors.Num() > 0)
             Volume = Cast<ANavMeshBoundsVolume>(AllActors[0]);
         else
             Volume = Cast<ANavMeshBoundsVolume>(
-                SpawnActorFromClass(ANavMeshBoundsVolume::StaticClass(), FVector::Zero(), FRotator::ZeroRotator));
+                Editor->SpawnActorFromClass(ANavMeshBoundsVolume::StaticClass(), FVector::Zero(), FRotator::ZeroRotator));
 
         const auto Center = BbBox->GetCenter();
         const auto Extent = BbBox->GetExtent();
@@ -303,14 +298,14 @@ void UTwinLinkEditorNavSystem::MakeNavMesh(UWorld* World) {
         }
     }
 }
-void UTwinLinkEditorNavSystem::SetCanEverAffectNavigationAllActors(UWorld* World, bool Relevant) {
+void UTwinLinkEditorNavSystem::SetCanEverAffectNavigationAllActors(UWorld* World, bool bRelevant) {
     if (!World)
         return;
 
     TArray<AActor*> Actors;
     UGameplayStatics::GetAllActorsOfClass(World, AActor::StaticClass(), Actors);
     for (const auto Actor : Actors) {
-        ::SetCanEverAffectNavigationRecursively(Actor, Relevant);
+        ::SetCanEverAffectNavigationRecursively(Actor, bRelevant);
     }
 }
 
