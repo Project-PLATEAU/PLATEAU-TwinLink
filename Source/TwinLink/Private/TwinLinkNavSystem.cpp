@@ -80,16 +80,39 @@ void ATwinLinkNavSystem::DebugDraw() {
         //    });
         //NavSys->FindPathAsync(Query.NavAgentProperties, Query, DebugPathFindDelegate);
         const auto PathFindResult = RequestFindPath(StartLocator->GetActorLocation(), EndLocator->GetActorLocation());
+
+        auto GetHeightCheckedPos = [this](FVector Pos) {
+            auto HeightMax = Pos;
+            HeightMax.Z = DemCollisionAabb.Max.Z + 1;
+            auto HeightMin = Pos;
+            HeightMin.Z = DemCollisionAabb.Min.Z - 1;
+            FHitResult HeightResult;
+
+            if (GetWorld()->LineTraceSingleByChannel(HeightResult, HeightMax, HeightMin, DemCollisionChannel))
+                Pos.Z = HeightResult.Location.Z + 1;
+            return Pos;
+        };
         if (PathFindResult.IsSuccessful()) {
             auto& points = PathFindResult.Path->GetPathPoints();
+            FVector LastPos = FVector::Zero();
             for (auto i = 0; i < points.Num(); ++i) {
                 auto& p = points[i];
-                auto offset = FVector::UpVector * DebugFindPathUpOffset;
-
-                DrawDebugSphere(GetWorld(), p.Location + offset, 5, 10, FColor::Red, false, 3);
-                if (i < points.Num() - 1) {
-                    DrawDebugLine(GetWorld(), p.Location + offset, points[i + 1].Location + offset, FColor::Blue);
+                auto Pos = GetHeightCheckedPos(p.Location);
+                DrawDebugSphere(GetWorld(), Pos, 5, 10, FColor::Red, false, 3);
+                if (i > 0) {
+                    auto Dir = (Pos - LastPos);                    
+                    auto Length = Dir.Length();
+                    Dir.Normalize();
+                    auto CheckNum = static_cast<int32>(Length / DebugFindPathHeightCheckInterval);
+                    for(auto I = 1; I <= CheckNum; ++I)
+                    {
+                        auto P = GetHeightCheckedPos(LastPos + Dir * DebugFindPathHeightCheckInterval);
+                        DrawDebugLine(GetWorld(), LastPos, P, FColor::Blue);
+                        LastPos = P;
+                    }
+                    DrawDebugLine(GetWorld(), LastPos, Pos, FColor::Blue);
                 }
+                LastPos = Pos;
             }
         }
     }

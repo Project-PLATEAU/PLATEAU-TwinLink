@@ -56,11 +56,17 @@ private:
     UPROPERTY(EditAnywhere, Category = Test)
         float DebugFindPathUpOffset = 4000;
 
+    // デバッグ用) パス感覚の高さチェック
+    UPROPERTY(EditAnywhere, Category = Test)
+        float DebugFindPathHeightCheckInterval = 10;
+
+
     FNavPathQueryDelegate DebugPathFindDelegate;
     // デバッグ用) スタート位置
     FWeakObjectPtr DebugFindPathStart;
     // デバッグ用) 目的地
     FWeakObjectPtr DebugFindPathEnd;
+
     // デバッグ描画実行
     void DebugDraw();
 };
