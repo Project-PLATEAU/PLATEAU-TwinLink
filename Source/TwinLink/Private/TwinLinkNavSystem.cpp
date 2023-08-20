@@ -45,6 +45,9 @@ void ATwinLinkNavSystem::DebugDraw() {
     if (!DebugCallFindPath)
         return;
 
+    // 道路モデルのAABB表示
+    DrawDebugBox(GetWorld(), DemCollisionAabb.GetCenter(), DemCollisionAabb.GetExtent(), FColor::Red);
+
     using LocatorType = AActor;
     auto CreateLocatorOrSkip = [self = this](FWeakObjectPtr& Out, const TCHAR* Name)-> LocatorType* {
         if (Out.IsValid() == false) {

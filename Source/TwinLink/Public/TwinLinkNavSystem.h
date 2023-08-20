@@ -28,7 +28,27 @@ public:
     bool CreateFindPathRequest(const FVector& Start, const FVector& End, FPathFindingQuery& OutRequest);
 
     virtual void Tick(float DeltaSeconds) override;
+
+    ECollisionChannel GetDemCollisionChannel() const {
+        return DemCollisionChannel;
+    }
+
+    FBox GetDemCollisionAabb() const {
+        return DemCollisionAabb;
+    }
+
+    void SetDemCollisionAabb(const FBox& val) {
+        DemCollisionAabb = val;
+    }
 private:
+    // 道路メッシュのコリジョンチャンネル
+    UPROPERTY(EditAnywhere, Category = Editor)
+        TEnumAsByte<ECollisionChannel> DemCollisionChannel = ECollisionChannel::ECC_GameTraceChannel1;
+
+    // 道路メッシュのAabb
+    UPROPERTY(EditAnywhere, Category = Editor)
+        FBox DemCollisionAabb;
+
     // デバッグ用) パス検索のデバッグ表示を行うかどうか
     UPROPERTY(EditAnywhere, Category = Test)
         bool DebugCallFindPath = false;
