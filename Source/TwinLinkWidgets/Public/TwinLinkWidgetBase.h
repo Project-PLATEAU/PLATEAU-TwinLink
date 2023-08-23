@@ -25,19 +25,12 @@ public:
     */
     virtual void NativeDestruct() override;
 
-
-    /**
-     * @brief テスト用　管理者モードをPinを入力せずに強制的に切り替える
-    */
-    UFUNCTION(BlueprintCallable, Category = "TwinLink")
-        void DebugChangeAdminMod();
-
     /**
      * @brief ウィジェットを管理者モードに同期する
      * @param bIsActiveAdminMode 現在の管理者モード
     */
     UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
-        void SyncWidgetOnAdminMode(const bool bIsActiveAdminMode);
+        void OnChangedAdminMode(const bool bIsActiveAdminMode);
 
 private:
     // 登録デリゲードの管理Handle
