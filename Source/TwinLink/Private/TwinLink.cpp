@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #include "TwinLink.h"
 
@@ -17,7 +17,23 @@ FString FTwinLinkModule::GetContentDir() {
 }
 
 void FTwinLinkModule::SetAdminMode(const bool bEnabled) {
+    const auto IsSame = bAdminMode == bEnabled;
     bAdminMode = bEnabled;
+
+    if (IsSame) {
+        return;
+    }
+
+    if (bEnabled) {
+        if (OnActiveAdminMode.IsBound()) {
+            OnActiveAdminMode.Broadcast();
+        }
+    }
+    else {
+        if (OnInactiveAdminMode.IsBound()) {
+            OnInactiveAdminMode.Broadcast();
+        }
+    }
 }
 
 bool FTwinLinkModule::IsAdminModeEnabled() const {
