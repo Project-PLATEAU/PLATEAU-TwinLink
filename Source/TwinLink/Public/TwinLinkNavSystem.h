@@ -12,6 +12,8 @@
 #include "InputActionValue.h"
 #include "TwinLinkNavSystemDef.h"
 #include "TwinLinkNavSystemFindPathInfo.h"
+#include "Components/SplineComponent.h"
+#include "Components/SplineMeshComponent.h"
 #include "TwinLinkNavSystem.generated.h"
 class APLATEAUInstancedCityModel;
 class ANavMeshBoundsVolume;
@@ -136,6 +138,10 @@ private:
         TSubclassOf<class AActor> PathLocatorDestBp;
 
 
+    UPROPERTY(EditAnywhere, Category = Editor)
+        TSubclassOf<class AActor> PathLineBp;
+
+
     // デバッグ用) パス検索のデバッグ表示を行うかどうか
     UPROPERTY(EditAnywhere, Category = Test)
         bool DebugCallFindPath = false;
@@ -152,6 +158,14 @@ private:
     // 目的地
     FWeakObjectPtr FindPathDestActor;
 
+    /*
+    // パス描画用のLine
+    UPROPERTY(EditAnywhere, Category = Editor)
+    TArray<USplineMeshComponent*> FindPathLineActorArray;
+
+    UPROPERTY(EditAnywhere, Category = Editor)
+        USplineComponent* PathLineComponent;
+        */
     // ナビメッシュのバウンディングボリューム
     UPROPERTY(EditAnywhere, Category = Editor)
         TObjectPtr<ANavMeshBoundsVolume> NavMeshBoundVolume;

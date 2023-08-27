@@ -347,18 +347,25 @@ namespace {
 }
 
 
-void UTwinLinkEditorNavSystem::MakeNavMesh(UEditorActorSubsystem* Editor, UWorld* World) {
+void UTwinLinkEditorNavSystem::MakeNavMesh(UEditorActorSubsystem* Editor, UWorld* World, UTwinLinkEditorNavSystemParam* Param) {
+
+    checkf(Param != nullptr, TEXT("Paramがnullです"));
+    if (!Param) {
+
+        return;
+    }
 
     // NavSystemActorが存在しない場合は作成する
     TArray<AActor*> NavSystemActors;
     UGameplayStatics::GetAllActorsOfClass(World, ATwinLinkNavSystem::StaticClass(), NavSystemActors);
     ATwinLinkNavSystem* NavSystem = nullptr;
     if (NavSystemActors.Num() == 0) {
-        NavSystem = Cast<ATwinLinkNavSystem>(Editor->SpawnActorFromClass(ATwinLinkNavSystem::StaticClass(), FVector::Zero(), FRotator::ZeroRotator));
+        NavSystem = Cast<ATwinLinkNavSystem>(Editor->SpawnActorFromObject(Param->NavSystemBp, FVector::Zero(), FRotator::ZeroRotator));
     }
     else {
         NavSystem = Cast<ATwinLinkNavSystem>(NavSystemActors[0]);
     }
+    
 
     const auto Result = ::ApplyNavMeshAffect(World, NavSystem);
     TArray<AActor*> AllActors;

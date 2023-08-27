@@ -5,6 +5,8 @@
 #include "Components/InputComponent.h" 
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Components/SplineComponent.h"
+#include "Components/SplineMeshComponent.h"
 #include "Engine/StaticMeshActor.h"
 
 namespace {
@@ -20,6 +22,16 @@ ATwinLinkNavSystem::ATwinLinkNavSystem() {
 
     PathLocatorStartBp = TSoftClassPtr<AActor>(FSoftObjectPath(TEXT("/Game/Blueprints/BP_PathStart.BP_PathStart_C"))).LoadSynchronous();;
     PathLocatorStartBp = TSoftClassPtr<AActor>(FSoftObjectPath(TEXT("/Game/Blueprints/BP_PathDest.BP_PathDest_C"))).LoadSynchronous();;
+
+   /* for (auto i = 0; i < 10; ++i) {
+        FString Name = "Line";
+        Name.AppendInt(i);
+        auto mesh = CreateDefaultSubobject<USplineMeshComponent>(FName(*Name));
+        FindPathLineActorArray.Add(mesh);
+        mesh->SetupAttachment(this->GetRootComponent());
+    }
+
+    PathLineComponent = CreateDefaultSubobject<USplineComponent>(FName("PathLine"));*/
 }
 
 bool ATwinLinkNavSystem::CreateFindPathRequest(const FVector& Start, const FVector& End, FPathFindingQuery& OutRequest) const {
@@ -211,14 +223,24 @@ void ATwinLinkNavSystem::DebugDraw() {
 
     auto& points = PathFindInfo->HeightCheckedPoints;
     FVector LastPos = FVector::Zero();
-    for (auto i = 0; i < points.Num(); ++i) {
+    for (auto i = 0; i < points.Num(); ++i) 
+    {
         auto Pos = points[i] + FVector::UpVector * DebugFindPathUpOffset;
         DrawDebugSphere(GetWorld(), Pos, 5, 10, FColor::Red, false);
         if (i > 0) {
             DrawDebugLine(GetWorld(), LastPos, Pos, FColor::Blue);
+           /* if(i <= FindPathLineActorArray.Num())
+            {
+                auto line = FindPathLineActorArray[i - 1];
+                line->SetStartPosition(LastPos);
+                line->SetEndPosition(Pos);
+                line->SetStartAndEnd(LastPos, FVector::Zero(), Pos, FVector::Zero(), true);
+            }*/
         }
+
         LastPos = Pos;
     }
+    //PathLineComponent->SetSplineWorldPoints(points);
 #endif
 }
 
@@ -238,6 +260,7 @@ void ATwinLinkNavSystem::BeginPlay() {
     };
     FindPathStartActor = CreateLocatorOrSkip(PathLocatorStartBp, TEXT("FindPathStartActor"));
     FindPathDestActor = CreateLocatorOrSkip(PathLocatorDestBp, TEXT("FindPathDestActor"));
+
 
     // Input設定を行う
     SetupInput();
