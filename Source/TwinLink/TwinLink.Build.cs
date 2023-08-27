@@ -31,6 +31,7 @@ public class TwinLink : ModuleRules
             new string[]
             {
                 "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput",
+                "Niagara",
             }
         );
 
@@ -46,6 +47,7 @@ public class TwinLink : ModuleRules
                 "Json",
                 "JsonUtilities",
                 "NavigationSystem",
+                "Niagara", "Imath", "Imath",
                 // ... add private dependencies that you statically link with here ...	
             }
         );

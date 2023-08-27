@@ -7,13 +7,11 @@
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "NavigationData.h"
-#include "InputMappingContext.h" 
-#include "InputAction.h"
 #include "InputActionValue.h"
 #include "TwinLinkNavSystemDef.h"
 #include "TwinLinkNavSystemFindPathInfo.h"
-#include "Components/SplineComponent.h"
-#include "Components/SplineMeshComponent.h"
+#include "TwinLinkNavSystemPathDrawer.h"
+#include "TwinLinkNavSystemPathLocator.h"
 #include "TwinLinkNavSystem.generated.h"
 class APLATEAUInstancedCityModel;
 class ANavMeshBoundsVolume;
@@ -66,18 +64,6 @@ public:
     // 目的地設定
     void SetDestPoint(const FVector& V);
 
-    // 開始地点のアクター
-    AActor* GetStartActor();
-
-    // 開始地点のアクター
-    const AActor* GetStartActor() const;
-
-    // 目的地点のアクター
-    AActor* GetDestActor();
-
-    // 目的地点のアクター
-    const AActor* GetDestActor() const;
-
     AActor* GetNowSelectedPointActor();
 private:
     // Input設定
@@ -94,69 +80,58 @@ private:
     void DebugDraw();
 private:
     // 道路メッシュのコリジョンチャンネル
-    UPROPERTY(EditAnywhere, Category = Editor)
+    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
         TEnumAsByte<ECollisionChannel> DemCollisionChannel = ECollisionChannel::ECC_GameTraceChannel1;
 
     // 道路メッシュのAabb
-    UPROPERTY(EditAnywhere, Category = Editor)
+    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
         FBox DemCollisionAabb;
 
     // 現在どのポイントを編集しているかどうか
-    UPROPERTY(EditAnywhere, Category = Path)
+    UPROPERTY(EditAnywhere, Category = TwinLink_Path)
         NavSystemPathPointType NowSelectedPointType = NavSystemPathPointType::Start;
 
     // 現在どのポイントを編集しているかどうか
-    UPROPERTY(EditAnywhere, Category = Path)
+    UPROPERTY(EditAnywhere, Category = TwinLink_Path)
         NavSystemMode NowSelectedMode = NavSystemMode::FindPathAnyPoint;
 
     // パス感覚の高さチェック
-    UPROPERTY(EditAnywhere, Category = Path)
+    UPROPERTY(EditAnywhere, Category = TwinLink_Path)
         float FindPathHeightCheckInterval = 1000;
 
-    /** Called for Action input */
-    void EventAction(const FInputActionValue& Value);
+    // パス開始地点のBP
+    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
+        TSubclassOf<ATwinLinkNavSystemPathLocator> PathLocatorStartBp;
 
-    /** Called for Axis input */
-    void EventAxis(const FInputActionValue& Value);
+    // パス終了地点のBP
+    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
+        TSubclassOf<ATwinLinkNavSystemPathLocator> PathLocatorDestBp;
 
-    /** MappingContext */
-    UPROPERTY(EditAnywhere, Category = Input)
-        class UInputMappingContext* DefaultMappingContext;
+    // パス描画のBP
+    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
+        TSubclassOf<AUTwinLinkNavSystemPathDrawer> PathDrawerBp;
 
-    /** Action Input */
-    UPROPERTY(EditAnywhere, Category = Input)
-        class UInputAction* ActionInput;
+    UPROPERTY(EditAnywhere, Category = TwinLink_Path)
+        TArray<AUTwinLinkNavSystemPathDrawer*> PathDrawers;
 
-    /** Axis Input */
-    UPROPERTY(EditAnywhere, Category = Input)
-        class UInputAction* AxisInput;
+    // スタート位置
+    UPROPERTY(EditDefaultsOnly, Category = TwinLink_Path)
+        ATwinLinkNavSystemPathLocator* PathLocatorStartActor;
 
-    UPROPERTY(EditAnywhere, Category = Editor)
-        TSubclassOf<class AActor> PathLocatorStartBp;
-
-    UPROPERTY(EditAnywhere, Category = Editor)
-        TSubclassOf<class AActor> PathLocatorDestBp;
-
-
-    UPROPERTY(EditAnywhere, Category = Editor)
-        TSubclassOf<class AActor> PathLineBp;
-
-
-    // デバッグ用) パス検索のデバッグ表示を行うかどうか
-    UPROPERTY(EditAnywhere, Category = Test)
-        bool DebugCallFindPath = false;
-    // デバッグ用) パス検索のデバッグ表示の際の描画オフセット
-    UPROPERTY(EditAnywhere, Category = Test)
-        float DebugFindPathUpOffset = 10;
+    // 目的地
+    UPROPERTY(EditDefaultsOnly, Category = TwinLink_Path)
+        ATwinLinkNavSystemPathLocator* PathLocatorDestActor;
 
     // パス検索情報
     std::optional<TwinLinkNavSystemFindPathInfo> PathFindInfo;
 
-    FNavPathQueryDelegate DebugPathFindDelegate;
-    // スタート位置
-    FWeakObjectPtr FindPathStartActor;
-    // 目的地
-    FWeakObjectPtr FindPathDestActor;
+    // -----------------------
+    // デバッグ系
+    // -----------------------
+
+    // デバッグ用) パス検索のデバッグ表示を行うかどうか
+    UPROPERTY(EditAnywhere, Category = TwinLink_Test)
+        bool DebugCallFindPath = false;
 
     /*
     // パス描画用のLine
@@ -166,7 +141,7 @@ private:
     UPROPERTY(EditAnywhere, Category = Editor)
         USplineComponent* PathLineComponent;
         */
-    // ナビメッシュのバウンディングボリューム
+        // ナビメッシュのバウンディングボリューム
     UPROPERTY(EditAnywhere, Category = Editor)
         TObjectPtr<ANavMeshBoundsVolume> NavMeshBoundVolume;
 protected:

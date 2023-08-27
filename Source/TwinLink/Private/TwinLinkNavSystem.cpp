@@ -3,35 +3,38 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/InputComponent.h" 
-#include "EnhancedInputComponent.h"
-#include "EnhancedInputSubsystems.h"
-#include "Components/SplineComponent.h"
-#include "Components/SplineMeshComponent.h"
-#include "Engine/StaticMeshActor.h"
 
 namespace {
+    template<class T>
+    auto CreateChildActor(ATwinLinkNavSystem* self, TSubclassOf<T> Class, const TCHAR* Name) -> T* {
+        FActorSpawnParameters Params;
+        Params.Owner = self;
+        Params.Name = FName(Name);
+        const auto Ret = self->GetWorld()->SpawnActor<T>(Class, Params);
+        if (!Ret)
+            return Ret;
+        Ret->SetActorLabel(FString(Name));
+        Ret->AttachToActor(self, FAttachmentTransformRules::KeepWorldTransform, Name);
+        return Ret;
+    };
+
+    template<class T, class F>
+    void ForeachChildActor(AActor* Self, F&& Func) {
+        if (!Self)
+            return;
+        for (auto& Child : Self->Children) {
+            if (auto Target = Cast<T>(Child))
+                Func(Target);
+
+            ForeachChildActor<T>(Child, std::forward<F>(Func));
+        }
+    }
 }
 
 
 ATwinLinkNavSystem::ATwinLinkNavSystem() {
     PrimaryActorTick.bCanEverTick = true;
     RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
-
-    // Input Actionを読込
-    ActionInput = LoadObject<UInputAction>(nullptr, TEXT("/PLATEAU-TwinLink/Content/Input/Actions/IA_Action"), nullptr, LOAD_None, nullptr);
-
-    PathLocatorStartBp = TSoftClassPtr<AActor>(FSoftObjectPath(TEXT("/Game/Blueprints/BP_PathStart.BP_PathStart_C"))).LoadSynchronous();;
-    PathLocatorStartBp = TSoftClassPtr<AActor>(FSoftObjectPath(TEXT("/Game/Blueprints/BP_PathDest.BP_PathDest_C"))).LoadSynchronous();;
-
-   /* for (auto i = 0; i < 10; ++i) {
-        FString Name = "Line";
-        Name.AppendInt(i);
-        auto mesh = CreateDefaultSubobject<USplineMeshComponent>(FName(*Name));
-        FindPathLineActorArray.Add(mesh);
-        mesh->SetupAttachment(this->GetRootComponent());
-    }
-
-    PathLineComponent = CreateDefaultSubobject<USplineComponent>(FName("PathLine"));*/
 }
 
 bool ATwinLinkNavSystem::CreateFindPathRequest(const FVector& Start, const FVector& End, FPathFindingQuery& OutRequest) const {
@@ -70,14 +73,15 @@ TwinLinkNavSystemFindPathInfo ATwinLinkNavSystem::RequestFindPath(const FVector&
 
         auto& points = Ret.PathFindResult.Path->GetPathPoints();
         FVector LastPos = FVector::Zero();
+        float ModLength = 0.f;
         for (auto i = 0; i < points.Num(); ++i) {
             auto& p = points[i];
             auto Pos = GetHeightCheckedPos(p.Location);
             if (i > 0) {
                 auto Dir = (Pos - LastPos);
-                auto Length = Dir.Length();
+                auto Length = ModLength + Dir.Length();
                 Dir.Normalize();
-                auto CheckNum = static_cast<int32>(Length / FindPathHeightCheckInterval);
+                auto CheckNum = static_cast<int32>((Length - ModLength) / FindPathHeightCheckInterval);
                 for (auto I = 1; I <= CheckNum; ++I) {
                     auto P = GetHeightCheckedPos(LastPos + Dir * FindPathHeightCheckInterval);
                     Ret.HeightCheckedPoints.Add(P);
@@ -112,7 +116,15 @@ void ATwinLinkNavSystem::RequestFindPath() {
 void ATwinLinkNavSystem::Tick(float DeltaSeconds) {
     Super::Tick(DeltaSeconds);
     if (PathFindInfo.has_value() && PathFindInfo->PathFindResult.IsSuccessful()) {
+        auto bBeforeSuccess = PathFindInfo->IsSuccess();
         PathFindInfo->Update(GetWorld(), DemCollisionChannel, DemCollisionAabb.Min.Z, DemCollisionAabb.Max.Z, 10);
+        auto bAfterSuccess = PathFindInfo->IsSuccess();
+        if (bBeforeSuccess == false && bAfterSuccess) {
+            for (auto Child : PathDrawers) {
+                if (Child)
+                    Child->DrawPath(PathFindInfo->HeightCheckedPoints);
+            }
+        }
     }
 
     // 
@@ -146,49 +158,34 @@ void ATwinLinkNavSystem::Tick(float DeltaSeconds) {
 }
 
 FVector ATwinLinkNavSystem::GetStartPoint() const {
-    if (const auto Actor = GetStartActor())
-        return Actor->GetActorLocation();
+    if (PathLocatorStartActor)
+        return PathLocatorStartActor->GetActorLocation();
     return FVector::Zero();
 }
 
 void ATwinLinkNavSystem::SetStartPoint(const FVector& V) {
-    if (const auto Actor = GetStartActor())
-        Actor->SetActorLocation(V);
+    if (PathLocatorStartActor)
+        PathLocatorStartActor->SetActorLocation(V);
 }
 
 FVector ATwinLinkNavSystem::GetDestPoint() const {
-    if (const auto Actor = GetDestActor())
-        return Actor->GetActorLocation();
+    if (PathLocatorDestActor)
+        return PathLocatorDestActor->GetActorLocation();
     return FVector::Zero();
 }
 
 void ATwinLinkNavSystem::SetDestPoint(const FVector& V) {
-    if (const auto Actor = GetDestActor())
-        Actor->SetActorLocation(V);
+    if (PathLocatorDestActor)
+        PathLocatorDestActor->SetActorLocation(V);
 }
 
-AActor* ATwinLinkNavSystem::GetStartActor() {
-    return const_cast<AActor*>(const_cast<const ATwinLinkNavSystem*>(this)->GetStartActor());
-}
-
-const AActor* ATwinLinkNavSystem::GetStartActor() const {
-    return Cast<AActor>(FindPathStartActor.Get());
-}
-
-AActor* ATwinLinkNavSystem::GetDestActor() {
-    return const_cast<AActor*>(const_cast<const ATwinLinkNavSystem*>(this)->GetDestActor());
-}
-
-const AActor* ATwinLinkNavSystem::GetDestActor() const {
-    return Cast<AActor>(FindPathDestActor.Get());
-}
 
 AActor* ATwinLinkNavSystem::GetNowSelectedPointActor() {
     switch (NowSelectedPointType) {
     case NavSystemPathPointType::Dest:
-        return GetDestActor();
+        return PathLocatorDestActor;
     case NavSystemPathPointType::Start:
-        return GetStartActor();
+        return PathLocatorStartActor;
     default:;
     }
     return nullptr;
@@ -207,61 +204,20 @@ void ATwinLinkNavSystem::DebugDraw() {
     // 道路モデルのAABB表示
     DrawDebugBox(GetWorld(), DemCollisionAabb.GetCenter(), DemCollisionAabb.GetExtent(), FColor::Red);
 
-    //if (StartLocator && EndLocator) {
-    //    //FPathFindingQuery Query;
-    //    //CreateFindPathRequest(StartLocator->GetActorLocation(), EndLocator->GetActorLocation(), Query);
-    //    //DebugPathFindDelegate.BindLambda([this](unsigned, ENavigationQueryResult::Type Type, TSharedPtr<FNavigationPath> Path)
-    //    //    {
-    //    //        
-    //    //    });
-    //    //NavSys->FindPathAsync(Query.NavAgentProperties, Query, DebugPathFindDelegate);
-    //    PathFindInfo = RequestFindPath(StartLocator->GetActorLocation(), EndLocator->GetActorLocation());
-    if (PathFindInfo.has_value() == false)
-        return;
-    if (PathFindInfo->IsSuccess() == false)
-        return;
-
-    auto& points = PathFindInfo->HeightCheckedPoints;
-    FVector LastPos = FVector::Zero();
-    for (auto i = 0; i < points.Num(); ++i) 
-    {
-        auto Pos = points[i] + FVector::UpVector * DebugFindPathUpOffset;
-        DrawDebugSphere(GetWorld(), Pos, 5, 10, FColor::Red, false);
-        if (i > 0) {
-            DrawDebugLine(GetWorld(), LastPos, Pos, FColor::Blue);
-           /* if(i <= FindPathLineActorArray.Num())
-            {
-                auto line = FindPathLineActorArray[i - 1];
-                line->SetStartPosition(LastPos);
-                line->SetEndPosition(Pos);
-                line->SetStartAndEnd(LastPos, FVector::Zero(), Pos, FVector::Zero(), true);
-            }*/
-        }
-
-        LastPos = Pos;
-    }
-    //PathLineComponent->SetSplineWorldPoints(points);
 #endif
 }
 
+
 void ATwinLinkNavSystem::BeginPlay() {
     Super::BeginPlay();
-    using LocatorType = AActor;
-    auto CreateLocatorOrSkip = [self = this](TSubclassOf<class AActor> Class, const TCHAR* Name)-> LocatorType* {
-        FActorSpawnParameters Params;
-        Params.Owner = self;
-        Params.Name = FName(Name);
-        const auto Ret = self->GetWorld()->SpawnActor<LocatorType>(Class, Params);
-        if (!Ret)
-            return Ret;
-        Ret->SetActorLabel(FString(Name));
-        Ret->AttachToActor(self, FAttachmentTransformRules::KeepWorldTransform, Name);
-        return Ret;
-    };
-    FindPathStartActor = CreateLocatorOrSkip(PathLocatorStartBp, TEXT("FindPathStartActor"));
-    FindPathDestActor = CreateLocatorOrSkip(PathLocatorDestBp, TEXT("FindPathDestActor"));
 
+    PathLocatorStartActor = CreateChildActor(this, PathLocatorStartBp, TEXT("PathLocatorStartActor"));
+    PathLocatorDestActor = CreateChildActor(this, PathLocatorDestBp, TEXT("PathLocatorDestActor"));
 
+    CreateChildActor(this, PathDrawerBp, TEXT("PathDrawerActor"));
+    ForeachChildActor<AUTwinLinkNavSystemPathDrawer>(this, [&](AUTwinLinkNavSystemPathDrawer* Child) {
+        PathDrawers.Add(Child);
+        });
     // Input設定を行う
     SetupInput();
 }
@@ -273,26 +229,6 @@ void ATwinLinkNavSystem::SetupInput() {
 
     // 入力を有効にする
     EnableInput(controller);
-
-    if (InputComponent) {
-        // Set up action bindings
-        if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(InputComponent)) {
-
-            // Input Action
-            EnhancedInputComponent->BindAction(ActionInput, ETriggerEvent::Triggered, this, &ATwinLinkNavSystem::PressedAction);
-            EnhancedInputComponent->BindAction(ActionInput, ETriggerEvent::Completed, this, &ATwinLinkNavSystem::ReleasedAction);
-
-            // Input Axis
-            EnhancedInputComponent->BindAction(AxisInput, ETriggerEvent::Triggered, this, &ATwinLinkNavSystem::PressedAxis);
-        }
-
-        // Input Mapping Contextを登録する
-        if (APlayerController* PlayerController = Cast<APlayerController>(controller)) {
-            if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer())) {
-                Subsystem->AddMappingContext(DefaultMappingContext, 0);
-            }
-        }
-    }
 }
 
 void ATwinLinkNavSystem::PressedAction() {

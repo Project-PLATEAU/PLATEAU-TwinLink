@@ -361,6 +361,7 @@ void UTwinLinkEditorNavSystem::MakeNavMesh(UEditorActorSubsystem* Editor, UWorld
     ATwinLinkNavSystem* NavSystem = nullptr;
     if (NavSystemActors.Num() == 0) {
         NavSystem = Cast<ATwinLinkNavSystem>(Editor->SpawnActorFromObject(Param->NavSystemBp, FVector::Zero(), FRotator::ZeroRotator));
+        NavSystem->SetActorLabel(TEXT("TwinLinkNavSystem"));
     }
     else {
         NavSystem = Cast<ATwinLinkNavSystem>(NavSystemActors[0]);

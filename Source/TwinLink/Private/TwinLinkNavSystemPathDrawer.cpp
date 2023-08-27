@@ -3,35 +3,61 @@
 
 #include "TwinLinkNavSystemPathDrawer.h"
 
-#include "TwinLinkNavSystemPathDrawer.h"
-
-#include "Components/SplineComponent.h"
-
-
+#include "ImathMath.h"
+#include "ImathMath.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraDataInterfaceArrayFunctionLibrary.h"
+#include "NiagaraComponent.h"
 // Sets default values for this component's properties
-UTwinLinkNavSystemPathDrawer::UTwinLinkNavSystemPathDrawer()
-{
-    // Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-    // off to improve performance if you don't need them.
-    PrimaryComponentTick.bCanEverTick = true;
-
-    // ...
+AUTwinLinkNavSystemPathDrawer::AUTwinLinkNavSystemPathDrawer() {
 }
 
-
-// Called when the game starts
-void UTwinLinkNavSystemPathDrawer::BeginPlay()
-{
-    Super::BeginPlay();
+AUTwinLinkNavSystemPathDrawerNiagara::AUTwinLinkNavSystemPathDrawerNiagara() {
 }
 
+void AUTwinLinkNavSystemPathDrawerNiagara::DrawPath(const TArray<FVector>& PathPoints) {
+    const auto NiagaraComponent = GetComponentByClass<UNiagaraComponent>();
+    checkf(NiagaraComponent != nullptr, TEXT("NiagaraSystem is nll"));
+    if (!NiagaraComponent)
+        return;
 
-// Called every frame
-void UTwinLinkNavSystemPathDrawer::TickComponent(float DeltaTime, ELevelTick TickType,
-                                        FActorComponentTickFunction* ThisTickFunction)
-{
-    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+    auto Length = 0.f;
+    for (auto I = 1; I < PathPoints.Num(); ++I)
+        Length += (PathPoints[I] - PathPoints[I - 1]).Length();
+    const auto ParticleNum = static_cast<int>(FMath::Max(1, Length / DrawPointInterval));
+    UNiagaraDataInterfaceArrayFunctionLibrary::SetNiagaraArrayVector(NiagaraComponent, "PathPoints", PathPoints);
+    NiagaraComponent->SetNiagaraVariableInt("ParticleNum", ParticleNum);
+    //UNiagaraDataInterface::Set
+}
 
-    // ...
+AUTwinLinkNavSystemPathDrawerDebug::AUTwinLinkNavSystemPathDrawerDebug() {
+    PrimaryActorTick.bCanEverTick = true;
+}
+
+void AUTwinLinkNavSystemPathDrawerDebug::DrawPath(const TArray<FVector>& PathPoints) {
+    Super::DrawPath(PathPoints);
+    DebugPathPoints = PathPoints;
+}
+
+void AUTwinLinkNavSystemPathDrawerDebug::Tick(float DeltaSeconds) {
+    Super::Tick(DeltaSeconds);
+
+    auto& points = DebugPathPoints;
+    FVector LastPos = FVector::Zero();
+    for (auto i = 0; i < points.Num(); ++i) {
+        auto Pos = points[i] + FVector::UpVector * DebugFindPathUpOffset;
+        DrawDebugSphere(GetWorld(), Pos, 5, 10, FColor::Red, false);
+        if (i > 0) {
+            DrawDebugLine(GetWorld(), LastPos, Pos, FColor::Blue);
+            /* if(i <= FindPathLineActorArray.Num())
+             {
+                 auto line = FindPathLineActorArray[i - 1];
+                 line->SetStartPosition(LastPos);
+                 line->SetEndPosition(Pos);
+                 line->SetStartAndEnd(LastPos, FVector::Zero(), Pos, FVector::Zero(), true);
+             }*/
+        }
+        LastPos = Pos;
+    }
 }
 

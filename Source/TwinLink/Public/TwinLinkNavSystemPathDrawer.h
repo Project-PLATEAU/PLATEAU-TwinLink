@@ -4,24 +4,55 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "NiagaraSystem.h"
 #include "TwinLinkNavSystemPathDrawer.generated.h"
 
 
-UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class TWINLINK_API UTwinLinkNavSystemPathDrawer : public UActorComponent
-{
+UCLASS(Blueprintable)
+class TWINLINK_API AUTwinLinkNavSystemPathDrawer : public AActor {
     GENERATED_BODY()
 
 public:
     // Sets default values for this component's properties
-    UTwinLinkNavSystemPathDrawer();
+    AUTwinLinkNavSystemPathDrawer();
+    UFUNCTION(BlueprintCallable)
+        virtual void DrawPath(const TArray<FVector>& PathPoints) {};
+};
 
-protected:
-    // Called when the game starts
-    virtual void BeginPlay() override;
+UCLASS(Blueprintable)
+class TWINLINK_API AUTwinLinkNavSystemPathDrawerNiagara : public AUTwinLinkNavSystemPathDrawer {
+    GENERATED_BODY()
 
 public:
-    // Called every frame
-    virtual void TickComponent(float DeltaTime, ELevelTick TickType,
-                               FActorComponentTickFunction* ThisTickFunction) override;
+    // Sets default values for this component's properties
+    AUTwinLinkNavSystemPathDrawerNiagara();
+
+    virtual void DrawPath(const TArray<FVector>& PathPoints) override;;
+
+private:
+
+    // 描画ポイント
+    UPROPERTY(EditAnywhere, Category = TwinLink_Path)
+        float DrawPointInterval = 10;
+};
+
+UCLASS(Blueprintable)
+class TWINLINK_API AUTwinLinkNavSystemPathDrawerDebug : public AUTwinLinkNavSystemPathDrawer {
+    GENERATED_BODY()
+
+public:
+    // Sets default values for this component's properties
+    AUTwinLinkNavSystemPathDrawerDebug();
+
+    virtual void DrawPath(const TArray<FVector>& PathPoints) override;;
+
+    virtual void Tick(float DeltaSeconds) override;
+private:
+    // 描画ポイント
+    UPROPERTY(EditDefaultsOnly, Category = TwinLink_Test)
+        TArray<FVector> DebugPathPoints;
+
+    // パス検索のデバッグ表示の際の描画オフセット
+    UPROPERTY(EditAnywhere, Category = TwinLink_Test)
+        float DebugFindPathUpOffset = 10;
 };
