@@ -4,13 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "TwinLinkWidgetBase.h"
 #include "TwinLinkAddViewPointDialogBase.generated.h"
 
 /**
  * 視点情報を追加を扱うダイアログの基底クラス
  */
 UCLASS(Abstract, Blueprintable, BlueprintType, ClassGroup = TwinLink)
-class TWINLINKWIDGETS_API UTwinLinkAddViewPointDialogBase : public UUserWidget
+class TWINLINKWIDGETS_API UTwinLinkAddViewPointDialogBase : public UTwinLinkWidgetBase
 {
 	GENERATED_BODY()
 	
