@@ -7,11 +7,10 @@
 #include "TwinLinkNavSystemParam.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
-class TWINLINK_API UTwinLinkNavSystemParam : public UPrimaryDataAsset
-{
+class TWINLINK_API UTwinLinkNavSystemParam : public UPrimaryDataAsset {
     GENERATED_BODY()
 public:
 
