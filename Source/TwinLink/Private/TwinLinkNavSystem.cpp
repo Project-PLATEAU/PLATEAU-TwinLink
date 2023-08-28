@@ -29,6 +29,33 @@ namespace {
             ForeachChildActor<T>(Child, std::forward<F>(Func));
         }
     }
+
+    std::optional<FVector2D> GetMousePosition(const APlayerController* PlayerController) {
+        if (!PlayerController)
+            return std::nullopt;
+        float MouseX, MouseY;
+        if (PlayerController->GetMousePosition(MouseX, MouseY)) {
+            return FVector2D(MouseX, MouseY);
+        }
+        return std::nullopt;
+    }
+
+    // マウスカーソル位置におけるDemCollisionを包括するような線分を取得
+    // Min/Maxが始点/終点を表す
+    std::optional<FBox> GetMouseCursorWorldVector(const APlayerController* PlayerController, const FVector2D& MousePos, const FBox& RangeAabb) {
+        if (!PlayerController)
+            return std::nullopt;
+        FVector WorldPosition, WorldDirection;
+        if (UGameplayStatics::DeprojectScreenToWorld(PlayerController, MousePos, WorldPosition, WorldDirection)) {
+            // 始点->道モデルのAABBの中心点までの距離 + Boxの対角線の長さがあれば道モデルとの
+            const auto ToAabbVec = RangeAabb.GetCenter() - WorldPosition;
+            const auto Length = ToAabbVec.Length() + (RangeAabb.Max - RangeAabb.Min).Length();
+            return FBox(WorldPosition + WorldDirection * 100, WorldPosition + WorldDirection * Length);
+        }
+        return std::nullopt;
+
+    }
+
 }
 
 
@@ -99,13 +126,17 @@ void ATwinLinkNavSystem::RequestFindPath() {
     const UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
     if (!NavSys)
         return;
-    auto Start = GetStartPoint();
+    // まだ両地点生成済みじゃない場合は無視する
+    if (GetNowSelectedPointType().IsValid())
+        return;
+
+    auto Start = PathLocatorActors[NavSystemPathPointType::Start]->GetActorLocation();
     Start.Z = 0;
     FNavLocation OutStart;
     if (NavSys->ProjectPointToNavigation(Start, OutStart, FVector::One() * 100))
         Start = OutStart;
 
-    auto Dest = GetDestPoint();
+    auto Dest = PathLocatorActors[NavSystemPathPointType::Dest]->GetActorLocation();
     Dest.Z = 0;
     FNavLocation OutDest;
     if (NavSys->ProjectPointToNavigation(Dest, OutDest, FVector::One() * 100))
@@ -131,23 +162,90 @@ void ATwinLinkNavSystem::Tick(float DeltaSeconds) {
     const APlayerController* PlayerController = Cast<APlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
     if (!PlayerController)
         return;
-
+    const UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+    if (!NavSys)
+        return;
+    // 押したとき
+    auto MousePos = ::GetMousePosition(PlayerController);
+    if (MousePos.has_value() == false)
+        return;
     if (PlayerController->WasInputKeyJustPressed(EKeys::LeftMouseButton)) {
         UKismetSystemLibrary::PrintString(this, TEXT("KeyDown"), true, true, FColor::Cyan, 10.0f, TEXT("None"));
 
-        float MouseX, MouseY;
-        if (PlayerController->GetMousePosition(MouseX, MouseY)) {
-            FVector WorldPosition, WorldDirection;
-            if (UGameplayStatics::DeprojectScreenToWorld(PlayerController, FVector2D(MouseX, MouseY), WorldPosition, WorldDirection)) {
-                // 始点->道モデルのAABBの中心点までの距離 + Boxの対角線の長さがあれば道モデルとの
-                const auto ToAabbVec = DemCollisionAabb.GetCenter() - WorldPosition;
-                const auto Length = ToAabbVec.Length() + (DemCollisionAabb.Max - DemCollisionAabb.Min).Length();
-                const auto Start = WorldPosition + WorldDirection * 100;
-                const auto End = WorldPosition + WorldDirection * Length;
-                FHitResult HitResult;
-                if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, DemCollisionChannel)) {
-                    if (const auto Actor = GetNowSelectedPointActor())
-                        Actor->SetActorLocation(HitResult.Location);
+        auto Ray = ::GetMouseCursorWorldVector(PlayerController, *MousePos, DemCollisionAabb);
+        if (Ray.has_value()) {
+            TArray<FHitResult> HitResults;
+            if (GetWorld()->LineTraceMultiByChannel(HitResults, Ray->Min, Ray->Max, ECC_WorldStatic)) {
+                auto PointType = GetNowSelectedPointType();
+                FHitResult* BlockHitResult = nullptr;
+                NowSelectedPathLocatorActor = nullptr;
+                for (auto& HitResult : HitResults) {
+
+                    UKismetSystemLibrary::PrintString(this, HitResult.GetActor()->GetActorLabel(), true, true, FColor::Cyan, 10.0f, TEXT("None"));
+                    if (HitResult.IsValidBlockingHit())
+                        BlockHitResult = &HitResult;
+                    // Start/Destが重なっていた場合最初にヒットしたほうを選択する
+                    NowSelectedPathLocatorActor = Cast<ATwinLinkNavSystemPathLocator>(HitResult.GetActor());
+                    if (NowSelectedPathLocatorActor) {
+                        NowSelectedPathLocatorActorScreenOffset = FVector2D::Zero();
+                        FVector2D ScreenPos = FVector2D::Zero();
+                        if (UGameplayStatics::ProjectWorldToScreen(PlayerController, NowSelectedPathLocatorActor->GetActorLocation(), ScreenPos))
+                            NowSelectedPathLocatorActorScreenOffset = ScreenPos - *MousePos;
+                        break;
+                    }
+                }
+
+                if (BlockHitResult != nullptr && NowSelectedPathLocatorActor == nullptr && PointType.IsValid()) {
+                    FString Name = TEXT("PathLocator");
+                    Name.AppendInt(PointType.GetValue());
+                    NowSelectedPathLocatorActor = ::CreateChildActor(this, PathLocatorBps[PointType.GetEnumValue()], ToCStr(Name));
+                    NowSelectedPathLocatorActor->SetActorLocation(BlockHitResult->Location);
+                    NowSelectedPathLocatorActorLastValidLocation = BlockHitResult->Location;
+                    PathLocatorActors.Add(PointType.GetEnumValue(), NowSelectedPathLocatorActor);
+                    SetNowSelectedPointType(static_cast<NavSystemPathPointType>(PointType.GetValue() + 1));
+
+                }
+            }
+        }
+    }
+    // 離した時
+    else if (PlayerController->WasInputKeyJustReleased(EKeys::LeftMouseButton)) {
+        UKismetSystemLibrary::PrintString(this, TEXT("KeyUp"), true, true, FColor::Cyan, 1.0f, TEXT("None"));
+        if (NowSelectedPathLocatorActor)
+            NowSelectedPathLocatorActor->SetActorLocation(NowSelectedPathLocatorActorLastValidLocation);
+        NowSelectedPathLocatorActor = nullptr;
+    }
+    else if (PlayerController->IsInputKeyDown(EKeys::LeftMouseButton)) {
+
+        UKismetSystemLibrary::PrintString(this, TEXT("Drag"), true, true, FColor::Cyan, 0.f, TEXT("None"));
+        if (NowSelectedPathLocatorActor) {
+            UKismetSystemLibrary::PrintString(this, TEXT("MoveActor"), true, true, FColor::Cyan, 0.f, TEXT("None"));
+            auto ScreenPos = *MousePos + NowSelectedPathLocatorActorScreenOffset;
+            auto Ray = ::GetMouseCursorWorldVector(PlayerController, ScreenPos, DemCollisionAabb);
+            if (Ray.has_value()) {
+                TArray<FHitResult> HitResults;
+                if (GetWorld()->LineTraceMultiByChannel(HitResults, Ray->Min, Ray->Max, ECollisionChannel::ECC_WorldStatic)) {
+                    for (auto& HitResult : HitResults) {
+
+                        UKismetSystemLibrary::PrintString(this, TEXT("MoveHit"), true, true, FColor::Cyan, 0.f, TEXT("None"));
+                        UKismetSystemLibrary::PrintString(this, HitResult.GetActor()->GetActorLabel(), true, true, FColor::Cyan, 1.0f, TEXT("None"));
+                        if (HitResult.IsValidBlockingHit() == false)
+                            continue;
+
+                        NowSelectedPathLocatorActor->SetActorLocation(HitResult.Location);
+                        auto IsGround = FVector::DotProduct(HitResult.Normal, FVector::UpVector) > FMath::Cos(FMath::DegreesToRadians(70));
+                        auto Pos = HitResult.Location;
+                        Pos.Z = 0.f;
+                        FNavLocation OutStart;
+                        auto IsInNavMesh = NavSys->ProjectPointToNavigation(Pos, OutStart, FVector::One() * 100);
+                        auto IsValid = IsGround && IsInNavMesh;
+
+                        NowSelectedPathLocatorActor->GetRootComponent()->GetChildComponent(1)->SetVisibility(IsValid == false);
+                        if (IsValid) {
+                            NowSelectedPathLocatorActorLastValidLocation = HitResult.Location;
+                        }
+                        break;
+                    }
                 }
             }
         }
@@ -155,40 +253,6 @@ void ATwinLinkNavSystem::Tick(float DeltaSeconds) {
 #ifdef WITH_EDITOR
     DebugDraw();
 #endif
-}
-
-FVector ATwinLinkNavSystem::GetStartPoint() const {
-    if (PathLocatorStartActor)
-        return PathLocatorStartActor->GetActorLocation();
-    return FVector::Zero();
-}
-
-void ATwinLinkNavSystem::SetStartPoint(const FVector& V) {
-    if (PathLocatorStartActor)
-        PathLocatorStartActor->SetActorLocation(V);
-}
-
-FVector ATwinLinkNavSystem::GetDestPoint() const {
-    if (PathLocatorDestActor)
-        return PathLocatorDestActor->GetActorLocation();
-    return FVector::Zero();
-}
-
-void ATwinLinkNavSystem::SetDestPoint(const FVector& V) {
-    if (PathLocatorDestActor)
-        PathLocatorDestActor->SetActorLocation(V);
-}
-
-
-AActor* ATwinLinkNavSystem::GetNowSelectedPointActor() {
-    switch (NowSelectedPointType) {
-    case NavSystemPathPointType::Dest:
-        return PathLocatorDestActor;
-    case NavSystemPathPointType::Start:
-        return PathLocatorStartActor;
-    default:;
-    }
-    return nullptr;
 }
 
 void ATwinLinkNavSystem::DebugDraw() {
@@ -211,9 +275,6 @@ void ATwinLinkNavSystem::DebugDraw() {
 void ATwinLinkNavSystem::BeginPlay() {
     Super::BeginPlay();
 
-    PathLocatorStartActor = CreateChildActor(this, PathLocatorStartBp, TEXT("PathLocatorStartActor"));
-    PathLocatorDestActor = CreateChildActor(this, PathLocatorDestBp, TEXT("PathLocatorDestActor"));
-
     CreateChildActor(this, PathDrawerBp, TEXT("PathDrawerActor"));
     ForeachChildActor<AUTwinLinkNavSystemPathDrawer>(this, [&](AUTwinLinkNavSystemPathDrawer* Child) {
         PathDrawers.Add(Child);
@@ -221,7 +282,6 @@ void ATwinLinkNavSystem::BeginPlay() {
     // Input設定を行う
     SetupInput();
 }
-
 
 void ATwinLinkNavSystem::SetupInput() {
     // PlayerControllerを取得する

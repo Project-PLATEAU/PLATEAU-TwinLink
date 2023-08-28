@@ -20,7 +20,7 @@ class ANavMeshBoundsVolume;
  * @brief : パス検索などランタイム中のナビメッシュ関係を管理するクラス.
  */
 UCLASS()
-class TWINLINK_API ATwinLinkNavSystem : public AActor {
+class TWINLINK_API ATwinLinkNavSystem : public AActor{
     GENERATED_BODY()
 public:
     ATwinLinkNavSystem();
@@ -52,19 +52,16 @@ public:
     // 任意の２点間で
     void RequestFindPath();
 
-    // 開始地点取得
-    FVector GetStartPoint() const;
+    NavSystemPathPointTypeT GetNowSelectedPointType() const
+    {
+        return NowSelectedPointType;
+    }
 
-    // 開始地点設定
-    void SetStartPoint(const FVector& V);
+    void SetNowSelectedPointType(NavSystemPathPointTypeT Val)
+    {
+        NowSelectedPointType = Val.GetEnumValue();
+    }
 
-    // 目的地取得
-    FVector GetDestPoint() const;
-
-    // 目的地設定
-    void SetDestPoint(const FVector& V);
-
-    AActor* GetNowSelectedPointActor();
 private:
     // Input設定
     void SetupInput();
@@ -78,10 +75,10 @@ private:
 
     // デバッグ描画実行
     void DebugDraw();
-private:
+
     // 道路メッシュのコリジョンチャンネル
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
-        TEnumAsByte<ECollisionChannel> DemCollisionChannel = ECollisionChannel::ECC_GameTraceChannel1;
+        TEnumAsByte<ECollisionChannel> DemCollisionChannel = ECollisionChannel::ECC_WorldStatic;
 
     // 道路メッシュのAabb
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
@@ -99,51 +96,44 @@ private:
     UPROPERTY(EditAnywhere, Category = TwinLink_Path)
         float FindPathHeightCheckInterval = 1000;
 
-    // パス開始地点のBP
+    // パス検索地点のBP
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
-        TSubclassOf<ATwinLinkNavSystemPathLocator> PathLocatorStartBp;
-
-    // パス終了地点のBP
-    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
-        TSubclassOf<ATwinLinkNavSystemPathLocator> PathLocatorDestBp;
+    TMap<NavSystemPathPointType, TSubclassOf<ATwinLinkNavSystemPathLocator>> PathLocatorBps;
 
     // パス描画のBP
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
         TSubclassOf<AUTwinLinkNavSystemPathDrawer> PathDrawerBp;
 
+    // パス検索地点のアクター
+    UPROPERTY(EditDefaultsOnly, Category = TwinLink_Path)
+        TMap<NavSystemPathPointType, ATwinLinkNavSystemPathLocator*> PathLocatorActors;
+
+    UPROPERTY(EditAnywhere, Category = TwinLink_Path)
+    ATwinLinkNavSystemPathLocator* NowSelectedPathLocatorActor;
+
+    UPROPERTY(EditAnywhere, Category = TwinLink_Path)
+        FVector2D NowSelectedPathLocatorActorScreenOffset = FVector2D::Zero();
+
+    UPROPERTY(EditAnywhere, Category = TwinLink_Path)
+        FVector NowSelectedPathLocatorActorLastValidLocation = FVector::Zero();
+
+    // パス描画のアクター
     UPROPERTY(EditAnywhere, Category = TwinLink_Path)
         TArray<AUTwinLinkNavSystemPathDrawer*> PathDrawers;
 
-    // スタート位置
-    UPROPERTY(EditDefaultsOnly, Category = TwinLink_Path)
-        ATwinLinkNavSystemPathLocator* PathLocatorStartActor;
-
-    // 目的地
-    UPROPERTY(EditDefaultsOnly, Category = TwinLink_Path)
-        ATwinLinkNavSystemPathLocator* PathLocatorDestActor;
+    // ナビメッシュのバウンディングボリューム
+    UPROPERTY(EditAnywhere, Category = Editor)
+        TObjectPtr<ANavMeshBoundsVolume> NavMeshBoundVolume;
 
     // パス検索情報
     std::optional<TwinLinkNavSystemFindPathInfo> PathFindInfo;
-
     // -----------------------
     // デバッグ系
     // -----------------------
-
     // デバッグ用) パス検索のデバッグ表示を行うかどうか
     UPROPERTY(EditAnywhere, Category = TwinLink_Test)
         bool DebugCallFindPath = false;
 
-    /*
-    // パス描画用のLine
-    UPROPERTY(EditAnywhere, Category = Editor)
-    TArray<USplineMeshComponent*> FindPathLineActorArray;
-
-    UPROPERTY(EditAnywhere, Category = Editor)
-        USplineComponent* PathLineComponent;
-        */
-        // ナビメッシュのバウンディングボリューム
-    UPROPERTY(EditAnywhere, Category = Editor)
-        TObjectPtr<ANavMeshBoundsVolume> NavMeshBoundVolume;
 protected:
     virtual void BeginPlay() override;
 };

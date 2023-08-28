@@ -1,12 +1,12 @@
 #pragma once
 
-template<class Enum>
+template<class T>
 class EnumT
 {
 public:
-    using EnumType = typename Enum::Type;
-    using ValueType = typename Enum::ValueType;
-    using ConstructorArgType = typename Enum::Type;
+    using EnumType = T;
+    using ValueType = std::underlying_type_t<T>;
+    using ConstructorArgType = T;
 
     EnumT(){}
     constexpr EnumT(EnumType V) : Val(V){}
@@ -39,10 +39,10 @@ public:
     inline bool operator != (EnumT<U> V) const = delete;
 
     // 有効な値かどうか
-    bool IsValid() const { return Val < Enum::Max; }
+    bool IsValid() const { return Val < T::Max; }
 
-    static EnumType Max() { return Enum::Max; }
+    static EnumType Max() { return T::Max; }
 
 private:
-    EnumType Val = Enum::Undefined;
+    EnumType Val = T::Undefined;
 };

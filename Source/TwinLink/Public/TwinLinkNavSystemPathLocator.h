@@ -7,11 +7,14 @@
 #include "TwinLinkNavSystemPathLocator.generated.h"
 
 UCLASS()
-class TWINLINK_API ATwinLinkNavSystemPathLocator : public AActor
-{
+class TWINLINK_API ATwinLinkNavSystemPathLocator : public AActor {
     GENERATED_BODY()
 
 public:
     // Sets default values for this actor's properties
     ATwinLinkNavSystemPathLocator();
+protected:
+    virtual void BeginPlay() override;
+public:
+    virtual void Tick(float DeltaSeconds) override;
 };
