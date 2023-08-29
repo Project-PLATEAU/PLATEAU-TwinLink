@@ -175,6 +175,7 @@ void ATwinLinkNavSystem::Tick(float DeltaSeconds) {
         auto Ray = ::GetMouseCursorWorldVector(PlayerController, *MousePos, DemCollisionAabb);
         if (Ray.has_value()) {
             TArray<FHitResult> HitResults;
+            FCollisionQueryParams Params;
             if (GetWorld()->LineTraceMultiByChannel(HitResults, Ray->Min, Ray->Max, ECC_WorldStatic)) {
                 auto PointType = GetNowSelectedPointType();
                 FHitResult* BlockHitResult = nullptr;
@@ -200,10 +201,12 @@ void ATwinLinkNavSystem::Tick(float DeltaSeconds) {
                     Name.AppendInt(PointType.GetValue());
                     NowSelectedPathLocatorActor = ::CreateChildActor(this, PathLocatorBps[PointType.GetEnumValue()], ToCStr(Name));
                     NowSelectedPathLocatorActor->SetActorLocation(BlockHitResult->Location);
-                    NowSelectedPathLocatorActorLastValidLocation = BlockHitResult->Location;
                     PathLocatorActors.Add(PointType.GetEnumValue(), NowSelectedPathLocatorActor);
                     SetNowSelectedPointType(static_cast<NavSystemPathPointType>(PointType.GetValue() + 1));
-
+                }
+                if(NowSelectedPathLocatorActor)
+                {
+                    NowSelectedPathLocatorActor->Select();                    
                 }
             }
         }
@@ -212,7 +215,7 @@ void ATwinLinkNavSystem::Tick(float DeltaSeconds) {
     else if (PlayerController->WasInputKeyJustReleased(EKeys::LeftMouseButton)) {
         UKismetSystemLibrary::PrintString(this, TEXT("KeyUp"), true, true, FColor::Cyan, 1.0f, TEXT("None"));
         if (NowSelectedPathLocatorActor)
-            NowSelectedPathLocatorActor->SetActorLocation(NowSelectedPathLocatorActorLastValidLocation);
+            NowSelectedPathLocatorActor->UnSelect();
         NowSelectedPathLocatorActor = nullptr;
     }
     else if (PlayerController->IsInputKeyDown(EKeys::LeftMouseButton)) {
@@ -220,30 +223,18 @@ void ATwinLinkNavSystem::Tick(float DeltaSeconds) {
         UKismetSystemLibrary::PrintString(this, TEXT("Drag"), true, true, FColor::Cyan, 0.f, TEXT("None"));
         if (NowSelectedPathLocatorActor) {
             UKismetSystemLibrary::PrintString(this, TEXT("MoveActor"), true, true, FColor::Cyan, 0.f, TEXT("None"));
-            auto ScreenPos = *MousePos + NowSelectedPathLocatorActorScreenOffset;
-            auto Ray = ::GetMouseCursorWorldVector(PlayerController, ScreenPos, DemCollisionAabb);
+            const auto ScreenPos = *MousePos + NowSelectedPathLocatorActorScreenOffset;
+            const auto Ray = ::GetMouseCursorWorldVector(PlayerController, ScreenPos, DemCollisionAabb);
             if (Ray.has_value()) {
                 TArray<FHitResult> HitResults;
                 if (GetWorld()->LineTraceMultiByChannel(HitResults, Ray->Min, Ray->Max, ECollisionChannel::ECC_WorldStatic)) {
                     for (auto& HitResult : HitResults) {
-
                         UKismetSystemLibrary::PrintString(this, TEXT("MoveHit"), true, true, FColor::Cyan, 0.f, TEXT("None"));
                         UKismetSystemLibrary::PrintString(this, HitResult.GetActor()->GetActorLabel(), true, true, FColor::Cyan, 1.0f, TEXT("None"));
                         if (HitResult.IsValidBlockingHit() == false)
                             continue;
 
-                        NowSelectedPathLocatorActor->SetActorLocation(HitResult.Location);
-                        auto IsGround = FVector::DotProduct(HitResult.Normal, FVector::UpVector) > FMath::Cos(FMath::DegreesToRadians(70));
-                        auto Pos = HitResult.Location;
-                        Pos.Z = 0.f;
-                        FNavLocation OutStart;
-                        auto IsInNavMesh = NavSys->ProjectPointToNavigation(Pos, OutStart, FVector::One() * 100);
-                        auto IsValid = IsGround && IsInNavMesh;
-
-                        NowSelectedPathLocatorActor->GetRootComponent()->GetChildComponent(1)->SetVisibility(IsValid == false);
-                        if (IsValid) {
-                            NowSelectedPathLocatorActorLastValidLocation = HitResult.Location;
-                        }
+                        NowSelectedPathLocatorActor->UpdateLocation(NavSys, HitResult);
                         break;
                     }
                 }

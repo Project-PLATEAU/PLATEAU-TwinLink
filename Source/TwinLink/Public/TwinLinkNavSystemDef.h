@@ -31,3 +31,19 @@ enum class NavSystemMode : uint8 {
     Undefined UMETA(DisplayName = "Undefined")
 };
 using NavSystemModeT = EnumT<NavSystemMode>;
+
+/*
+ * @brief : ナビメッシュのパスポイントの状態を表す
+ */
+UENUM(BlueprintType)
+enum class NavSystemPathLocatorState : uint8 {
+    // 有効な状態
+    Valid              UMETA(DisplayName = "Valid"),
+    // 壁にくっついている
+    OnWall             UMETA(DisplayName = "OnWall"),
+    // ナビメッシュの外
+    OutsideNavMesh     UMETA(DisplayName = "OutsideNavMesh"),
+    Max    UMETA(DisplayName = "Max"),
+    Undefined UMETA(DisplayName = "Undefined")
+};
+using NavSystemPathLocatorStateT = EnumT<NavSystemPathLocatorState>;

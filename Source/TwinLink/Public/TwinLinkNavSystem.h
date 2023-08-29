@@ -114,9 +114,6 @@ private:
     UPROPERTY(EditAnywhere, Category = TwinLink_Path)
         FVector2D NowSelectedPathLocatorActorScreenOffset = FVector2D::Zero();
 
-    UPROPERTY(EditAnywhere, Category = TwinLink_Path)
-        FVector NowSelectedPathLocatorActorLastValidLocation = FVector::Zero();
-
     // パス描画のアクター
     UPROPERTY(EditAnywhere, Category = TwinLink_Path)
         TArray<AUTwinLinkNavSystemPathDrawer*> PathDrawers;
