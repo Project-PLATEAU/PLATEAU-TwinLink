@@ -13,6 +13,7 @@
 #include "TwinLinkNavSystemPathDrawer.h"
 #include "TwinLinkNavSystemPathLocator.h"
 #include "TwinLinkNavSystem.generated.h"
+class ATwinLinkNavSystemPathFinder;
 class APLATEAUInstancedCityModel;
 class ANavMeshBoundsVolume;
 
@@ -20,7 +21,7 @@ class ANavMeshBoundsVolume;
  * @brief : パス検索などランタイム中のナビメッシュ関係を管理するクラス.
  */
 UCLASS()
-class TWINLINK_API ATwinLinkNavSystem : public AActor{
+class TWINLINK_API ATwinLinkNavSystem : public AActor {
     GENERATED_BODY()
 public:
     ATwinLinkNavSystem();
@@ -45,36 +46,25 @@ public:
     }
 
     /*
-     * @brief : 指定した2点間のパス検索を行う
+     * @brief : 検索されたパスの高さチェックの間隔
      */
-    TwinLinkNavSystemFindPathInfo RequestFindPath(const FVector& Start, const FVector& End) const;
-
-    // 任意の２点間で
-    void RequestFindPath();
-
-    NavSystemPathPointTypeT GetNowSelectedPointType() const
-    {
-        return NowSelectedPointType;
+    float GetPathFindingHeightCheckInterval() const {
+        return PathFindingHeightCheckInterval;
     }
 
-    void SetNowSelectedPointType(NavSystemPathPointTypeT Val)
-    {
-        NowSelectedPointType = Val.GetEnumValue();
-    }
-
+    void ChangeMode(NavSystemMode Mode, bool bForce = false);
 private:
     // Input設定
     void SetupInput();
 
-    // Input Event(Action) イベントハンドラー関数
-    void PressedAction();
-    void ReleasedAction();
-
-    // Input Event(Axis) イベントハンドラー関数
-    void PressedAxis(const FInputActionValue& Value);
-
     // デバッグ描画実行
     void DebugDraw();
+    /*
+     * Editor系
+     */
+     // ナビメッシュのバウンディングボリューム
+    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
+        TObjectPtr<ANavMeshBoundsVolume> NavMeshBoundVolume;
 
     // 道路メッシュのコリジョンチャンネル
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
@@ -84,53 +74,42 @@ private:
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
         FBox DemCollisionAabb;
 
-    // 現在どのポイントを編集しているかどうか
-    UPROPERTY(EditAnywhere, Category = TwinLink_Path)
-        NavSystemPathPointType NowSelectedPointType = NavSystemPathPointType::Start;
-
-    // 現在どのポイントを編集しているかどうか
-    UPROPERTY(EditAnywhere, Category = TwinLink_Path)
-        NavSystemMode NowSelectedMode = NavSystemMode::FindPathAnyPoint;
-
-    // パス感覚の高さチェック
-    UPROPERTY(EditAnywhere, Category = TwinLink_Path)
-        float FindPathHeightCheckInterval = 1000;
-
-    // パス検索地点のBP
-    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
-    TMap<NavSystemPathPointType, TSubclassOf<ATwinLinkNavSystemPathLocator>> PathLocatorBps;
-
     // パス描画のBP
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
         TSubclassOf<AUTwinLinkNavSystemPathDrawer> PathDrawerBp;
 
-    // パス検索地点のアクター
-    UPROPERTY(EditDefaultsOnly, Category = TwinLink_Path)
-        TMap<NavSystemPathPointType, ATwinLinkNavSystemPathLocator*> PathLocatorActors;
+    // パス探索のBP
+    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
+        TMap<NavSystemMode, TSubclassOf<ATwinLinkNavSystemPathFinder>> PathFinderBp;
 
+    /*
+     * ランタイム系
+     */
+     // 現在どのポイントを編集しているかどうか
     UPROPERTY(EditAnywhere, Category = TwinLink_Path)
-    ATwinLinkNavSystemPathLocator* NowSelectedPathLocatorActor;
+        NavSystemMode NowSelectedMode = NavSystemMode::FindPathAnyPoint;
 
+    // パスの高さチェックを行う間隔
     UPROPERTY(EditAnywhere, Category = TwinLink_Path)
-        FVector2D NowSelectedPathLocatorActorScreenOffset = FVector2D::Zero();
+        float PathFindingHeightCheckInterval = 1000;
 
     // パス描画のアクター
     UPROPERTY(EditAnywhere, Category = TwinLink_Path)
         TArray<AUTwinLinkNavSystemPathDrawer*> PathDrawers;
 
-    // ナビメッシュのバウンディングボリューム
-    UPROPERTY(EditAnywhere, Category = Editor)
-        TObjectPtr<ANavMeshBoundsVolume> NavMeshBoundVolume;
+    // パス探索のアクター
+    UPROPERTY(EditAnywhere, Category = TwinLink_Path)
+        ATwinLinkNavSystemPathFinder* NowPathFinder = nullptr;
 
     // パス検索情報
     std::optional<TwinLinkNavSystemFindPathInfo> PathFindInfo;
+
     // -----------------------
     // デバッグ系
     // -----------------------
     // デバッグ用) パス検索のデバッグ表示を行うかどうか
     UPROPERTY(EditAnywhere, Category = TwinLink_Test)
-        bool DebugCallFindPath = false;
-
+        bool DebugCallPathFinding = false;
 protected:
     virtual void BeginPlay() override;
 };

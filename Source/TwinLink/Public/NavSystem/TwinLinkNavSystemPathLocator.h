@@ -38,6 +38,10 @@ public:
     // 非選択状態にする
     void UnSelect();
 
+    std::optional<FVector> GetLastValidLocation() const
+    {
+        return LastValidLocation;
+    }
 protected:
     // 現在の状態
     UPROPERTY(EditAnywhere, Category = TwinLink_Base)
@@ -49,5 +53,5 @@ protected:
         bool IsSelected = false;
 
     // 最後にValid状態になった位置
-    std::optional<FVector> LastValidLocation = FVector::Zero();
+    std::optional<FVector> LastValidLocation = std::nullopt;
 };
