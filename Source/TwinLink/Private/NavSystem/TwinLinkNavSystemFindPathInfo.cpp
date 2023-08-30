@@ -1,4 +1,4 @@
-#include "TwinLinkNavSystemFindPathInfo.h"
+#include "NavSystem/TwinLinkNavSystemFindPathInfo.h"
 #include "NavigationSystem.h"
 #include "Components/InputComponent.h" 
 

@@ -1,7 +1,7 @@
 // Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
-#include "TwinLinkNavSystemPathLocator.h"
+#include "NavSystem/TwinLinkNavSystemPathLocator.h"
 
 #include "NavigationSystem.h"
 

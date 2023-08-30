@@ -1,4 +1,4 @@
-#include "TwinLinkNavSystem.h"
+#include "NavSystem/TwinLinkNavSystem.h"
 #include "NavigationSystem.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
@@ -204,9 +204,8 @@ void ATwinLinkNavSystem::Tick(float DeltaSeconds) {
                     PathLocatorActors.Add(PointType.GetEnumValue(), NowSelectedPathLocatorActor);
                     SetNowSelectedPointType(static_cast<NavSystemPathPointType>(PointType.GetValue() + 1));
                 }
-                if(NowSelectedPathLocatorActor)
-                {
-                    NowSelectedPathLocatorActor->Select();                    
+                if (NowSelectedPathLocatorActor) {
+                    NowSelectedPathLocatorActor->Select();
                 }
             }
         }

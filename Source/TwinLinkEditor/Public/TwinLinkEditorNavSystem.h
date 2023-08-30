@@ -5,8 +5,6 @@
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "EditorLevelLibrary.h"
-#include <NavMesh/NavMeshBoundsVolume.h>
-#include <optional>
 
 #include "TwinLinkEditorNavSystemParam.h"
 #include "Subsystems/EditorActorSubsystem.h"

@@ -5,11 +5,10 @@
 #include <Kismet/GameplayStatics.h>
 #include <optional>
 #include <NavMesh/NavMeshBoundsVolume.h>
-#include "Components/BrushComponent.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "NavigationSystem.h"
 #include "PLATEAUCityModelLoader.h"
-#include "TwinLink/Public/TwinLinkNavSystem.h"
+#include "TwinLink/Public/NavSystem/TwinLinkNavSystem.h"
 namespace {
     /*
      * SelfからNest番目の子に対してFuncを実行する
