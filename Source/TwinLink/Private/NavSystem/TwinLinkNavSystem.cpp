@@ -57,8 +57,13 @@ void ATwinLinkNavSystem::DebugDraw() {
 
     if (DebugCallPathFinding) {
         DebugCallPathFinding = false;
-        if (NowPathFinder)
-            NowPathFinder->RequestStartPathFinding(*PathFindInfo);
+        if (NowPathFinder) {
+            TwinLinkNavSystemFindPathInfo Tmp;
+            if (NowPathFinder->RequestStartPathFinding(Tmp)) {
+                PathFindInfo = Tmp;
+            }
+
+        }
     }
 
 
@@ -81,13 +86,12 @@ void ATwinLinkNavSystem::BeginPlay() {
     ChangeMode(NavSystemMode::FindPathAnyPoint, true);
 }
 
-void ATwinLinkNavSystem::ChangeMode(NavSystemMode Mode, bool bForce)
-{
+void ATwinLinkNavSystem::ChangeMode(NavSystemMode Mode, bool bForce) {
     if (NowSelectedMode == Mode && !bForce)
         return;
     if (NowPathFinder)
         NowPathFinder->Destroy();
-    if(PathFinderBp.Contains(Mode))
+    if (PathFinderBp.Contains(Mode))
         NowPathFinder = TwinLinkActorEx::SpawnChildActor(this, PathFinderBp[Mode], TEXT("PathFinder"));
 }
 

@@ -68,8 +68,10 @@ bool ATwinLinkNavSystemPathFinder::RequestStartPathFinding(TwinLinkNavSystemFind
     // まだ両地点生成済みじゃない場合は無視する
     if (IsReadyPathFinding() == false)
         return false;
-
-    Out = RequestPathFinding(*GetPathLocation(NavSystemPathPointType::Start), *GetPathLocation(NavSystemPathPointType::Dest));
+    auto Start = *GetPathLocation(NavSystemPathPointType::Start);
+    auto Dest = *GetPathLocation(NavSystemPathPointType::Dest);
+    Start.Z = Dest.Z = 0;
+    Out = RequestPathFinding(Start, Dest);
     return true;
 }
 

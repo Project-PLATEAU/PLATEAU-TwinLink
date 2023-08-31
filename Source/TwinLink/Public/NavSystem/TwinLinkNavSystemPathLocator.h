@@ -25,9 +25,7 @@ public:
 
     // 現在の状態
     UFUNCTION(BlueprintCallable)
-    NavSystemPathLocatorState GetNowState() const {
-        return State;
-    }
+        NavSystemPathLocatorState GetNowState() const;
 
     // 位置更新する
     void UpdateLocation(const UNavigationSystemV1* NavSys, const FHitResult& HitResult);
@@ -38,10 +36,8 @@ public:
     // 非選択状態にする
     void UnSelect();
 
-    std::optional<FVector> GetLastValidLocation() const
-    {
-        return LastValidLocation;
-    }
+    // 最後の有効な位置を取得
+    std::optional<FVector> GetLastValidLocation() const;
 protected:
     // 現在の状態
     UPROPERTY(EditAnywhere, Category = TwinLink_Base)

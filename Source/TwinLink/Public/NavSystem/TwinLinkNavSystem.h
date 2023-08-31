@@ -52,7 +52,11 @@ public:
         return PathFindingHeightCheckInterval;
     }
 
-    void ChangeMode(NavSystemMode Mode, bool bForce = false);
+    /*
+     * @brief : モード切替
+     */
+    UFUNCTION(BlueprintCallable)
+        void ChangeMode(NavSystemMode Mode, bool bForce = false);
 private:
     // Input設定
     void SetupInput();

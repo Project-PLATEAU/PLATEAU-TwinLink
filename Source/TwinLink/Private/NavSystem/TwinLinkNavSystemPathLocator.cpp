@@ -18,12 +18,15 @@ void ATwinLinkNavSystemPathLocator::Tick(float DeltaSeconds) {
     Super::Tick(DeltaSeconds);
 }
 
+NavSystemPathLocatorState ATwinLinkNavSystemPathLocator::GetNowState() const {
+    return State;
+}
+
 void ATwinLinkNavSystemPathLocator::UpdateLocation(const UNavigationSystemV1* NavSys, const FHitResult& HitResult) {
     SetActorLocation(HitResult.Location);
 
     // 壁についている
-    if(FVector::DotProduct(HitResult.Normal,FVector::UpVector) < FMath::Cos(FMath::DegreesToRadians(70)))
-    {
+    if (FVector::DotProduct(HitResult.Normal, FVector::UpVector) < FMath::Cos(FMath::DegreesToRadians(70))) {
         State = NavSystemPathLocatorState::OnWall;
         return;
     }
@@ -41,18 +44,19 @@ void ATwinLinkNavSystemPathLocator::UpdateLocation(const UNavigationSystemV1* Na
     LastValidLocation = OutStart.Location;
 }
 
-void ATwinLinkNavSystemPathLocator::Select()
-{
+void ATwinLinkNavSystemPathLocator::Select() {
     IsSelected = true;
 }
 
-void ATwinLinkNavSystemPathLocator::UnSelect()
-{
+void ATwinLinkNavSystemPathLocator::UnSelect() {
     if (LastValidLocation.has_value()) {
         SetActorLocation(*LastValidLocation);
         State = NavSystemPathLocatorState::Valid;
     }
-    LastValidLocation = std::nullopt;
+    //LastValidLocation = std::nullopt;
     IsSelected = false;
 }
 
+std::optional<FVector> ATwinLinkNavSystemPathLocator::GetLastValidLocation() const {
+    return LastValidLocation;
+}
