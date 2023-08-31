@@ -34,6 +34,10 @@ private:
     // 描画ポイント
     UPROPERTY(EditAnywhere, Category = TwinLink_Path)
         float DrawPointInterval = 10;
+
+    // 高さ方向の描画オフセット
+    UPROPERTY(EditAnywhere, Category = TwinLink_Test)
+        float DrawPointHeightOffset = 10;
 };
 
 UCLASS(Blueprintable)

@@ -27,6 +27,7 @@ void AUTwinLinkNavSystemPathDrawerNiagara::DrawPath(const TArray<FVector>& PathP
     const auto ParticleNum = static_cast<int>(FMath::Max(1, Length / DrawPointInterval));
     UNiagaraDataInterfaceArrayFunctionLibrary::SetNiagaraArrayVector(NiagaraComponent, "PathPoints", PathPoints);
     NiagaraComponent->SetNiagaraVariableInt("ParticleNum", ParticleNum);
+    NiagaraComponent->SetNiagaraVariableVec3("Offset", FVector::UpVector * DrawPointHeightOffset);
     //UNiagaraDataInterface::Set
 }
 
