@@ -189,7 +189,7 @@ namespace {
                 }
 
                 // 道路自体のメッシュモデル
-                /*if (MeshName.Contains("dem")) {
+                if (MeshName.Contains("dem")) {
                     ApplyDem(Self);
                 }
                 else {
@@ -198,7 +198,7 @@ namespace {
                             StaMeshComp->SetCollisionResponseToChannel(Request.DemCollisionChannel, ECR_Ignore);
                         }
                         });
-                }*/
+                }
             });
         return Result;
     }
