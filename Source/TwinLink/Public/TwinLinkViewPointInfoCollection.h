@@ -19,9 +19,9 @@ class TWINLINK_API UTwinLinkViewPointInfoCollection : public UTwinLinkObservable
 
 protected:
     virtual void OnAdd(UObject* Obj) override;
-    virtual void OnRemove(const TWeakObjectPtr<UObject> Obj) override;
+    virtual void OnRemove(const TWeakObjectPtr<UObject>& Obj) override;
     virtual void OnReset() override;
-    virtual bool OnContains(const TWeakObjectPtr<UObject> Obj) override;
+    virtual bool OnContains(const TWeakObjectPtr<UObject>& Obj) override;
     virtual TArray<UObject*> OnGetCollectionRaw() override;
 
 public:

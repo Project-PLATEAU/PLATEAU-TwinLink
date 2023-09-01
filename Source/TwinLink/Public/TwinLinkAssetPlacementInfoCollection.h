@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -18,9 +18,9 @@ class TWINLINK_API UTwinLinkAssetPlacementInfoCollection : public UTwinLinkObser
 
 protected:
     virtual void OnAdd(UObject* Obj) override;
-    virtual void OnRemove(const TWeakObjectPtr<UObject> Obj) override;
+    virtual void OnRemove(const TWeakObjectPtr<UObject>& Obj) override;
     virtual void OnReset() override;
-    virtual bool OnContains(const TWeakObjectPtr<UObject> Obj) override;
+    virtual bool OnContains(const TWeakObjectPtr<UObject>& Obj) override;
     virtual TArray<UObject*> OnGetCollectionRaw() override;
 
 public:
@@ -38,7 +38,7 @@ public:
      * @param Key
      * @param Obj
     */
-    void Update(const uint32 Key, const TWeakObjectPtr<UObject> Obj);
+    void Update(const uint32 Key, const TWeakObjectPtr<UObject>& Obj);
 
 private:
     /** アセット配置情報群 **/

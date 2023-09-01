@@ -6,6 +6,10 @@
 #include "GameFramework/Character.h"
 #include "TwinLinkWorldViewer.generated.h"
 
+// クリックイベントの取得
+DECLARE_EVENT_OneParam(ATwinLinkWorldViewer, FDelClickViewPort, FHitResult, HitResult);
+DECLARE_EVENT_OneParam(ATwinLinkWorldViewer, FDelCanceledClickFacility);
+
 /**
  * @brief 視点操作機能を提供するカメラを搭載したキャラクタークラス
 */
@@ -16,6 +20,8 @@ class TWINLINK_API ATwinLinkWorldViewer : public ACharacter {
 public:
     // Sets default values for this character's properties
     ATwinLinkWorldViewer();
+
+    static TWeakObjectPtr<ATwinLinkWorldViewer> GetInstance(UWorld* World);
 
 protected:
     // Called when the game starts or when spawned
@@ -28,46 +34,69 @@ public:
     // Called to bind functionality to input
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+public:
+
+
+    /**
+     * @brief 移動先の設定
+     * 現在は指定した先に瞬間移動する
+     * 後から高速移動に切り替えるかも
+     * @param Position
+     * @param Rotation
+    */
+    void SetLocation(const FVector& Position, const FRotator& Rotation);
+    void SetLocation(const FVector& Position, const FVector& RotationEulur);
+
+public:
+    // クリック
+    FDelClickViewPort EvOnClickedFacility;
+    FDelCanceledClickFacility EvOnCanceledClickFacility;
+
 private:
     // BluePrint側から呼び出す処理
     UFUNCTION(BlueprintCallable, Category = "Movement")
-        void MoveForward(const float Value);
+    void MoveForward(const float Value);
 
     UFUNCTION(BlueprintCallable, Category = "Movement")
-        void MoveRight(const float Value);
+    void MoveRight(const float Value);
 
     UFUNCTION(BlueprintCallable, Category = "Movement")
-        void MoveUp(const float Value);
+    void MoveUp(const float Value);
 
     UFUNCTION(BlueprintCallable, Category = "Movement")
-        void Turn(const float Value);
+    void Turn(const float Value);
 
     UFUNCTION(BlueprintCallable, Category = "Movement")
-        void LookUp(const float Value);
+    void LookUp(const float Value);
+
+    UFUNCTION(BlueprintCallable, Category = "Movement")
+    void Click();
 
 private:
     /* カメラの移動速度 */
     UPROPERTY(EditAnywhere, Category = "TwinLink View Movement")
-        float CameraMovementSpeed = 500000.0f;
+    float CameraMovementSpeed = 500000.0f;
 
     /* カメラの回転速度 */
     UPROPERTY(EditAnywhere, Category = "TwinLink View Movement")
-        float CameraRotationSpeed = 1.0f;
+    float CameraRotationSpeed = 1.0f;
 
     /* 最大加速度(速度の変化率) */
     UPROPERTY(EditAnywhere, Category = "TwinLink View Movement", meta = (ClampMin = "0", UIMin = "0", ForceUnits = "%"))
-        float MaxAcceleration = 20000.f;
+    float MaxAcceleration = 20000.f;
 
     /* cm/sec 最大飛行速度 */
     UPROPERTY(EditAnywhere, Category = "TwinLink View Movement", meta = (ClampMin = "0", UIMin = "0", ForceUnits = "cm/s"))
-        float MaxFlySpeed = 50000.0f;
+    float MaxFlySpeed = 50000.0f;
 
 
     /* このプロパティ値で他のシステムの値を上書きする */
     UPROPERTY(EditAnywhere, AdvancedDisplay, Category = "TwinLink View Movement")
-        bool bOverrideOtherSystemValues = true;
+    bool bOverrideOtherSystemValues = true;
 
 
     UCharacterMovementComponent* CharMovementComponent;
+
+    bool bIsSelectingFacility;
 
 };

@@ -7,7 +7,7 @@
 
 #include "TwinLinkTickSystem.h"
 
-void UTwinLinkAddViewPointDialogBase::AddViewPointInfo(const FString ViewPointName) {
+void UTwinLinkAddViewPointDialogBase::AddViewPointInfo(const FString& ViewPointName) {
     const auto ViewPointSystem = TwinLinkSubSystemHelper::GetInstance<UTwinLinkViewPointSystem>();
 
     if (ViewPointSystem->CheckAddableViewPointInfo(ViewPointName) == false) {

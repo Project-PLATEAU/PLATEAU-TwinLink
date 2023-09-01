@@ -5,10 +5,30 @@
 #include "TwinLinkCommon.h"
 #include "TwinLinkTickSystem.h"
 
-void UTwinLinkScrollBoxElementBase::Setup(UObject* Obj) {
+#include "TwinLinkScrollBoxElementImpl.h"
+
+void UTwinLinkScrollBoxElementBase::Setup(UTwinLinkScrollBoxElementImpl* _Impl, UObject* Obj) {
+    check(_Impl);
     check(Obj);
     WidgetData = Obj;
-    Sync();
+
+    Impl = _Impl;
+    check(Impl != nullptr);
+
+    if (Impl.IsValid())
+        Impl->OnSetup(WidgetData.Get());
+
+    //// 登録済みのイベントを削除
+    //if (EvOnChangedHnd.IsValid()) {
+    //    CastedElement->EvOnChanged.Remove(EvOnChangedHnd);
+    //    EvOnChangedHnd.Reset();
+    //}
+
+    //EvOnChangedHnd = CastedElement->EvOnChanged.AddLambda([]() {
+    //    Onchanged
+    //    });
+
+    OnChangedElement();
 }
 
 void UTwinLinkScrollBoxElementBase::RequestRemove() const {
@@ -16,20 +36,25 @@ void UTwinLinkScrollBoxElementBase::RequestRemove() const {
 
     const auto TickSystem = TwinLinkSubSystemHelper::GetInstance<UTwinLinkTickSystem>();
     check(TickSystem.IsValid());
-    
+
     // 遅延削除　BP側でこの関数を呼び出した際にBP側の処理が完了するまで正常な値を保証するため
     TickSystem.Get()->EvDelayExec.AddLambda([this]() {
-            OnRequestRemove(WidgetData.Get());
+        if (Impl.IsValid())
+            Impl->OnRequestRemove(WidgetData.Get());
         });
 }
 
 void UTwinLinkScrollBoxElementBase::RequestSelect() const {
     check(WidgetData.IsValid());
-    OnRequestSelect(WidgetData.Get());
+    if (Impl.IsValid())
+        Impl->OnRequestSelect(WidgetData.Get());
+
 }
 
-void UTwinLinkScrollBoxElementBase::RequestEditName(const FString NewName) const {
-    OnRequestEdit(NewName);
+void UTwinLinkScrollBoxElementBase::RequestEditName(const FString& NewName) const {
+    check(WidgetData.IsValid());
+    if (Impl.IsValid())
+        Impl->OnRequestEdit(WidgetData.Get(), NewName);
 }
 
 const UObject* UTwinLinkScrollBoxElementBase::GetElement() const {
@@ -39,5 +64,10 @@ const UObject* UTwinLinkScrollBoxElementBase::GetElement() const {
 
 const FText UTwinLinkScrollBoxElementBase::GetName() const {
     check(WidgetData.IsValid());
-    return OnGetName(WidgetData.Get());
+
+    if (Impl.IsValid())
+        return Impl->OnGetName(WidgetData.Get());
+
+    check(false);
+    return FText::FromString(TEXT("undefind"));
 }
