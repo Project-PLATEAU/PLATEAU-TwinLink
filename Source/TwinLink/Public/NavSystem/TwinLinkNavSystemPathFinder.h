@@ -16,6 +16,8 @@ UCLASS()
 class TWINLINK_API ATwinLinkNavSystemPathFinder : public AActor {
     GENERATED_BODY()
 public:
+    DECLARE_MULTICAST_DELEGATE(OnReadyPathFindingDelegate);
+
     // Sets default values for this actor's properties
     ATwinLinkNavSystemPathFinder();
 
@@ -37,6 +39,8 @@ public:
     virtual bool IsReadyPathFinding() const {
         return false;
     }
+    // パス検索が可能になったときに呼ばれる
+    OnReadyPathFindingDelegate OnReadyPathFinding;
 protected:
     // Called when the game starts or when spawned
     virtual void BeginPlay() override;
@@ -51,6 +55,7 @@ private:
      * @brief : 指定した2点間のパス検索を行う
      */
     TwinLinkNavSystemFindPathInfo RequestPathFinding(const FVector& Start, const FVector& End) const;
+
 };
 
 UCLASS()

@@ -57,7 +57,13 @@ public:
      */
     UFUNCTION(BlueprintCallable)
         void ChangeMode(NavSystemMode Mode, bool bForce = false);
+
 private:
+    /*
+     * @brief : PathFinderからパス検索準備完了時のコールバックとして登録する
+     */
+    void OnReadyPathFinding();
+
     // Input設定
     void SetupInput();
 

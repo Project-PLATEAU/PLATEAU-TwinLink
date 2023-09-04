@@ -23,12 +23,12 @@ void TwinLinkNavSystemFindPathInfo::Update(const UWorld* World, const ECollision
     const auto EndI = std::min(NowHeightCheckIndex + CheckNum, HeightCheckedPoints.Num());
     for (; NowHeightCheckIndex < EndI; NowHeightCheckIndex++) {
         auto& Pos = HeightCheckedPoints[NowHeightCheckIndex];
+        // 一応オフセットを入れておく
         auto HeightMax = Pos;
         HeightMax.Z = MaxZ + 1;
         auto HeightMin = Pos;
         HeightMin.Z = MinZ - 1;
         FHitResult HeightResult;
-
         if (World->LineTraceSingleByChannel(HeightResult, HeightMax, HeightMin, Channel))
             Pos.Z = HeightResult.Location.Z + 1;
     }

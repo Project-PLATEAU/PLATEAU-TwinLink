@@ -78,11 +78,11 @@ bool ATwinLinkNavSystemPathFinder::RequestStartPathFinding(TwinLinkNavSystemFind
 // Called when the game starts or when spawned
 void ATwinLinkNavSystemPathFinder::BeginPlay() {
     Super::BeginPlay();
-
 }
 
 void ATwinLinkNavSystemPathFinder::Tick(float DeltaTime) {
     Super::Tick(DeltaTime);
+
 }
 
 const ATwinLinkNavSystem* ATwinLinkNavSystemPathFinder::GetTwinLinkNavSystem() const {
@@ -208,6 +208,8 @@ void ATwinLinkNavSystemPathFinderAnyLocation::Tick(float DeltaTime) {
         if (NowSelectedPathLocatorActor)
             NowSelectedPathLocatorActor->UnSelect();
         NowSelectedPathLocatorActor = nullptr;
+        if (IsReadyPathFinding())
+            OnReadyPathFinding.Broadcast();
     }
     else if (PlayerController->IsInputKeyDown(EKeys::LeftMouseButton)) {
 

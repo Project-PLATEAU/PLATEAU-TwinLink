@@ -29,7 +29,7 @@ ATwinLinkNavSystem::ATwinLinkNavSystem() {
 
 void ATwinLinkNavSystem::Tick(float DeltaSeconds) {
     Super::Tick(DeltaSeconds);
-    if (PathFindInfo.has_value() && PathFindInfo->PathFindResult.IsSuccessful()) {
+    if (PathFindInfo.has_value()) {
         const auto bBeforeSuccess = PathFindInfo->IsSuccess();
         PathFindInfo->Update(GetWorld(), DemCollisionChannel, DemCollisionAabb.Min.Z, DemCollisionAabb.Max.Z, 10);
         const auto bAfterSuccess = PathFindInfo->IsSuccess();
@@ -91,8 +91,20 @@ void ATwinLinkNavSystem::ChangeMode(NavSystemMode Mode, bool bForce) {
         return;
     if (NowPathFinder)
         NowPathFinder->Destroy();
-    if (PathFinderBp.Contains(Mode))
+    if (PathFinderBp.Contains(Mode)) {
         NowPathFinder = TwinLinkActorEx::SpawnChildActor(this, PathFinderBp[Mode], TEXT("PathFinder"));
+        NowPathFinder->OnReadyPathFinding.AddUObject(this, &ATwinLinkNavSystem::OnReadyPathFinding);
+    }
+}
+
+void ATwinLinkNavSystem::OnReadyPathFinding()
+{
+    if (NowPathFinder) {
+        TwinLinkNavSystemFindPathInfo Tmp;
+        if (NowPathFinder->RequestStartPathFinding(Tmp)) {
+            PathFindInfo = Tmp;
+        }
+    }
 }
 
 void ATwinLinkNavSystem::SetupInput() {
@@ -101,4 +113,6 @@ void ATwinLinkNavSystem::SetupInput() {
 
     // 入力を有効にする
     EnableInput(controller);
+    // マウスカーソルオンにする
+    controller->SetShowMouseCursor(true);
 }
