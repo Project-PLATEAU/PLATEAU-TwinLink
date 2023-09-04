@@ -9,7 +9,7 @@
 /**
  * TwinLinkで使用するデータオブジェクトの基底クラス
  */
-UCLASS()
+UCLASS(Abstract, BlueprintType)
 class TWINLINK_API UTwinLinkDataObjBase : public UObject
 {
 	GENERATED_BODY()
