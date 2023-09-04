@@ -10,6 +10,7 @@
 #include "GameFramework/Actor.h"
 #include "TwinLinkNavSystemPathFinder.generated.h"
 
+class ATwinLinkNavSystemPathLocator;
 class ATwinLinkNavSystem;
 
 UCLASS()
@@ -24,7 +25,7 @@ public:
     /*
      * @brief : パス検索を開始する
      */
-    virtual bool RequestStartPathFinding(TwinLinkNavSystemFindPathInfo& Out);
+    virtual bool RequestStartPathFinding(FTwinLinkNavSystemFindPathInfo& Out);
 
     /*
      * @brief : 指定したポイントの位置を取得
@@ -54,7 +55,7 @@ private:
     /*
      * @brief : 指定した2点間のパス検索を行う
      */
-    TwinLinkNavSystemFindPathInfo RequestPathFinding(const FVector& Start, const FVector& End) const;
+    FTwinLinkNavSystemFindPathInfo RequestPathFinding(const FVector& Start, const FVector& End) const;
 
 };
 
@@ -108,7 +109,6 @@ private:
     // 現在選択しているアクター
     UPROPERTY(EditAnywhere, Category = TwinLink_Path)
         ATwinLinkNavSystemPathLocator* NowSelectedPathLocatorActor;
-
     // 現在選択しているアクターのスクリーン位置オフセット
     UPROPERTY(EditAnywhere, Category = TwinLink_Path)
         FVector2D NowSelectedPathLocatorActorScreenOffset = FVector2D::Zero();

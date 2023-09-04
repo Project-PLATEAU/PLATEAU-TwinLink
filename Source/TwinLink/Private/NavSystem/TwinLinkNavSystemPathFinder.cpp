@@ -12,7 +12,6 @@
 
 #include "TwinLinkActorEx.h"
 #include "NavSystem/TwinLinkNavSystem.h"
-
 namespace {
 
     std::optional<FVector2D> GetMousePosition(const APlayerController* PlayerController) {
@@ -61,7 +60,7 @@ ATwinLinkNavSystemPathFinder::ATwinLinkNavSystemPathFinder() {
     PrimaryActorTick.bCanEverTick = true;
 }
 
-bool ATwinLinkNavSystemPathFinder::RequestStartPathFinding(TwinLinkNavSystemFindPathInfo& Out) {
+bool ATwinLinkNavSystemPathFinder::RequestStartPathFinding(FTwinLinkNavSystemFindPathInfo& Out) {
     const UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
     if (!NavSys)
         return false;
@@ -89,12 +88,12 @@ const ATwinLinkNavSystem* ATwinLinkNavSystemPathFinder::GetTwinLinkNavSystem() c
     return TwinLinkActorEx::FindActorInOwner<ATwinLinkNavSystem>(this);
 }
 
-TwinLinkNavSystemFindPathInfo ATwinLinkNavSystemPathFinder::RequestPathFinding(const FVector& Start,
+FTwinLinkNavSystemFindPathInfo ATwinLinkNavSystemPathFinder::RequestPathFinding(const FVector& Start,
     const FVector& End) const {
     UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
     FPathFindingQuery Query;
     CreateFindPathRequest(this, Start, End, Query);
-    TwinLinkNavSystemFindPathInfo Ret = TwinLinkNavSystemFindPathInfo(NavSys->FindPathSync(Query, EPathFindingMode::Regular));
+    FTwinLinkNavSystemFindPathInfo Ret = FTwinLinkNavSystemFindPathInfo(NavSys->FindPathSync(Query, EPathFindingMode::Regular));
     const auto TwinLinkNavSystem = GetTwinLinkNavSystem();
     const auto DemCollisionAabb = TwinLinkNavSystem->GetDemCollisionAabb();
     const auto DemCollisionChannel = TwinLinkNavSystem->GetDemCollisionChannel();
@@ -205,11 +204,13 @@ void ATwinLinkNavSystemPathFinderAnyLocation::Tick(float DeltaTime) {
     // 離した時
     else if (PlayerController->WasInputKeyJustReleased(EKeys::LeftMouseButton)) {
         UKismetSystemLibrary::PrintString(this, TEXT("KeyUp"), true, true, FColor::Cyan, 1.0f, TEXT("None"));
-        if (NowSelectedPathLocatorActor)
+        if (NowSelectedPathLocatorActor) {
             NowSelectedPathLocatorActor->UnSelect();
+
+            if (IsReadyPathFinding())
+                OnReadyPathFinding.Broadcast();
+        }
         NowSelectedPathLocatorActor = nullptr;
-        if (IsReadyPathFinding())
-            OnReadyPathFinding.Broadcast();
     }
     else if (PlayerController->IsInputKeyDown(EKeys::LeftMouseButton)) {
 

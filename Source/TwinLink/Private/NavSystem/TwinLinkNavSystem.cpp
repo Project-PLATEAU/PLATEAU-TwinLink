@@ -1,4 +1,7 @@
 #include "NavSystem/TwinLinkNavSystem.h"
+
+#include <numeric>
+
 #include "NavigationSystem.h"
 #include "TwinLinkActorEx.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -19,8 +22,13 @@ namespace {
             ForeachChildActor<T>(Child, std::forward<F>(Func));
         }
     }
+    // 0, 1, 2, 3... -> 0, +1, -1, +2, -2と変換する
+    int AlterSignSequence(int Index) {
+        const auto Sign = ((Index & 1) << 1) - 1;
+        const auto Offset = (Index + 1) >> 1;
+        return Sign * Offset;
+    }
 }
-
 
 ATwinLinkNavSystem::ATwinLinkNavSystem() {
     PrimaryActorTick.bCanEverTick = true;
@@ -38,6 +46,7 @@ void ATwinLinkNavSystem::Tick(float DeltaSeconds) {
                 if (Child)
                     Child->DrawPath(PathFindInfo->HeightCheckedPoints);
             }
+            OnReadyFindPathInfo(*PathFindInfo);
         }
     }
 
@@ -58,7 +67,7 @@ void ATwinLinkNavSystem::DebugDraw() {
     if (DebugCallPathFinding) {
         DebugCallPathFinding = false;
         if (NowPathFinder) {
-            TwinLinkNavSystemFindPathInfo Tmp;
+            FTwinLinkNavSystemFindPathInfo Tmp;
             if (NowPathFinder->RequestStartPathFinding(Tmp)) {
                 PathFindInfo = Tmp;
             }
@@ -97,10 +106,50 @@ void ATwinLinkNavSystem::ChangeMode(NavSystemMode Mode, bool bForce) {
     }
 }
 
-void ATwinLinkNavSystem::OnReadyPathFinding()
-{
+bool ATwinLinkNavSystem::TryGetReadyFindPathInfo(FTwinLinkNavSystemFindPathInfo& Out) const {
+    if (PathFindInfo.has_value()) {
+        Out = *PathFindInfo;
+        return true;
+    }
+    return false;
+}
+
+const UTwinLinkNavSystemParam* ATwinLinkNavSystem::GetRuntimeParam() const {
+    return RuntimeParam;
+}
+
+FTwinLinkNavSystemFindPathUiInfo ATwinLinkNavSystem::GetDrawMoveTimeUiInfo(const FBox2D& ScreenRange) const {
+    if (PathFindInfo.has_value() == false || PathFindInfo->IsSuccess() == false)
+        return FTwinLinkNavSystemFindPathUiInfo();
+
+    const APlayerController* Controller = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+    auto& HeightCheckedPoints = PathFindInfo->HeightCheckedPoints;
+
+    // 総距離
+    auto Length = 0.f;
+    for (auto I = 0; I < HeightCheckedPoints.Num() - 1; ++I) {
+        Length += (HeightCheckedPoints[I + 1] - HeightCheckedPoints[I]).Length();
+    }
+
+    const auto Meter = Length / RuntimeParam->WorldUnitMeter;
+    const auto Sec = Meter * 3.6f / RuntimeParam->WalkSpeedKmPerH;
+
+    const auto Center = FMath::Max(0, HeightCheckedPoints.Num() - 1) >> 1;
+    for (auto I = 0; I < HeightCheckedPoints.Num(); ++I) {
+        const auto Index = Center + AlterSignSequence(I);
+        FVector2D Tmp;
+        if (UGameplayStatics::ProjectWorldToScreen(Controller, HeightCheckedPoints[Index], Tmp)) {
+            if (ScreenRange.IsInsideOrOn(Tmp)) {
+                return FTwinLinkNavSystemFindPathUiInfo(Meter, Sec, Tmp);
+            }
+        }
+    }
+    return FTwinLinkNavSystemFindPathUiInfo();
+}
+
+void ATwinLinkNavSystem::OnReadyPathFinding() {
     if (NowPathFinder) {
-        TwinLinkNavSystemFindPathInfo Tmp;
+        FTwinLinkNavSystemFindPathInfo Tmp;
         if (NowPathFinder->RequestStartPathFinding(Tmp)) {
             PathFindInfo = Tmp;
         }

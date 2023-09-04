@@ -7,11 +7,11 @@
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "NavigationData.h"
-#include "InputActionValue.h"
 #include "TwinLinkNavSystemDef.h"
 #include "TwinLinkNavSystemFindPathInfo.h"
 #include "TwinLinkNavSystemPathDrawer.h"
-#include "TwinLinkNavSystemPathLocator.h"
+#include "TwinLinkNavSystemParam.h"
+#include "TwinLinkNavSystemFindPathUiInfo.h"
 #include "TwinLinkNavSystem.generated.h"
 class ATwinLinkNavSystemPathFinder;
 class APLATEAUInstancedCityModel;
@@ -58,6 +58,20 @@ public:
     UFUNCTION(BlueprintCallable)
         void ChangeMode(NavSystemMode Mode, bool bForce = false);
 
+    /*
+     * @brief : パス検索の結果を返す. nullptrの場合は検索していないか検索途中
+     */
+    UFUNCTION(BlueprintCallable)
+        bool TryGetReadyFindPathInfo(FTwinLinkNavSystemFindPathInfo& Out) const;
+
+    UFUNCTION(BlueprintImplementableEvent)
+        void OnReadyFindPathInfo(const FTwinLinkNavSystemFindPathInfo& PathInfo) const;
+
+    UFUNCTION(BlueprintCallable)
+        const UTwinLinkNavSystemParam* GetRuntimeParam() const;
+
+    UFUNCTION(BlueprintCallable)
+    FTwinLinkNavSystemFindPathUiInfo GetDrawMoveTimeUiInfo(const FBox2D& ScreenRange) const;
 private:
     /*
      * @brief : PathFinderからパス検索準備完了時のコールバックとして登録する
@@ -72,7 +86,11 @@ private:
     /*
      * Editor系
      */
-     // ナビメッシュのバウンディングボリューム
+     // ランタイム時に利用するパラメータ
+    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
+        UTwinLinkNavSystemParam* RuntimeParam = nullptr;
+
+    // ナビメッシュのバウンディングボリューム
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
         TObjectPtr<ANavMeshBoundsVolume> NavMeshBoundVolume;
 
@@ -112,7 +130,7 @@ private:
         ATwinLinkNavSystemPathFinder* NowPathFinder = nullptr;
 
     // パス検索情報
-    std::optional<TwinLinkNavSystemFindPathInfo> PathFindInfo;
+    std::optional<FTwinLinkNavSystemFindPathInfo> PathFindInfo;
 
     // -----------------------
     // デバッグ系

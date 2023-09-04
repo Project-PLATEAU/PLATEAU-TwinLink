@@ -1,23 +1,24 @@
 #include "NavSystem/TwinLinkNavSystemFindPathInfo.h"
 #include "NavigationSystem.h"
 #include "Components/InputComponent.h" 
+#include "Kismet/GameplayStatics.h"
 
-bool TwinLinkNavSystemFindPathInfo::IsRequesting() const {
+bool FTwinLinkNavSystemFindPathInfo::IsRequesting() const {
     if (PathFindResult.Path == nullptr)
         return false;
     // まだ高さ調整位置検索中
     return NowHeightCheckIndex < HeightCheckedPoints.Num();
 }
 
-bool TwinLinkNavSystemFindPathInfo::IsValid() const {
+bool FTwinLinkNavSystemFindPathInfo::IsValid() const {
     return PathFindResult.Path != nullptr;
 }
 
-bool TwinLinkNavSystemFindPathInfo::IsSuccess() const {
+bool FTwinLinkNavSystemFindPathInfo::IsSuccess() const {
     return IsValid() && PathFindResult.IsSuccessful() && IsRequesting() == false;
 }
 
-void TwinLinkNavSystemFindPathInfo::Update(const UWorld* World, const ECollisionChannel Channel, const float MinZ, const float MaxZ, const int32_t CheckNum) {
+void FTwinLinkNavSystemFindPathInfo::Update(const UWorld* World, const ECollisionChannel Channel, const float MinZ, const float MaxZ, const int32_t CheckNum) {
     if (PathFindResult.IsSuccessful() == false)
         return;
     const auto EndI = std::min(NowHeightCheckIndex + CheckNum, HeightCheckedPoints.Num());
@@ -34,6 +35,6 @@ void TwinLinkNavSystemFindPathInfo::Update(const UWorld* World, const ECollision
     }
 }
 
-TwinLinkNavSystemFindPathInfo::TwinLinkNavSystemFindPathInfo(FPathFindingResult&& Result)
+FTwinLinkNavSystemFindPathInfo::FTwinLinkNavSystemFindPathInfo(FPathFindingResult&& Result)
     : PathFindResult(std::move(Result)) {
 }
