@@ -97,7 +97,7 @@ TWeakObjectPtr<UTwinLinkObservableCollection> UTwinLinkAssetPlacementSystem::Get
 void UTwinLinkAssetPlacementSystem::AddAssetPlacementActor(const TObjectPtr<UTwinLinkAssetPlacementInfo> AssetPlacementInfo) {
     const auto Position = AssetPlacementInfo->GetPosition();
     const auto Rotation = FRotator(AssetPlacementInfo->GetRotationEuler().Y, AssetPlacementInfo->GetRotationEuler().Z, AssetPlacementInfo->GetRotationEuler().X);
-    const auto AssetPlacementActor = SpawnAssetPlacementActor(GetAsset(AssetPlacementInfo->GetPresetID()), Position, Rotation);
+    const auto AssetPlacementActor = SpawnAssetPlacementActor(GetPresetAssetMesh(AssetPlacementInfo->GetPresetID()), Position, Rotation);
 
     AssetPlacementActorCollection.Add(AssetPlacementInfo->GetUniqueID(), AssetPlacementActor);
 }
@@ -108,10 +108,11 @@ void UTwinLinkAssetPlacementSystem::TwinLinkAssetPlacementUpdateActor(AActor* Ta
     if (!Key) {
         return;
     }
+    const auto AssetPlacementInfoOrg = AssetPlacementInfoCollection->GetFromKey(*Key);
 
     const auto AssetPlacementInfo = NewObject<UTwinLinkAssetPlacementInfo>();
 
-    AssetPlacementInfo->Setup(0, TargetActor->GetActorLocation(), FVector(TargetActor->GetActorRotation().Roll, TargetActor->GetActorRotation().Pitch, TargetActor->GetActorRotation().Yaw));
+    AssetPlacementInfo->Setup(AssetPlacementInfoOrg->Get()->GetPresetID(), TargetActor->GetActorLocation(), FVector(TargetActor->GetActorRotation().Roll, TargetActor->GetActorRotation().Pitch, TargetActor->GetActorRotation().Yaw));
 
     AssetPlacementInfoCollection->Update(*Key, AssetPlacementInfo);
 
@@ -131,20 +132,98 @@ AActor* UTwinLinkAssetPlacementSystem::SpawnAssetPlacementActor(const TObjectPtr
     return AssetPlacementActor;
 }
 
-void UTwinLinkAssetPlacementSystem::TwinLinkAssetPlacementRegistSoilTest(UStaticMesh* Soil) {
-    TestAssetSoil = Soil;
+void UTwinLinkAssetPlacementSystem::TwinLinkAssetPlacementRemoveActor(AActor* TargetActor) {
+    const auto Key = AssetPlacementActorCollection.FindKey(TargetActor);
 
-    //TODO　確認用処理
+    if (!Key) {
+        return;
+    }
+    const auto AssetPlacementInfoOrg = AssetPlacementInfoCollection->GetFromKey(*Key);
+
+    AssetPlacementInfoCollection->RemoveFromKey(*Key);
+
+    ExportAssetPlacementInfo();
+}
+
+void UTwinLinkAssetPlacementSystem::TwinLinkAssetPlacementRelocation() {
     for (const auto& AssetPlacementInfo : *AssetPlacementInfoCollection) {
         const auto& Val = AssetPlacementInfo.Value;
         AddAssetPlacementActor(Val);
     }
 }
 
-TObjectPtr<UStaticMesh> UTwinLinkAssetPlacementSystem::GetAsset(const int PresetID) {
-    //TODO　確認用処理（テスト用アセットを返す）
-    if (TestAssetSoil) {
-        return TestAssetSoil;
+void UTwinLinkAssetPlacementSystem::TwinLinkAssetPlacementRegistPresetAsset(const FTwinLinkAssetPlacementPresetData& Presets) {
+    PresetIDs.Add(Presets.PresetID);
+    PresetMeshes.Add(Presets.PresetID, Presets.AssetSils);
+    PresetTextures.Add(Presets.PresetID, Presets.WidgetTexture);
+}
+
+void UTwinLinkAssetPlacementSystem::SpawnUnsettledActor(const TObjectPtr<UTwinLinkAssetPlacementInfo> AssetPlacementInfo) {
+    const auto Position = AssetPlacementInfo->GetPosition();
+    const auto Rotation = FRotator(AssetPlacementInfo->GetRotationEuler().Y, AssetPlacementInfo->GetRotationEuler().Z, AssetPlacementInfo->GetRotationEuler().X);
+    AssetPlacementUnsettledActor = SpawnAssetPlacementActor(GetPresetAssetMesh(AssetPlacementInfo->GetPresetID()), Position, Rotation);
+
+    AssetPlacementUnsettledActor->GetRootComponent()->SetHiddenInGame(true);
+
+    AssetPlacementUnsettledAssetPlacementInfo = AssetPlacementInfo;
+
+    CurrentMode = ETwinLinkAssetPlacementModes::AssetPlacement;
+}
+
+void UTwinLinkAssetPlacementSystem::TwinLinkAssetPlacementUpdateUnsettledActor(const FVector& Location) {
+    if (!AssetPlacementUnsettledActor) {
+        return;
     }
+    if (IsWidgetUnderMouseCursor()) {
+        return;
+    }
+
+    if (AssetPlacementUnsettledActor->GetRootComponent()->bHiddenInGame) {
+        AssetPlacementUnsettledActor->GetRootComponent()->SetHiddenInGame(false);
+    }
+    AssetPlacementUnsettledActor->SetActorLocation(Location);
+}
+
+bool UTwinLinkAssetPlacementSystem::IsWidgetUnderMouseCursor() {
+    FSlateApplication& SlateApplication = FSlateApplication::Get();
+    const FWidgetPath WidgetsUnderCursor = SlateApplication.LocateWindowUnderMouse(
+        SlateApplication.GetCursorPos(), SlateApplication.GetInteractiveTopLevelWindows()
+    );
+
+    if (WidgetsUnderCursor.IsValid()) {
+        const FArrangedChildren& Widgets = WidgetsUnderCursor.Widgets;
+        if (Widgets.Num() > 0) {
+            const TSharedPtr<SWidget> Widget2 = Widgets.Last().Widget;
+
+            return !Widget2.ToSharedRef().Get().IsHovered();
+        }
+    }
+
+    return false;
+}
+
+void UTwinLinkAssetPlacementSystem::TwinLinkAssetPlacementSettledActor() {
+    const auto AssetPlacementInfo = NewObject<UTwinLinkAssetPlacementInfo>();
+
+    AssetPlacementInfo->Setup(AssetPlacementUnsettledAssetPlacementInfo->GetPresetID(), AssetPlacementUnsettledActor->GetActorLocation(), FVector(AssetPlacementUnsettledActor->GetActorRotation().Roll, AssetPlacementUnsettledActor->GetActorRotation().Pitch, AssetPlacementUnsettledActor->GetActorRotation().Yaw));
+
+    //コレクション追加
+    AssetPlacementInfoCollection->Add(AssetPlacementInfo);
+    //アクタ追加
+    AssetPlacementActorCollection.Add(AssetPlacementInfo->GetUniqueID(), AssetPlacementUnsettledActor);
+
+    ExportAssetPlacementInfo();
+
+    AssetPlacementUnsettledActor = nullptr;
+    AssetPlacementUnsettledAssetPlacementInfo = nullptr;
+
+    CurrentMode = ETwinLinkAssetPlacementModes::AssetTransform;
+}
+
+TObjectPtr<UStaticMesh> UTwinLinkAssetPlacementSystem::GetPresetAssetMesh(const int PresetID) {
+    if (PresetMeshes.Num() > 0) {
+        return PresetMeshes[PresetID];
+    }
+
     return nullptr;
 }

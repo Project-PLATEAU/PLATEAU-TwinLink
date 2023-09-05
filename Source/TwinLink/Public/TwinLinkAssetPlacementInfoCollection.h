@@ -39,7 +39,16 @@ public:
      * @param Obj
     */
     void Update(const uint32 Key, const TWeakObjectPtr<UObject>& Obj);
-
+    /**
+     * @brief 指定のキーの値を取得
+     * @param Key
+    */
+    TObjectPtr<UTwinLinkAssetPlacementInfo>* GetFromKey(uint32 Key);
+    /**
+     * @brief 指定のキーの情報を削除
+     * @param Key
+    */
+    uint32 RemoveFromKey(uint32 Key);
 private:
     /** アセット配置情報群 **/
     UPROPERTY()

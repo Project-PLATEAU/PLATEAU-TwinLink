@@ -40,3 +40,11 @@ void UTwinLinkAssetPlacementInfoCollection::Update(const uint32 Key, const TWeak
     check(AssetPlacementInfo);
     AssetPlacementInfoCollection.Add(Key, AssetPlacementInfo);
 }
+
+TObjectPtr<UTwinLinkAssetPlacementInfo>* UTwinLinkAssetPlacementInfoCollection::GetFromKey(uint32 Key) {
+    return AssetPlacementInfoCollection.Find(Key);
+}
+
+uint32 UTwinLinkAssetPlacementInfoCollection::RemoveFromKey(uint32 Key) {
+    return AssetPlacementInfoCollection.Remove(Key);
+}

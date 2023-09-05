@@ -30,7 +30,7 @@ public class TwinLink : ModuleRules
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
-                "Core", "CoreUObject", "Engine", "InputCore", "PLATEAURuntime",
+                "Core", "CoreUObject", "Engine", "InputCore", "PLATEAURuntime", "Slate", "SlateCore",
             }
         );
 
