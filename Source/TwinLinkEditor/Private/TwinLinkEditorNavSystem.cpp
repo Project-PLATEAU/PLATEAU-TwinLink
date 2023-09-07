@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
 #include "TwinLinkEditorNavSystem.h"
@@ -195,11 +195,11 @@ namespace {
             // モデルを読み込んでいない
             const auto CityModel = ::FindFirstPersistentLevelActor<APLATEAUInstancedCityModel>(World);
             if (!CityModel)
-                return  Error(TEXT("3D都市モデルが読み込前れていません"));
+                return  Error(TEXT("3D都市モデルが読み込まれていません"));
 
             const auto CityModelLoader = ::FindFirstPersistentLevelActor<APLATEAUCityModelLoader>(World);
             if (!CityModelLoader)
-                return  Error(TEXT("3D都市モデルが読み込前れていません"));
+                return  Error(TEXT("3D都市モデルが読み込まれていません"));
 
             if (CityModelLoader->Phase != ECityModelLoadingPhase::Finished)
                 return Error(TEXT("3D都市モデルのインポートがまだ完了していません"));
