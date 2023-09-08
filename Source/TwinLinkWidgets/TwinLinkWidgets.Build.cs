@@ -28,7 +28,7 @@ public class TwinLinkWidgets : ModuleRules
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
-                "Core", "CoreUObject", "Engine", "InputCore",
+                "Core", "CoreUObject", "Engine", "InputCore", "PLATEAURuntime"
             }
         );
 

@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -41,6 +41,30 @@ public:
     */
     bool IsAdminModeEnabled() const;
 
+    /**
+    * @brief 管理対象建築物（LOD4）を設定
+    * @param 建築物（LOD4）のアクタ
+    */
+    void SetFacilityModel(const TObjectPtr<AActor> Model) { FacilityModel = Model; }
+
+    /**
+    * @brief 管理対象建築物（LOD4）を取得
+    * @return 建築物（LOD4）のアクタ
+    */
+    TObjectPtr<AActor> GetFacilityModel() const { return FacilityModel; }
+
+    /**
+    * @brief PLATEAU都市モデルを設定
+    * @param 都市のアクタ
+    */
+    void SetCityModel(const TObjectPtr<AActor> Model) { CityModel = Model; }
+
+    /**
+    * @brief PLATEAU都市モデルを取得
+    * @return 都市のアクタ
+    */
+    TObjectPtr<AActor> GetCityModel() const { return CityModel; }
+
 public:
     /** 管理者モード有効化時に呼ばれる **/
     DelEvOnChangedAdminMode OnActiveAdminMode;
@@ -50,6 +74,12 @@ public:
 
 private:
     bool bAdminMode = false;
+
+    /** 管理対象建築物（LOD4） **/
+    TObjectPtr<AActor> FacilityModel;
+
+    /** PLATEAU都市モデル **/
+    TObjectPtr<AActor> CityModel;
 };
 
 UCLASS()
@@ -69,4 +99,18 @@ public:
     */
     UFUNCTION(BlueprintPure, Category = "TwinLink")
         static bool IsAdminModeEnabled();
+
+    /**
+    * @brief 管理対象建築物（LOD4）を設定
+    * @param 建築物（LOD4）のアクタ
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        static void TwinLinkSetFacilityModel(AActor* Model);
+
+    /**
+    * @brief PLATEAU都市モデルを設定
+    * @param 都市のアクタ
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        static void TwinLinkSetCityModel(AActor* Model);
 };
