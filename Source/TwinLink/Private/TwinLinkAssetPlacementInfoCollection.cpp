@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #include "TwinLinkAssetPlacementInfoCollection.h"
 
@@ -8,7 +8,7 @@ void UTwinLinkAssetPlacementInfoCollection::OnAdd(UObject* Obj) {
     AssetPlacementInfoCollection.Add(AssetPlacementInfo->GetUniqueID(), AssetPlacementInfo);
 }
 
-void UTwinLinkAssetPlacementInfoCollection::OnRemove(const TWeakObjectPtr<UObject> Obj) {
+void UTwinLinkAssetPlacementInfoCollection::OnRemove(const TWeakObjectPtr<UObject>& Obj) {
     check(Obj.IsValid());
     auto AssetPlacementInfo = Cast<UTwinLinkAssetPlacementInfo>(Obj.Get());
     check(AssetPlacementInfo);
@@ -19,7 +19,7 @@ void UTwinLinkAssetPlacementInfoCollection::OnReset() {
     AssetPlacementInfoCollection.Reset();
 }
 
-bool UTwinLinkAssetPlacementInfoCollection::OnContains(const TWeakObjectPtr<UObject> Obj) {
+bool UTwinLinkAssetPlacementInfoCollection::OnContains(const TWeakObjectPtr<UObject>& Obj) {
     check(Obj.IsValid());
     const auto AssetPlacementInfo = Cast<UTwinLinkAssetPlacementInfo>(Obj.Get());
     check(AssetPlacementInfo);
@@ -35,8 +35,16 @@ TArray<UObject*> UTwinLinkAssetPlacementInfoCollection::OnGetCollectionRaw() {
     return RetCollection;
 }
 
-void UTwinLinkAssetPlacementInfoCollection::Update(const uint32 Key, const TWeakObjectPtr<UObject> Obj) {
+void UTwinLinkAssetPlacementInfoCollection::Update(const uint32 Key, const TWeakObjectPtr<UObject>& Obj) {
     auto AssetPlacementInfo = Cast<UTwinLinkAssetPlacementInfo>(Obj);
     check(AssetPlacementInfo);
     AssetPlacementInfoCollection.Add(Key, AssetPlacementInfo);
+}
+
+TObjectPtr<UTwinLinkAssetPlacementInfo>* UTwinLinkAssetPlacementInfoCollection::GetFromKey(uint32 Key) {
+    return AssetPlacementInfoCollection.Find(Key);
+}
+
+uint32 UTwinLinkAssetPlacementInfoCollection::RemoveFromKey(uint32 Key) {
+    return AssetPlacementInfoCollection.Remove(Key);
 }

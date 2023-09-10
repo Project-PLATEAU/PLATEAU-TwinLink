@@ -25,7 +25,7 @@ void UTwinLinkViewPointSystem::Initialize(FSubsystemCollectionBase& Collection) 
 
     Filepath = TwinLinkPersistentPaths::CreateViewPointFilePath(TEXT("ViewPointInfo.csv"));
     UE_TWINLINK_LOG(LogTemp, Log, TEXT("ViewPointInfo File Path : %s"), *Filepath);
-    
+
     ViewPointInfoCollection = NewObject<UTwinLinkViewPointInfoCollection>();
     ImportViewPointInfo();
 }
@@ -33,13 +33,13 @@ void UTwinLinkViewPointSystem::Initialize(FSubsystemCollectionBase& Collection) 
 void UTwinLinkViewPointSystem::Deinitialize() {
 }
 
-bool UTwinLinkViewPointSystem::CheckAddableViewPointInfo(const FString ViewPointName) {
+bool UTwinLinkViewPointSystem::CheckAddableViewPointInfo(const FString& ViewPointName) {
     if (ViewPointName.IsEmpty()) {
         UE_TWINLINK_LOG(LogTemp, Log, TEXT("TwinLink Cant add empty name : %s"), *ViewPointName);
         return false;
     }
 
-    const auto ApplicableTargets = GetApplicableTargets();
+    const auto ApplicableTargets = ATwinLinkWorldViewer::GetInstance(GetWorld());
     // 視点情報を取得、適応する対象が存在しない
     if (ApplicableTargets == nullptr) {
         UE_TWINLINK_LOG(LogTemp, Log, TEXT("TwinLink Not ApplicableTargets : %s"), *ViewPointName);
@@ -49,15 +49,15 @@ bool UTwinLinkViewPointSystem::CheckAddableViewPointInfo(const FString ViewPoint
     return true;
 }
 
-void UTwinLinkViewPointSystem::AddViewPointInfo(const FString ViewPointName) {
+void UTwinLinkViewPointSystem::AddViewPointInfo(const FString& ViewPointName) {
     UE_TWINLINK_LOG(LogTemp, Log, TEXT("TwinLink AddViewPointInfo : %s"), *Filepath);
-    const auto ApplicableTargets = GetApplicableTargets();
+    const auto ApplicableTargets = ATwinLinkWorldViewer::GetInstance(GetWorld());
 
     FVector Position;
     FVector RotationEuler;
 
     // CheckAddableViewPointInfo()内で チェック済みなので正常な値が格納されている前提で記述する
-    check(ApplicableTargets);
+    check(ApplicableTargets.IsValid());
 
     // 視点情報の作成
 
@@ -74,9 +74,27 @@ void UTwinLinkViewPointSystem::AddViewPointInfo(const FString ViewPointName) {
     ViewPointInfoCollection->Add(ViewPointInfo);
 }
 
-void UTwinLinkViewPointSystem::RemoveViewPointInfo(const TWeakObjectPtr<UTwinLinkViewPointInfo> ViewPointInfo) {
-    check(ViewPointInfo.IsValid());     
+void UTwinLinkViewPointSystem::RemoveViewPointInfo(const TWeakObjectPtr<UTwinLinkViewPointInfo>& ViewPointInfo) {
+    check(ViewPointInfo.IsValid());
     ViewPointInfoCollection->Remove(ViewPointInfo);
+}
+
+void UTwinLinkViewPointSystem::RequestEditName(const TWeakObjectPtr<UTwinLinkViewPointInfo>& ViewPointInfo, const FString& NewName) {
+    const auto IsAddable = CheckAddableViewPointInfo(NewName);
+    if (IsAddable == false) {
+        UE_TWINLINK_LOG(LogTemp, Log, TEXT("Cant Add ViewPoint : %s"), *NewName);
+        return;
+    }
+
+    check(ViewPointInfo.IsValid());
+    const auto Pos = ViewPointInfo->GetPosition();
+    const auto RotEulur = ViewPointInfo->GetRotationEuler();
+    const auto IsSuc = ViewPointInfo->Setup(NewName, Pos, RotEulur);
+    if (IsSuc == false) {
+        UE_TWINLINK_LOG(LogTemp, Log, TEXT("Failed setup ViewPoint : %s"), *NewName);
+        return;
+    }
+
 }
 
 void UTwinLinkViewPointSystem::ExportViewPointInfo() {
@@ -96,7 +114,7 @@ void UTwinLinkViewPointSystem::ExportViewPointInfo() {
         const auto Rot = Val->GetRotationEuler();
         StringBuf =
             CSVContents.CreateBodyContents(
-                FString::Printf(TEXT("%s, %f, %f, %f, %f, %f, %f"),
+                FString::Printf(TEXT("%s,%f,%f,%f,%f,%f,%f"),
                     *(Name),
                     Pos.X, Pos.Y, Pos.Z,
                     Rot.X, Rot.Y, Rot.Z));
@@ -112,7 +130,7 @@ void UTwinLinkViewPointSystem::ImportViewPointInfo() {
     TwinLinkCSVImporter CSVImporter;
     TwinLinkCSVContents::Standard CSVContents(VersionInfo);
     const auto bIsSuc = CSVImporter.ImportCSV(*Filepath, &CSVContents);
-    
+
     if (bIsSuc == false) {
         UE_TWINLINK_LOG(LogTemp, Log, TEXT("Failed Import CSV : %s"), *Filepath);
         return;
@@ -145,10 +163,10 @@ void UTwinLinkViewPointSystem::ImportViewPointInfo() {
     }
 }
 
-void UTwinLinkViewPointSystem::ApplyViewPointInfo(const TWeakObjectPtr<UTwinLinkViewPointInfo> ViewPointInfo) {
-    const auto ApplicableTargets = GetApplicableTargets();
+void UTwinLinkViewPointSystem::ApplyViewPointInfo(const TWeakObjectPtr<UTwinLinkViewPointInfo>& ViewPointInfo) {
+    const auto WorldViewer = ATwinLinkWorldViewer::GetInstance(GetWorld());
     check(ViewPointInfo.IsValid());
-    if (ApplicableTargets == nullptr) {
+    if (WorldViewer == nullptr) {
         UE_TWINLINK_LOG(LogTemp, Log, TEXT("視点情報の適用対象が存在しない : %s"), *(ViewPointInfo.Get()->GetName()));
         return;
     }
@@ -157,28 +175,10 @@ void UTwinLinkViewPointSystem::ApplyViewPointInfo(const TWeakObjectPtr<UTwinLink
         ViewPointInfoCollection->Contains(ViewPointInfo);
     check(bIsContains);
 
-    const auto P = ApplicableTargets.Get();
-    P->GetController()->ClientSetLocation(
-        ViewPointInfo.Get()->GetPosition(), 
-        FRotator::MakeFromEuler(ViewPointInfo.Get()->GetRotationEuler()));
+    WorldViewer->SetLocation(ViewPointInfo.Get()->GetPosition(), FRotator::MakeFromEuler(ViewPointInfo.Get()->GetRotationEuler()));
 
 }
 
 TWeakObjectPtr<UTwinLinkObservableCollection> UTwinLinkViewPointSystem::GetViewPointCollection() const {
     return ViewPointInfoCollection;
-}
-
-TObjectPtr<ACharacter> UTwinLinkViewPointSystem::GetApplicableTargets() {
-
-    AActor* ViewPointActor = UGameplayStatics::GetActorOfClass(GetWorld(), ATwinLinkWorldViewer::StaticClass());
-    if (ViewPointActor == nullptr) {
-        return nullptr;
-    }
-
-    ACharacter* ApplicableTargets = Cast<ACharacter>(ViewPointActor);
-    if (ApplicableTargets == nullptr) {
-        return nullptr;
-    }
-
-    return ApplicableTargets;
 }

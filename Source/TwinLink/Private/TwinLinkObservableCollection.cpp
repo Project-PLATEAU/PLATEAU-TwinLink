@@ -11,7 +11,7 @@ void UTwinLinkObservableCollection::Add(UObject* Obj) {
     }
 }
 
-void UTwinLinkObservableCollection::Remove(const TWeakObjectPtr<UObject> Obj) {
+void UTwinLinkObservableCollection::Remove(const TWeakObjectPtr<UObject>& Obj) {
     OnRemove(Obj);
 
     if (EvOnPostRemove.IsBound()) {
@@ -27,7 +27,7 @@ void UTwinLinkObservableCollection::Reset() {
     }
 }
 
-bool UTwinLinkObservableCollection::Contains(const TWeakObjectPtr<UObject> Obj) {
+bool UTwinLinkObservableCollection::Contains(const TWeakObjectPtr<UObject>& Obj) {
     return OnContains(Obj);
 }
 

@@ -18,42 +18,47 @@ class UTwinLinkViewPointInfo;
  * 視点情報の管理、適用を行うサブシステム
  */
 UCLASS()
-class TWINLINK_API UTwinLinkViewPointSystem : public UTwinLinkSubSystemBase
-{
-	GENERATED_BODY()
+class TWINLINK_API UTwinLinkViewPointSystem : public UTwinLinkSubSystemBase {
+    GENERATED_BODY()
 
 public:
 
     /**
-     * @brief 
-     * @param Collection 
+     * @brief
+     * @param Collection
     */
     virtual void Initialize(FSubsystemCollectionBase& Collection);
 
     /**
-     * @brief 
+     * @brief
     */
     virtual void Deinitialize();
 
 public:
     /**
      * @brief 追加可能な視点情報かチェックする
-     * @param ViewPointName 
-     * @return 
+     * @param ViewPointName
+     * @return
     */
-    bool CheckAddableViewPointInfo(const FString ViewPointName);
+    bool CheckAddableViewPointInfo(const FString& ViewPointName);
 
     /**
      * @brief 視点情報を追加する
-     * @param ViewPointName 
+     * @param ViewPointName
     */
-    void AddViewPointInfo(const FString ViewPointName);
+    void AddViewPointInfo(const FString& ViewPointName);
 
     /**
      * @brief 視点情報を削除する
-     * @param ViewPointInfo 
+     * @param ViewPointInfo
     */
-    void RemoveViewPointInfo(const TWeakObjectPtr<UTwinLinkViewPointInfo> ViewPointInfo);
+    void RemoveViewPointInfo(const TWeakObjectPtr<UTwinLinkViewPointInfo>& ViewPointInfo);
+
+    /**
+     * @brief 名前の変更を要求する
+     * @param Name
+    */
+    void RequestEditName(const TWeakObjectPtr<UTwinLinkViewPointInfo>& ViewPointInfo, const FString& NewName);
 
     /**
      * @brief 視点情報群をエキスポートする
@@ -67,20 +72,20 @@ public:
 
     /**
      * @brief 視点情報を適応する
-     * @param ViewPointInfo 
+     * @param ViewPointInfo
     */
-    void ApplyViewPointInfo(const TWeakObjectPtr<UTwinLinkViewPointInfo> ViewPointInfo);
+    void ApplyViewPointInfo(const TWeakObjectPtr<UTwinLinkViewPointInfo>& ViewPointInfo);
 
     /**
      * @brief 視点情報群を保持する通知機能付きのコレクションを取得する
-     * @return 
+     * @return
     */
     TWeakObjectPtr<UTwinLinkObservableCollection> GetViewPointCollection() const;
 
 private:
     /** 視点情報機能のバージョン　永続化時に組み込む **/
     const TwinLinkSystemVersionInfo VersionInfo = TwinLinkSystemVersionInfo(0, 0, 0);
-    
+
     /** 視点情報の永続化時のパス **/
     FString Filepath;
 
@@ -89,11 +94,5 @@ private:
     TObjectPtr<UTwinLinkViewPointInfoCollection> ViewPointInfoCollection;
 
 private:
-    /**
-     * @brief 視点情報の適応ターゲットを取得する
-     * @return 
-    */
-    TObjectPtr<ACharacter> GetApplicableTargets();
-
 
 };

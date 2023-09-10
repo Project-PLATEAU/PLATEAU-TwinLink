@@ -77,3 +77,10 @@ public:
     }
 
 };
+
+TWINLINK_API class TwinLinkWorldViewerHelper {
+public:
+
+    static TWeakObjectPtr<ACharacter> GetInstance(UWorld* World);
+
+};

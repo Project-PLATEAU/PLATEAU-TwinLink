@@ -3,14 +3,14 @@
 
 #include "TwinLinkViewPointInfo.h"
 
-bool UTwinLinkViewPointInfo::Setup(FString ViewPointName, FVector ViewPointPosition, FVector ViewPointRotationEuler) {
+bool UTwinLinkViewPointInfo::Setup(const FString& ViewPointName, const FVector& ViewPointPosition, const FVector& ViewPointRotationEuler) {
     this->Name = ViewPointName;
     this->Position = ViewPointPosition;
     this->RotationEuler = ViewPointRotationEuler;
     return true;
 }
 
-bool UTwinLinkViewPointInfo::Setup(TArray<FString> StrInfo) {
+bool UTwinLinkViewPointInfo::Setup(const TArray<FString>& StrInfo) {
     // プリミティブな型単位での要素数 FVectorならfloatが3つなので　3
     const auto NumPrimElementOfViewPointInfoStruct = 7;
     const auto bIsValid = StrInfo.Num() == NumPrimElementOfViewPointInfoStruct;

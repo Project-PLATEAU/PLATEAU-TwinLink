@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #include "TwinLink.h"
 
@@ -46,6 +46,14 @@ void UTwinLinkBlueprintLibrary::SetAdminMode(const bool bEnabled) {
 
 bool UTwinLinkBlueprintLibrary::IsAdminModeEnabled() {
     return FTwinLinkModule::Get().IsAdminModeEnabled();
+}
+
+void UTwinLinkBlueprintLibrary::TwinLinkSetFacilityModel(AActor* Model) {
+    FTwinLinkModule::Get().SetFacilityModel(Model);
+}
+
+void UTwinLinkBlueprintLibrary::TwinLinkSetCityModel(AActor* Model) {
+    FTwinLinkModule::Get().SetCityModel(Model);
 }
 
 IMPLEMENT_MODULE(FTwinLinkModule, TwinLink)

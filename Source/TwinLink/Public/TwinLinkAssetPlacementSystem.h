@@ -7,7 +7,17 @@
 #include "TwinLinkSystemVersionInfo.h"
 #include "TwinLinkObservableCollection.h"
 #include "TwinLinkAssetPlacementInfoCollection.h"
+#include "TwinLinkAssetPlacementPresetData.h"
 #include "TwinLinkAssetPlacementSystem.generated.h"
+
+/**
+ * 操作モード
+ */
+UENUM(BlueprintType)
+enum class ETwinLinkAssetPlacementModes : uint8 {
+    AssetPlacement,
+    AssetTransform,
+};
 
 /**
  * アセット配置情報の管理を行うサブシステム
@@ -49,7 +59,7 @@ public:
 
     /**
      * @brief アセットの配置を行う
-     * @return
+     * @param AssetPlacementInfo
     */
     void AddAssetPlacementActor(const TObjectPtr<UTwinLinkAssetPlacementInfo> AssetPlacementInfo);
 
@@ -70,12 +80,68 @@ public:
     AActor* SpawnAssetPlacementActor(const TObjectPtr<UStaticMesh> Soil, const FVector& Location, const FRotator& Rotation);
 
     /**
-     * @brief アセット配置テスト用の形状を登録
-     * @param Soil
+     * @brief アセットの配置情報を削除する
+     * @param TargetActor
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
-        void TwinLinkAssetPlacementRegistSoilTest(UStaticMesh* Soil);
+        void TwinLinkAssetPlacementRemoveActor(AActor* TargetActor);
 
+    /**
+     * @brief プリセットアセットを再配置
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        void TwinLinkAssetPlacementRelocation();
+
+    /**
+     * @brief プリセットアセットを登録
+     * @param Presets
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        void TwinLinkAssetPlacementRegistPresetAsset(const FTwinLinkAssetPlacementPresetData& Presets);
+
+    /**
+     * @brief 操作モードを取得
+     * @return
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        ETwinLinkAssetPlacementModes TwinLinkAssetPlacementGetMode() const { return CurrentMode; }
+    /**
+     * @brief 操作モードを設定
+     * @param Mode
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        void TwinLinkAssetPlacementSetMode(const ETwinLinkAssetPlacementModes Mode) { CurrentMode = Mode; }
+
+    /**
+     * @brief 配置未確定アクタを生成
+     * @param AssetPlacementInfo
+    */
+    void SpawnUnsettledActor(const TObjectPtr<UTwinLinkAssetPlacementInfo> AssetPlacementInfo);
+
+    /**
+     * @brief 配置未確定アクタの位置を更新
+     * @param Location
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        void TwinLinkAssetPlacementUpdateUnsettledActor(const FVector& Location);
+
+    /**
+     * @brief マウスカーソルがWidgetに乗っているか
+     * @return
+    */
+    bool IsWidgetUnderMouseCursor();
+
+    /**
+     * @brief 配置未確定アクタの位置を確定
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        void TwinLinkAssetPlacementSettledActor();
+
+    /**
+     * @brief 配置未確定アクタを取得
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        AActor* TwinLinkAssetPlacementGetUnsettledActor() const { return AssetPlacementUnsettledActor; }
 private:
 
     /**
@@ -83,7 +149,7 @@ private:
      * @param PresetID
      * @return
     */
-    TObjectPtr<UStaticMesh> GetAsset(const int PresetID);
+    TObjectPtr<UStaticMesh> GetPresetAssetMesh(const int PresetID);
 
 private:
 
@@ -101,6 +167,27 @@ private:
     UPROPERTY()
         TMap<uint32, TObjectPtr<AActor>> AssetPlacementActorCollection;
 
-    /** テスト用アセットへの参照 **/
-    TObjectPtr<UStaticMesh> TestAssetSoil;
+    /** 操作モード **/
+    UPROPERTY()
+        ETwinLinkAssetPlacementModes CurrentMode = ETwinLinkAssetPlacementModes::AssetTransform;
+
+    /** 配置未確定アクタへの参照 **/
+    UPROPERTY()
+        TObjectPtr<AActor> AssetPlacementUnsettledActor;
+
+    /** 配置未確定アセットの配置情 **/
+    UPROPERTY()
+        TObjectPtr<UTwinLinkAssetPlacementInfo> AssetPlacementUnsettledAssetPlacementInfo;
+public:
+    /** プリセットアセットのIDリスト **/
+    UPROPERTY()
+        TArray<int> PresetIDs;
+
+    /** プリセットアセットのスタティックメッシュ群 **/
+    UPROPERTY()
+        TMap<uint32, TObjectPtr<UStaticMesh>> PresetMeshes;
+
+    /** プリセットアセットのウィジェット用テクスチャ群 **/
+    UPROPERTY()
+        TMap<uint32, TObjectPtr<UTexture2D>> PresetTextures;
 };

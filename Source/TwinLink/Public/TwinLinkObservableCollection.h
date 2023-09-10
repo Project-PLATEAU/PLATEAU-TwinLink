@@ -28,7 +28,7 @@ public:
      * @brief 削除
      * @param Obj 
     */
-    void Remove(const TWeakObjectPtr<UObject> Obj);
+    void Remove(const TWeakObjectPtr<UObject>& Obj);
 
     /**
      * @brief 
@@ -40,7 +40,7 @@ public:
      * @param Obj 
      * @return 
     */
-    bool Contains(const TWeakObjectPtr<UObject> Obj);
+    bool Contains(const TWeakObjectPtr<UObject>& Obj);
 
     /**
      * @brief 走査用のコレクションを取得する
@@ -73,7 +73,7 @@ protected:
      * 継承先で継承先のコレクションで要素を削除する処理を実装してください
      * @param Obj
     */
-    virtual void OnRemove(const TWeakObjectPtr<UObject> Obj) {};
+    virtual void OnRemove(const TWeakObjectPtr<UObject>& Obj) {};
 
     /**
      * @brief 要素リセットに呼ばれる　内部コレクションに追加する
@@ -88,7 +88,7 @@ protected:
      * @param Obj
      * @return 
     */
-    virtual bool OnContains(const TWeakObjectPtr<UObject> Obj) { return false; };
+    virtual bool OnContains(const TWeakObjectPtr<UObject>& Obj) { return false; };
 
     /**
      * @brief 走査用コレクション取得時に呼ばれる　内部コレクションの走査用のコレクションを提供する

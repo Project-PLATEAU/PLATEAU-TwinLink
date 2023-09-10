@@ -10,20 +10,15 @@
 #include "TwinLinkTickSystem.h"
 #include "TwinLinkScrollBoxElementBase.h"
 
-
-
-void UTwinLinkScrollBoxBase::SetupOnTwinLink() {
-    TWeakObjectPtr<UTwinLinkObservableCollection> RefCollection;
-    OnSetupOnTwinLink(&RefCollection);
-    check(RefCollection.IsValid());
-
-    Setup(RefCollection.Get());
-}
-
-void UTwinLinkScrollBoxBase::Setup(UTwinLinkObservableCollection* Collection) {
+void UTwinLinkScrollBoxBase::Setup(
+    UTwinLinkObservableCollection* Collection,
+    UTwinLinkScrollBoxElementImpl* _ElmentImpl) {
 
     ObservableCollection = Collection;
     check(ObservableCollection.IsValid());
+
+    check(_ElmentImpl);
+    ElmentImpl = _ElmentImpl;
 
     // 現在のコレクションの状態を同期
     OnPostReset();
@@ -67,7 +62,7 @@ UTwinLinkScrollBoxElementBase* UTwinLinkScrollBoxBase::FindChild(UObject* Elemen
     return *RetPtr;
 }
 
-void UTwinLinkScrollBoxBase::AddElementWidgets(UTwinLinkScrollBoxElementBase* Widget) { 
+void UTwinLinkScrollBoxBase::AddElementWidgets(UTwinLinkScrollBoxElementBase* Widget) {
     ScrollBoxElementWidgets.Add(Widget->GetElement()->GetUniqueID(), Widget);
 }
 

@@ -18,7 +18,6 @@ public class TwinLinkWidgets : ModuleRules
         );
         PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
 
-
         PrivateIncludePaths.AddRange(
             new string[]
             {
@@ -26,14 +25,12 @@ public class TwinLinkWidgets : ModuleRules
             }
         );
 
-
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
-                "Core", "CoreUObject", "Engine", "InputCore",
+                "Core", "CoreUObject", "Engine", "InputCore", "PLATEAURuntime"
             }
         );
-
 
         PrivateDependencyModuleNames.AddRange(
             new string[]
@@ -43,8 +40,10 @@ public class TwinLinkWidgets : ModuleRules
                 "Engine",
                 "Projects",
                 "UMG",
-                "TwinLink"
-                // ... add private dependencies that you statically link with here ...	
+                "TwinLink",
+                "Slate",
+                "SlateCore",
+                // ... add private dependencies that you statically link with here ...
             }
         );
 

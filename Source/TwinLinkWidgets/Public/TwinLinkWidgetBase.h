@@ -10,7 +10,7 @@
 /**
  * 全てのWidgetのベースクラス
  */
-UCLASS()
+UCLASS(Abstract, Blueprintable, BlueprintType, ClassGroup = TwinLink)
 class TWINLINKWIDGETS_API UTwinLinkWidgetBase : public UUserWidget {
     GENERATED_BODY()
 
@@ -30,7 +30,15 @@ public:
      * @param bIsActiveAdminMode 現在の管理者モード
     */
     UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
-        void OnChangedAdminMode(const bool bIsActiveAdminMode);
+    void OnChangedAdminMode(const bool bIsActiveAdminMode);
+
+    /**
+     * @brief 管理者モードの状態を取得する
+     * 　その時の管理者モードによって処理を分岐したい時に使用する
+     * @return
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+    bool IsActiveAdminMode();
 
 private:
     // 登録デリゲードの管理Handle

@@ -15,6 +15,7 @@ void UTwinLinkAssetPlacementPanel::SetupOnTwinLink() {
 }
 
 void UTwinLinkAssetPlacementPanel::AddAssetPlacement(const int PlacementPresetID, const FVector& PlacementPosition, const FVector& PlacementRotationEuler) {
+    //TODO  廃止予定（UTwinLinkAssetPlacementElementへ移譲）
     const auto AssetPlacementSys = TwinLinkSubSystemHelper::GetInstance<UTwinLinkAssetPlacementSystem>();
 
     const auto AssetPlacementInfo = NewObject<UTwinLinkAssetPlacementInfo>();

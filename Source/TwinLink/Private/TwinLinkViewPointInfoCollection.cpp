@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
 #include "TwinLinkViewPointInfoCollection.h"
@@ -10,7 +10,7 @@ void UTwinLinkViewPointInfoCollection::OnAdd(UObject* Obj) {
     ViewPointInfoCollection.Add(ViewPointInfo->GetUniqueID(), ViewPointInfo);
 }
 
-void UTwinLinkViewPointInfoCollection::OnRemove(const TWeakObjectPtr<UObject> Obj) {
+void UTwinLinkViewPointInfoCollection::OnRemove(const TWeakObjectPtr<UObject>& Obj) {
     check(Obj.IsValid());
     auto ViewPointInfo = Cast<UTwinLinkViewPointInfo>(Obj.Get());
     check(ViewPointInfo);
@@ -22,7 +22,7 @@ void UTwinLinkViewPointInfoCollection::OnReset() {
     ViewPointInfoCollection.Reset();
 }
 
-bool UTwinLinkViewPointInfoCollection::OnContains(const TWeakObjectPtr<UObject> Obj) {
+bool UTwinLinkViewPointInfoCollection::OnContains(const TWeakObjectPtr<UObject>& Obj) {
     check(Obj.IsValid());
     const auto ViewPointInfo = Cast<UTwinLinkViewPointInfo>(Obj.Get());
     check(ViewPointInfo);
