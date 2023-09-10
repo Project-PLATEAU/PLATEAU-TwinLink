@@ -28,7 +28,10 @@ public:
         NavSystemPathLocatorState GetNowState() const;
 
     // 位置更新する
-    void UpdateLocation(const UNavigationSystemV1* NavSys, const FHitResult& HitResult);
+    bool UpdateLocation(const UNavigationSystemV1* NavSys, const FHitResult& HitResult);
+
+    // 位置更新する
+    bool UpdateLocation(const UNavigationSystemV1* NavSys, const FVector& Location);
 
     // 選択状態にする
     void Select();

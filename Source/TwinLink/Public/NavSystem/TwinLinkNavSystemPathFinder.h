@@ -35,11 +35,17 @@ public:
     }
 
     /*
+     * @brief : 指定したポイントの位置を設定
+     */
+    virtual void SetPathLocation(NavSystemPathPointType Type, FVector Location) {}
+
+    /*
      * @brief : パス検索の準備ができている(目的地が正しく選択されている)
      */
     virtual bool IsReadyPathFinding() const {
         return false;
     }
+
     // パス検索が可能になったときに呼ばれる
     OnReadyPathFindingDelegate OnReadyPathFinding;
 protected:
@@ -93,7 +99,17 @@ public:
      */
     virtual std::optional<FVector> GetPathLocation(NavSystemPathPointTypeT Type) const override;
 
+    /*
+     * @brief : 指定したポイントの位置を設定
+     */
+    virtual void SetPathLocation(NavSystemPathPointType Type, FVector Location) override;
+
 private:
+    /*
+     * @brief : 指定したポイントのアクターを生成して返す
+     */
+    ATwinLinkNavSystemPathLocator* GetOrSpawnActor(NavSystemPathPointType Type);
+
     // パス検索地点のBP
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
         TMap<NavSystemPathPointType, TSubclassOf<ATwinLinkNavSystemPathLocator>> PathLocatorBps;
@@ -114,34 +130,15 @@ private:
         FVector2D NowSelectedPathLocatorActorScreenOffset = FVector2D::Zero();
 };
 
-
-
-
 UCLASS()
-class TWINLINK_API ATwinLinkNavSystemPathFinderListSelect : public ATwinLinkNavSystemPathFinder {
+class TWINLINK_API ATwinLinkNavSystemPathFinderListSelect : public ATwinLinkNavSystemPathFinderAnyLocation {
     GENERATED_BODY()
 
 public:
-
-
     // Sets default values for this actor's properties
     ATwinLinkNavSystemPathFinderListSelect();
 
-protected:
-    // Called when the game starts or when spawned
-    virtual void BeginPlay() override;
-
 public:
     // Called every frame
-    virtual void Tick(float DeltaTime) override;
-    /*
-     * @brief : パス検索の準備ができている(目的地が正しく選択されている)
-     */
-    virtual bool IsReadyPathFinding() const override;
-
-private:
-    struct DebubBuildingInfo
-    {
-        
-    };
+    virtual void Tick(float DeltaTime) override{}
 };

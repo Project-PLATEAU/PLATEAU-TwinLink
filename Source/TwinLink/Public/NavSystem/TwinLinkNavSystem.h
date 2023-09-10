@@ -26,11 +26,6 @@ class TWINLINK_API ATwinLinkNavSystem : public AActor {
 public:
     ATwinLinkNavSystem();
 
-    /*
-     * @brief : FindPathのリクエスト作成のラッパー
-     */
-    bool CreateFindPathRequest(const FVector& Start, const FVector& End, FPathFindingQuery& OutRequest) const;
-
     virtual void Tick(float DeltaSeconds) override;
 
     ECollisionChannel GetDemCollisionChannel() const {
@@ -64,29 +59,38 @@ public:
     UFUNCTION(BlueprintCallable)
         bool TryGetReadyFindPathInfo(FTwinLinkNavSystemFindPathInfo& Out) const;
 
+    /*
+     * @brief : パス検索可能になったときに呼ばれるイベント
+     */
     UFUNCTION(BlueprintImplementableEvent)
         void OnReadyFindPathInfo(const FTwinLinkNavSystemFindPathInfo& PathInfo) const;
 
+    /*
+     * @brief : ランタイムで使うパラメータ取得
+     */
     UFUNCTION(BlueprintCallable)
         const UTwinLinkNavSystemParam* GetRuntimeParam() const;
 
+    /*
+     * @brief : 移動パスの情報取得
+     */
     UFUNCTION(BlueprintCallable)
-    FTwinLinkNavSystemFindPathUiInfo GetDrawMoveTimeUiInfo(const FBox2D& ScreenRange) const;
+        FTwinLinkNavSystemFindPathUiInfo GetDrawMoveTimeUiInfo(const FBox2D& ScreenRange) const;
 private:
     /*
      * @brief : PathFinderからパス検索準備完了時のコールバックとして登録する
      */
     void OnReadyPathFinding();
 
-    // Input設定
-    void SetupInput();
-
-    // デバッグ描画実行
-    void DebugDraw();
     /*
-     * Editor系
+     * @brief : デバッグ描画実行
      */
-     // ランタイム時に利用するパラメータ
+    void DebugDraw();
+
+    // -----------------------
+    // Editor設定系
+    // -----------------------
+    // ランタイム時に利用するパラメータ
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
         UTwinLinkNavSystemParam* RuntimeParam = nullptr;
 
@@ -110,10 +114,11 @@ private:
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
         TMap<NavSystemMode, TSubclassOf<ATwinLinkNavSystemPathFinder>> PathFinderBp;
 
-    /*
-     * ランタイム系
-     */
-     // 現在どのポイントを編集しているかどうか
+    // -----------------------
+    // ランタイム系
+    // -----------------------
+
+    // 現在どのポイントを編集しているかどうか
     UPROPERTY(EditAnywhere, Category = TwinLink_Path)
         NavSystemMode NowSelectedMode = NavSystemMode::FindPathAnyPoint;
 

@@ -140,6 +140,14 @@ ATwinLinkNavSystemPathFinderAnyLocation::ATwinLinkNavSystemPathFinderAnyLocation
 
 void ATwinLinkNavSystemPathFinderAnyLocation::BeginPlay() {
     Super::BeginPlay();
+
+    // PlayerControllerを取得する
+    APlayerController* controller = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+
+    // 入力を有効にする
+    EnableInput(controller);
+    // マウスカーソルオンにする
+    controller->SetShowMouseCursor(true);
 }
 
 // Called every frame
@@ -188,11 +196,8 @@ void ATwinLinkNavSystemPathFinderAnyLocation::Tick(float DeltaTime) {
                 }
 
                 if (BlockHitResult != nullptr && NowSelectedPathLocatorActor == nullptr && PointType.IsValid()) {
-                    FString Name = TEXT("PathLocator");
-                    Name.AppendInt(PointType.GetValue());
-                    NowSelectedPathLocatorActor = TwinLinkActorEx::SpawnChildActor(this, PathLocatorBps[PointType.GetEnumValue()], ToCStr(Name));
+                    NowSelectedPathLocatorActor = GetOrSpawnActor(PointType.GetEnumValue());
                     NowSelectedPathLocatorActor->SetActorLocation(BlockHitResult->Location);
-                    PathLocatorActors.Add(PointType.GetEnumValue(), NowSelectedPathLocatorActor);
                     SetNowSelectedPointType(static_cast<NavSystemPathPointType>(PointType.GetValue() + 1));
                 }
                 if (NowSelectedPathLocatorActor) {
@@ -252,22 +257,25 @@ std::optional<FVector> ATwinLinkNavSystemPathFinderAnyLocation::GetPathLocation(
     return std::nullopt;
 }
 
+void ATwinLinkNavSystemPathFinderAnyLocation::SetPathLocation(NavSystemPathPointType Type, FVector Location) {
+    if (const auto Actor = GetOrSpawnActor(Type)) {
+        const auto bIsChanged = Actor->UpdateLocation(FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld()), Location);
+        if (bIsChanged && IsReadyPathFinding())
+            OnReadyPathFinding.Broadcast();
+    }
+}
+
+ATwinLinkNavSystemPathLocator* ATwinLinkNavSystemPathFinderAnyLocation::GetOrSpawnActor(NavSystemPathPointType Type) {
+    if (PathLocatorActors.Contains(Type))
+        return PathLocatorActors[Type];
+
+    FString Name = TEXT("PathLocator");
+    Name.AppendInt(static_cast<int>(Type));
+    auto Ret = TwinLinkActorEx::SpawnChildActor(this, PathLocatorBps[Type], ToCStr(Name));
+    PathLocatorActors.Add(Type, NowSelectedPathLocatorActor);
+    return Ret;
+}
+
 ATwinLinkNavSystemPathFinderListSelect::ATwinLinkNavSystemPathFinderListSelect()
-{
-}
-
-void ATwinLinkNavSystemPathFinderListSelect::BeginPlay()
-{
-    Super::BeginPlay();
-}
-
-void ATwinLinkNavSystemPathFinderListSelect::Tick(float DeltaTime)
-{
-    Super::Tick(DeltaTime);
-}
-
-bool ATwinLinkNavSystemPathFinderListSelect::IsReadyPathFinding() const
-{
-    return Super::IsReadyPathFinding();
-}
+{}
 

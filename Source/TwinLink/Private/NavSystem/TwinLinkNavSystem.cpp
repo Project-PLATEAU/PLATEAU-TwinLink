@@ -88,10 +88,6 @@ void ATwinLinkNavSystem::BeginPlay() {
         PathDrawers.Add(Child);
         });
 
-
-    // Input設定を行う
-    SetupInput();
-
     ChangeMode(NavSystemMode::FindPathAnyPoint, true);
 }
 
@@ -154,14 +150,4 @@ void ATwinLinkNavSystem::OnReadyPathFinding() {
             PathFindInfo = Tmp;
         }
     }
-}
-
-void ATwinLinkNavSystem::SetupInput() {
-    // PlayerControllerを取得する
-    APlayerController* controller = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-
-    // 入力を有効にする
-    EnableInput(controller);
-    // マウスカーソルオンにする
-    controller->SetShowMouseCursor(true);
 }

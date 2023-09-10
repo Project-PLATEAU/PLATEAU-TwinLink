@@ -22,26 +22,33 @@ NavSystemPathLocatorState ATwinLinkNavSystemPathLocator::GetNowState() const {
     return State;
 }
 
-void ATwinLinkNavSystemPathLocator::UpdateLocation(const UNavigationSystemV1* NavSys, const FHitResult& HitResult) {
+bool ATwinLinkNavSystemPathLocator::UpdateLocation(const UNavigationSystemV1* NavSys, const FHitResult& HitResult) {
     SetActorLocation(HitResult.Location);
 
     // 壁についている
     if (FVector::DotProduct(HitResult.Normal, FVector::UpVector) < FMath::Cos(FMath::DegreesToRadians(70))) {
         State = NavSystemPathLocatorState::OnWall;
-        return;
+        return false;
     }
 
+    return UpdateLocation(NavSys, HitResult.Location);
+}
+
+bool ATwinLinkNavSystemPathLocator::UpdateLocation(const UNavigationSystemV1* NavSys, const FVector& Location) {
+    SetActorLocation(Location);
+
     // ナビメッシュの範囲内かどうか
-    auto Pos = HitResult.Location;
+    auto Pos = Location;
     Pos.Z = 0.f;
     FNavLocation OutStart;
     if (NavSys->ProjectPointToNavigation(Pos, OutStart, FVector::One() * 100) == false) {
         State = NavSystemPathLocatorState::OutsideNavMesh;
-        return;
+        return false;
     }
-    OutStart.Location.Z = HitResult.Location.Z;
+    OutStart.Location.Z = Location.Z;
     State = NavSystemPathLocatorState::Valid;
     LastValidLocation = OutStart.Location;
+    return true;
 }
 
 void ATwinLinkNavSystemPathLocator::Select() {
