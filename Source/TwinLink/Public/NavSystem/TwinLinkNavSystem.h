@@ -49,7 +49,7 @@ public:
      * @brief : 検索されたパスの高さチェックの間隔
      */
     float GetPathFindingHeightCheckInterval() const {
-        return PathFindingHeightCheckInterval;
+        return RuntimeParam->PathPointInterval;
     }
 
     /*
@@ -116,10 +116,6 @@ private:
      // 現在どのポイントを編集しているかどうか
     UPROPERTY(EditAnywhere, Category = TwinLink_Path)
         NavSystemMode NowSelectedMode = NavSystemMode::FindPathAnyPoint;
-
-    // パスの高さチェックを行う間隔
-    UPROPERTY(EditAnywhere, Category = TwinLink_Path)
-        float PathFindingHeightCheckInterval = 1000;
 
     // パス描画のアクター
     UPROPERTY(EditAnywhere, Category = TwinLink_Path)

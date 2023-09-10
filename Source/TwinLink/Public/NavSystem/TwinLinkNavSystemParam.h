@@ -17,6 +17,12 @@ public:
     UPROPERTY(EditAnywhere, meta = (Comment = "ワールド座標における1[m]のサイズ"), Category = "Path")
         float WorldUnitMeter = 100.f;
 
-    UPROPERTY(EditAnywhere, meta=(Comment="利用者の歩く速度[km/h]"), Category="Path")
+    UPROPERTY(EditAnywhere, meta = (Comment = "利用者の歩く速度[km/h]"), Category = "Path")
         float WalkSpeedKmPerH = 10.f;
+
+    UPROPERTY(EditAnywhere, meta = (Comment = "利用者の車の速度[km/h]"), Category = "Path")
+        float CarSpeedKmPerH = 10.f;
+
+    UPROPERTY(EditAnywhere, meta = (Comment = "パスの点線描画の間隔"), Category = "Path")
+        float PathPointInterval = 1000;
 };
