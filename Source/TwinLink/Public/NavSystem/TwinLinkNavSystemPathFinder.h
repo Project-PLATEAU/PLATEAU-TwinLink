@@ -113,3 +113,35 @@ private:
     UPROPERTY(EditAnywhere, Category = TwinLink_Path)
         FVector2D NowSelectedPathLocatorActorScreenOffset = FVector2D::Zero();
 };
+
+
+
+
+UCLASS()
+class TWINLINK_API ATwinLinkNavSystemPathFinderListSelect : public ATwinLinkNavSystemPathFinder {
+    GENERATED_BODY()
+
+public:
+
+
+    // Sets default values for this actor's properties
+    ATwinLinkNavSystemPathFinderListSelect();
+
+protected:
+    // Called when the game starts or when spawned
+    virtual void BeginPlay() override;
+
+public:
+    // Called every frame
+    virtual void Tick(float DeltaTime) override;
+    /*
+     * @brief : パス検索の準備ができている(目的地が正しく選択されている)
+     */
+    virtual bool IsReadyPathFinding() const override;
+
+private:
+    struct DebubBuildingInfo
+    {
+        
+    };
+};
