@@ -76,6 +76,28 @@ public:
      */
     UFUNCTION(BlueprintCallable)
         FTwinLinkNavSystemFindPathUiInfo GetDrawMoveTimeUiInfo(const FBox2D& ScreenRange) const;
+
+    /*
+     * @brief : 現在のパス検索モードアクタ
+     */
+    UFUNCTION(BlueprintCallable)
+        ATwinLinkNavSystemPathFinder* GetNowPathFinder();
+
+    UFUNCTION(BlueprintCallable)
+    const FTwinLinkNavSystemBuildingInfo& GetBaseBuilding() const {
+        return BaseBuilding;
+    }
+
+    UFUNCTION(BlueprintCallable)
+    void SetBaseBuilding(const FTwinLinkNavSystemBuildingInfo& BaseBuilding) {
+        this->BaseBuilding = BaseBuilding;
+    }
+
+    /*
+     * @brief : レベルに登録されている建物リストを取得する
+     */
+    UFUNCTION(BlueprintCallable)
+        TArray<FTwinLinkNavSystemBuildingInfo> GetBuildingInfo() const;
 private:
     /*
      * @brief : PathFinderからパス検索準備完了時のコールバックとして登録する
@@ -106,14 +128,11 @@ private:
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
         FBox DemCollisionAabb;
 
-    // パス描画のBP
+    // 開始地点の建物
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
-        TSubclassOf<AUTwinLinkNavSystemPathDrawer> PathDrawerBp;
+        FTwinLinkNavSystemBuildingInfo BaseBuilding;
 
-    // パス探索のBP
-    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
-        TMap<NavSystemMode, TSubclassOf<ATwinLinkNavSystemPathFinder>> PathFinderBp;
-
+private:
     // -----------------------
     // ランタイム系
     // -----------------------

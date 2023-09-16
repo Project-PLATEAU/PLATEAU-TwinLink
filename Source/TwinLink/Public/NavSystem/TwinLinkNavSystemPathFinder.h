@@ -25,18 +25,23 @@ public:
     /*
      * @brief : パス検索を開始する
      */
+    UFUNCTION(BlueprintCallable)
     virtual bool RequestStartPathFinding(FTwinLinkNavSystemFindPathInfo& Out);
+
+    UFUNCTION(BlueprintCallable)
+    bool TryGetPathLocation(NavSystemPathPointType Type, FVector& Out);
 
     /*
      * @brief : 指定したポイントの位置を取得
      */
-    virtual std::optional<FVector> GetPathLocation(NavSystemPathPointTypeT Type) const {
+    virtual std::optional<FVector> GetPathLocation(NavSystemPathPointType Type) const {
         return std::nullopt;
     }
 
     /*
      * @brief : 指定したポイントの位置を設定
      */
+    UFUNCTION(BlueprintCallable)
     virtual void SetPathLocation(NavSystemPathPointType Type, FVector Location) {}
 
     /*
@@ -46,7 +51,7 @@ public:
         return false;
     }
 
-    // パス検索が可能になったときに呼ばれる
+    // パス検索が可能になったときに呼ばれる       
     OnReadyPathFindingDelegate OnReadyPathFinding;
 protected:
     // Called when the game starts or when spawned
@@ -97,7 +102,7 @@ public:
     /*
      * @brief : 指定したポイントの位置を取得
      */
-    virtual std::optional<FVector> GetPathLocation(NavSystemPathPointTypeT Type) const override;
+    virtual std::optional<FVector> GetPathLocation(NavSystemPathPointType Type) const override;
 
     /*
      * @brief : 指定したポイントの位置を設定
@@ -140,5 +145,10 @@ public:
 
 public:
     // Called every frame
-    virtual void Tick(float DeltaTime) override{}
+    virtual void Tick(float DeltaTime) override;
+
+private:
+    // 現在選択しているアクターのスクリーン位置オフセット
+    UPROPERTY(EditAnywhere, Category = TwinLink_Test)
+        bool bDebugIsLocationMovable = false;
 };

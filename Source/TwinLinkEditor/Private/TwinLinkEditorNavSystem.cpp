@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
 #include "TwinLinkEditorNavSystem.h"
@@ -350,9 +350,15 @@ void UTwinLinkEditorNavSystem::MakeNavMesh(UEditorActorSubsystem* Editor, UWorld
 
     checkf(Param != nullptr, TEXT("Paramがnullです"));
     if (!Param) {
-
         return;
     }
+
+    checkf(Param->NavSystemBp != nullptr, TEXT("UTwinLinkEditorNavSystemParamのNavSystemBpがnullです"));
+    if(!Param->NavSystemBp)
+    {
+        return;
+    }
+
 
     // NavSystemActorが存在しない場合は作成する
     TArray<AActor*> NavSystemActors;
@@ -394,6 +400,11 @@ void UTwinLinkEditorNavSystem::MakeNavMesh(UEditorActorSubsystem* Editor, UWorld
         if (UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(World)) {
             NavSys->OnNavigationBoundsUpdated(Volume);
             NavSys->Build();
+            if(auto NavData = NavSys->GetMainNavData())
+            {
+               // for (auto& DataSet : NavSys->NavDataSet)
+               //     DataSet->RebuildAll();
+            }
         }
     }
 }

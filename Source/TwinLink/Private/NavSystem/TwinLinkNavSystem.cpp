@@ -3,6 +3,7 @@
 #include <numeric>
 
 #include "NavigationSystem.h"
+#include "PLATEAUInstancedCityModel.h"
 #include "TwinLinkActorEx.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
@@ -75,7 +76,7 @@ void ATwinLinkNavSystem::DebugDraw() {
         }
     }
 
-
+    // NavSys->NavDataSet[0]->
 #endif
 }
 
@@ -83,7 +84,7 @@ void ATwinLinkNavSystem::DebugDraw() {
 void ATwinLinkNavSystem::BeginPlay() {
     Super::BeginPlay();
 
-    TwinLinkActorEx::SpawnChildActor(this, PathDrawerBp, TEXT("PathDrawerActor"));
+    TwinLinkActorEx::SpawnChildActor(this, RuntimeParam->PathDrawerBp, TEXT("PathDrawerActor"));
     ForeachChildActor<AUTwinLinkNavSystemPathDrawer>(this, [&](AUTwinLinkNavSystemPathDrawer* Child) {
         PathDrawers.Add(Child);
         });
@@ -96,8 +97,19 @@ void ATwinLinkNavSystem::ChangeMode(NavSystemMode Mode, bool bForce) {
         return;
     if (NowPathFinder)
         NowPathFinder->Destroy();
-    if (PathFinderBp.Contains(Mode)) {
-        NowPathFinder = TwinLinkActorEx::SpawnChildActor(this, PathFinderBp[Mode], TEXT("PathFinder"));
+
+    if (NavSystemModeT(Mode).IsValid() == false) {
+        for (auto Drawer : PathDrawers)
+            Drawer->Destroy();
+        PathDrawers.RemoveAll([](auto& a) { return true; });
+        PathFindInfo = std::nullopt;
+        return;
+    }
+
+    if (RuntimeParam->PathFinderBp.Contains(Mode)) {
+        FString Name = TEXT("PathFinder");
+        Name.AppendInt(static_cast<int>(Mode));
+        NowPathFinder = TwinLinkActorEx::SpawnChildActor(this, RuntimeParam->PathFinderBp[Mode], TCHAR_TO_WCHAR(*Name));
         NowPathFinder->OnReadyPathFinding.AddUObject(this, &ATwinLinkNavSystem::OnReadyPathFinding);
     }
 }
@@ -141,6 +153,67 @@ FTwinLinkNavSystemFindPathUiInfo ATwinLinkNavSystem::GetDrawMoveTimeUiInfo(const
         }
     }
     return FTwinLinkNavSystemFindPathUiInfo();
+}
+
+ATwinLinkNavSystemPathFinder* ATwinLinkNavSystem::GetNowPathFinder() {
+    return NowPathFinder;
+}
+
+TArray<FTwinLinkNavSystemBuildingInfo> ATwinLinkNavSystem::GetBuildingInfo() const {
+
+    TArray<FTwinLinkNavSystemBuildingInfo> Ret;
+    const UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+    if (!NavSys)
+        return Ret;
+    TArray<AActor*> AllActors;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), APLATEAUInstancedCityModel::StaticClass(), AllActors);
+
+    for (auto Actor : AllActors) {
+        const auto RootComp = Actor->GetRootComponent();
+        if (!RootComp)
+            continue;
+        for (auto Child : RootComp->GetAttachChildren()) {
+            FString MeshName;
+            Child->GetName(MeshName);
+            // とりあえずBldg以下をすべて返す
+            if (!MeshName.Contains("bldg"))
+                continue;
+
+            for (auto Lod : Child->GetAttachChildren()) {
+                FString LodName;
+                Lod->GetName(LodName);
+                if (!LodName.StartsWith("LOD2"))
+                    continue;
+
+                TArray<USceneComponent*> ChildComponents;
+                Lod->GetChildrenComponents(true, ChildComponents);
+                for (const auto ChildComp : ChildComponents) {
+                    const auto StaMeshComp = Cast<UStaticMeshComponent>(ChildComp);
+                    if (!StaMeshComp)
+                        continue;
+                    StaMeshComp->SetCanEverAffectNavigation(true);
+                    const auto StaMesh = StaMeshComp->GetStaticMesh();
+                    if (!StaMesh)
+                        continue;
+                    auto Bounds = StaMesh->GetBounds();
+                    auto Bb = Bounds.GetBox();
+                    // ナビメッシュの範囲内かどうか
+                    auto Pos = Bb.GetCenter();
+                    Pos.Z = 0.f;
+                    auto Size = Bb.GetSize();
+                    FNavLocation OutPos;
+                    if (NavSys->ProjectPointToNavigation(Pos, OutPos, Size + FVector::One() * 1000)) {
+                        FTwinLinkNavSystemBuildingInfo Elem;
+                        Elem.Name = MeshName;
+                        Elem.NavMeshEntranceLocation = OutPos;
+                        Elem.NavMeshEntranceLocation.Z = Bb.GetCenter().Z;
+                        Ret.Add(Elem);
+                    }
+                }
+            }
+        }
+    }
+    return Ret;
 }
 
 void ATwinLinkNavSystem::OnReadyPathFinding() {

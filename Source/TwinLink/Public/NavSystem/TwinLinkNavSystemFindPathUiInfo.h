@@ -38,3 +38,16 @@ public:
         , ScreenPos(Screen) {
     }
 };
+
+USTRUCT(BlueprintType)
+struct FTwinLinkNavSystemBuildingInfo {
+    GENERATED_BODY()
+public:
+    // 有効な情報かどうか
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Base")
+        FString Name;
+
+    // 入口(ナビメッシュ状のポイント)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Base")
+        FVector NavMeshEntranceLocation;
+};

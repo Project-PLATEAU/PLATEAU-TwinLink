@@ -3,7 +3,6 @@
 #include "TwinLink.h"
 
 #include "Interfaces/IPluginManager.h"
-
 void FTwinLinkModule::StartupModule() {
     bAdminMode = false;
 }
@@ -54,6 +53,11 @@ void UTwinLinkBlueprintLibrary::TwinLinkSetFacilityModel(AActor* Model) {
 
 void UTwinLinkBlueprintLibrary::TwinLinkSetCityModel(AActor* Model) {
     FTwinLinkModule::Get().SetCityModel(Model);
+}
+
+ESlateVisibility UTwinLinkBlueprintLibrary::AsSlateVisibility(bool visibility)
+{
+    return visibility ? ESlateVisibility::Visible : ESlateVisibility::Hidden;
 }
 
 IMPLEMENT_MODULE(FTwinLinkModule, TwinLink)

@@ -6,6 +6,7 @@
 #include "Engine/DataAsset.h"
 #include "TwinLinkNavSystemParam.generated.h"
 
+class ATwinLinkNavSystemPathFinder;
 /**
  *
  */
@@ -25,4 +26,10 @@ public:
 
     UPROPERTY(EditAnywhere, meta = (Comment = "パスの点線描画の間隔"), Category = "Path")
         float PathPointInterval = 1000;
+
+    UPROPERTY(EditAnywhere, meta= (Comment = "パス描画アクターのBP"), Category = "Path")
+        TSubclassOf<AUTwinLinkNavSystemPathDrawer> PathDrawerBp;
+
+    UPROPERTY(EditAnywhere, meta = (Comment = "パス探索のBPアクターのBP"), Category = "Path")
+        TMap<NavSystemMode, TSubclassOf<ATwinLinkNavSystemPathFinder>> PathFinderBp;
 };

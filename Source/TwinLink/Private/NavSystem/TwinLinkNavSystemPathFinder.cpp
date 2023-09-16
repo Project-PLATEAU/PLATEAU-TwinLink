@@ -74,6 +74,16 @@ bool ATwinLinkNavSystemPathFinder::RequestStartPathFinding(FTwinLinkNavSystemFin
     return true;
 }
 
+bool ATwinLinkNavSystemPathFinder::TryGetPathLocation(NavSystemPathPointType Type, FVector& Out)
+{
+    auto Ret = GetPathLocation(Type);
+    if (Ret.has_value() == false)
+        return false;
+
+    Out = *Ret;
+    return true;
+}
+
 // Called when the game starts or when spawned
 void ATwinLinkNavSystemPathFinder::BeginPlay() {
     Super::BeginPlay();
@@ -169,8 +179,6 @@ void ATwinLinkNavSystemPathFinderAnyLocation::Tick(float DeltaTime) {
     if (MousePos.has_value() == false)
         return;
     if (PlayerController->WasInputKeyJustPressed(EKeys::LeftMouseButton)) {
-        UKismetSystemLibrary::PrintString(this, TEXT("KeyDown"), true, true, FColor::Cyan, 10.0f, TEXT("None"));
-
         auto Ray = ::GetMouseCursorWorldVector(PlayerController, *MousePos, DemCollisionAabb);
         if (Ray.has_value()) {
             TArray<FHitResult> HitResults;
@@ -197,7 +205,7 @@ void ATwinLinkNavSystemPathFinderAnyLocation::Tick(float DeltaTime) {
 
                 if (BlockHitResult != nullptr && NowSelectedPathLocatorActor == nullptr && PointType.IsValid()) {
                     NowSelectedPathLocatorActor = GetOrSpawnActor(PointType.GetEnumValue());
-                    NowSelectedPathLocatorActor->SetActorLocation(BlockHitResult->Location);
+                    NowSelectedPathLocatorActor->UpdateLocation(NavSys, *BlockHitResult);
                     SetNowSelectedPointType(static_cast<NavSystemPathPointType>(PointType.GetValue() + 1));
                 }
                 if (NowSelectedPathLocatorActor) {
@@ -208,7 +216,6 @@ void ATwinLinkNavSystemPathFinderAnyLocation::Tick(float DeltaTime) {
     }
     // 離した時
     else if (PlayerController->WasInputKeyJustReleased(EKeys::LeftMouseButton)) {
-        UKismetSystemLibrary::PrintString(this, TEXT("KeyUp"), true, true, FColor::Cyan, 1.0f, TEXT("None"));
         if (NowSelectedPathLocatorActor) {
             NowSelectedPathLocatorActor->UnSelect();
 
@@ -217,18 +224,15 @@ void ATwinLinkNavSystemPathFinderAnyLocation::Tick(float DeltaTime) {
         }
         NowSelectedPathLocatorActor = nullptr;
     }
+    // ドラッグ中
     else if (PlayerController->IsInputKeyDown(EKeys::LeftMouseButton)) {
-
-        UKismetSystemLibrary::PrintString(this, TEXT("Drag"), true, true, FColor::Cyan, 0.f, TEXT("None"));
         if (NowSelectedPathLocatorActor) {
-            UKismetSystemLibrary::PrintString(this, TEXT("MoveActor"), true, true, FColor::Cyan, 0.f, TEXT("None"));
             const auto ScreenPos = *MousePos + NowSelectedPathLocatorActorScreenOffset;
             const auto Ray = ::GetMouseCursorWorldVector(PlayerController, ScreenPos, DemCollisionAabb);
             if (Ray.has_value()) {
                 TArray<FHitResult> HitResults;
                 if (GetWorld()->LineTraceMultiByChannel(HitResults, Ray->Min, Ray->Max, ECollisionChannel::ECC_WorldStatic)) {
                     for (auto& HitResult : HitResults) {
-                        UKismetSystemLibrary::PrintString(this, TEXT("MoveHit"), true, true, FColor::Cyan, 0.f, TEXT("None"));
                         UKismetSystemLibrary::PrintString(this, HitResult.GetActor()->GetActorLabel(), true, true, FColor::Cyan, 1.0f, TEXT("None"));
                         if (HitResult.IsValidBlockingHit() == false)
                             continue;
@@ -249,9 +253,9 @@ bool ATwinLinkNavSystemPathFinderAnyLocation::IsReadyPathFinding() const {
     return GetPathLocation(NavSystemPathPointType::Start).has_value() && GetPathLocation(NavSystemPathPointType::Dest).has_value();
 }
 
-std::optional<FVector> ATwinLinkNavSystemPathFinderAnyLocation::GetPathLocation(NavSystemPathPointTypeT Type) const {
-    if (PathLocatorActors.Contains(Type.GetEnumValue())) {
-        if (const auto Actor = PathLocatorActors[Type.GetEnumValue()])
+std::optional<FVector> ATwinLinkNavSystemPathFinderAnyLocation::GetPathLocation(NavSystemPathPointType Type) const {
+    if (PathLocatorActors.Contains(Type)) {
+        if (const auto Actor = PathLocatorActors[Type])
             return Actor->GetLastValidLocation();
     }
     return std::nullopt;
@@ -272,10 +276,17 @@ ATwinLinkNavSystemPathLocator* ATwinLinkNavSystemPathFinderAnyLocation::GetOrSpa
     FString Name = TEXT("PathLocator");
     Name.AppendInt(static_cast<int>(Type));
     auto Ret = TwinLinkActorEx::SpawnChildActor(this, PathLocatorBps[Type], ToCStr(Name));
-    PathLocatorActors.Add(Type, NowSelectedPathLocatorActor);
+    PathLocatorActors.Add(Type, Ret);
     return Ret;
 }
 
 ATwinLinkNavSystemPathFinderListSelect::ATwinLinkNavSystemPathFinderListSelect()
 {}
+
+void ATwinLinkNavSystemPathFinderListSelect::Tick(float DeltaTime)
+{
+    if (bDebugIsLocationMovable == false)
+        return;
+    Super::Tick(DeltaTime);
+}
 
