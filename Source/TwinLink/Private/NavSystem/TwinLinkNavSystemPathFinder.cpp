@@ -247,9 +247,6 @@ void ATwinLinkNavSystemPathFinderAnyLocation::Tick(float DeltaTime) {
 }
 
 bool ATwinLinkNavSystemPathFinderAnyLocation::IsReadyPathFinding() const {
-    if (GetNextCreatePointType().IsValid())
-        return false;
-
     return GetPathLocation(NavSystemPathPointType::Start).has_value() && GetPathLocation(NavSystemPathPointType::Dest).has_value();
 }
 

@@ -1,14 +1,15 @@
 #include "NavSystem/TwinLinkNavSystem.h"
 
+#include <array>
 #include <numeric>
 
 #include "NavigationSystem.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "TwinLinkActorEx.h"
+#include "Camera/CameraComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/InputComponent.h" 
-#include "NavSystem/TwinLinkNavSystemPathFinder.h"
 #include "NavSystem/TwinLinkNavSystemPathFinder.h"
 
 namespace {
@@ -195,6 +196,8 @@ TArray<FTwinLinkNavSystemBuildingInfo> ATwinLinkNavSystem::GetBuildingInfo() con
                     const auto StaMesh = StaMeshComp->GetStaticMesh();
                     if (!StaMesh)
                         continue;
+                    FString Name;
+                    Lod->GetName(Name);
                     auto Bounds = StaMesh->GetBounds();
                     auto Bb = Bounds.GetBox();
                     // ナビメッシュの範囲内かどうか
