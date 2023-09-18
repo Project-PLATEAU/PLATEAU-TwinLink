@@ -6,7 +6,7 @@ public:
     static auto SpawnChildActor(AActor* Self, const TSubclassOf<T>& Class, const TCHAR* Name) -> T* {
         FActorSpawnParameters Params;
         Params.Owner = Self;
-        Params.Name = FName(Name);
+        Params.Name = MakeUniqueObjectName(Self->GetWorld(), Class, FName(Name));
         const auto Ret = Self->GetWorld()->SpawnActor<T>(Class, Params);
         if (!Ret)
             return Ret;

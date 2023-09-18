@@ -98,6 +98,9 @@ public:
      */
     UFUNCTION(BlueprintCallable)
         TArray<FTwinLinkNavSystemBuildingInfo> GetBuildingInfo() const;
+
+    UFUNCTION(BlueprintCallable)
+        void Clear();
 private:
     /*
      * @brief : PathFinderからパス検索準備完了時のコールバックとして登録する
@@ -139,7 +142,7 @@ private:
 
     // 現在どのポイントを編集しているかどうか
     UPROPERTY(EditAnywhere, Category = TwinLink_Path)
-        NavSystemMode NowSelectedMode = NavSystemMode::FindPathAnyPoint;
+        NavSystemMode NowSelectedMode = NavSystemMode::Undefined;
 
     // パス描画のアクター
     UPROPERTY(EditAnywhere, Category = TwinLink_Path)

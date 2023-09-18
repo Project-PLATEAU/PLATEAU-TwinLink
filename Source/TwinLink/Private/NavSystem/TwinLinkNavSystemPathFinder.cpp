@@ -266,6 +266,12 @@ void ATwinLinkNavSystemPathFinderAnyLocation::SetPathLocation(NavSystemPathPoint
     }
 }
 
+void ATwinLinkNavSystemPathFinderAnyLocation::Clear()
+{
+    for (auto& Item : PathLocatorActors)
+        Item.Value->Destroy();
+}
+
 ATwinLinkNavSystemPathLocator* ATwinLinkNavSystemPathFinderAnyLocation::GetOrSpawnActor(NavSystemPathPointType Type) {
     if (PathLocatorActors.Contains(Type))
         return PathLocatorActors[Type];

@@ -84,28 +84,24 @@ void ATwinLinkNavSystem::DebugDraw() {
 
 void ATwinLinkNavSystem::BeginPlay() {
     Super::BeginPlay();
-
-    TwinLinkActorEx::SpawnChildActor(this, RuntimeParam->PathDrawerBp, TEXT("PathDrawerActor"));
-    ForeachChildActor<AUTwinLinkNavSystemPathDrawer>(this, [&](AUTwinLinkNavSystemPathDrawer* Child) {
-        PathDrawers.Add(Child);
-        });
-
-    ChangeMode(NavSystemMode::FindPathAnyPoint, true);
 }
 
 void ATwinLinkNavSystem::ChangeMode(NavSystemMode Mode, bool bForce) {
     if (NowSelectedMode == Mode && !bForce)
         return;
-    if (NowPathFinder)
-        NowPathFinder->Destroy();
 
-    if (NavSystemModeT(Mode).IsValid() == false) {
-        for (auto Drawer : PathDrawers)
-            Drawer->Destroy();
-        PathDrawers.RemoveAll([](auto& a) { return true; });
-        PathFindInfo = std::nullopt;
+    // 既存のDrawerクラスなどを削除する
+    Clear();
+
+    NowSelectedMode = Mode;
+    if (NavSystemModeT(NowSelectedMode).IsValid() == false)
         return;
-    }
+
+    // パス描画クラスを再生成する
+    TwinLinkActorEx::SpawnChildActor(this, RuntimeParam->PathDrawerBp, TEXT("PathDrawerActor"));
+    ForeachChildActor<AUTwinLinkNavSystemPathDrawer>(this, [&](AUTwinLinkNavSystemPathDrawer* Child) {
+        PathDrawers.Add(Child);
+        });
 
     if (RuntimeParam->PathFinderBp.Contains(Mode)) {
         FString Name = TEXT("PathFinder");
@@ -217,6 +213,20 @@ TArray<FTwinLinkNavSystemBuildingInfo> ATwinLinkNavSystem::GetBuildingInfo() con
         }
     }
     return Ret;
+}
+
+void ATwinLinkNavSystem::Clear() {
+    if (NowPathFinder) {
+        NowPathFinder->Clear();
+        NowPathFinder->Destroy();
+    }
+    NowPathFinder = nullptr;
+    // 既存のパス描画クラスを削除
+    for (const auto Drawer : PathDrawers)
+        Drawer->Destroy();
+    PathDrawers.RemoveAll([](auto& a) { return true; });
+    PathFindInfo = std::nullopt;
+    NowSelectedMode = NavSystemMode::Undefined;
 }
 
 void ATwinLinkNavSystem::OnReadyPathFinding() {

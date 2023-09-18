@@ -51,6 +51,11 @@ public:
         return false;
     }
 
+    /*
+     * @brief : 状態の初期化
+     */
+    virtual void Clear(){}
+
     // パス検索が可能になったときに呼ばれる       
     OnReadyPathFindingDelegate OnReadyPathFinding;
 protected:
@@ -108,6 +113,11 @@ public:
      * @brief : 指定したポイントの位置を設定
      */
     virtual void SetPathLocation(NavSystemPathPointType Type, FVector Location) override;
+
+    /*
+     * @brief : 状態の初期化
+     */
+    virtual void Clear() override;
 
 private:
     /*
