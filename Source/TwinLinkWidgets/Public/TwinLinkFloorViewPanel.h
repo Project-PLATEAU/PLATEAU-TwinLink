@@ -18,10 +18,15 @@ class TWINLINKWIDGETS_API UTwinLinkFloorViewPanel : public UTwinLinkWidgetBase {
 public:
     /**
      * @brief 階層表示パネルセットアップ
-     * @param CityModel
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
         void SetupTwinLinkFloorView();
+
+    /**
+     * @brief 階層表示パネル後始末
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        void FinalizeTwinLinkFloorView();
 
     /**
      * @brief 階層表示パネル要素選択時処理
