@@ -41,7 +41,7 @@ public:
 
 private:
     /** 都市モデルの階層コンポーネントのコレクション **/
-    TMap<FString, TObjectPtr<UPLATEAUCityObjectGroup>> LinkComponents;
+    TMap<FString, TWeakObjectPtr<UPLATEAUCityObjectGroup>> LinkComponents;
 
     /** 階層表示パネル要素のコレクション **/
     TMap<FString, TObjectPtr<UUserWidget>> ElementWidgets;
