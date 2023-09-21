@@ -7,16 +7,19 @@
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "NavigationData.h"
+#include "TwinLinkNavSystemCamera.h"
 #include "TwinLinkNavSystemDef.h"
 #include "TwinLinkNavSystemFindPathInfo.h"
 #include "TwinLinkNavSystemPathDrawer.h"
 #include "TwinLinkNavSystemParam.h"
 #include "TwinLinkNavSystemFindPathUiInfo.h"
 #include "TwinLinkNavSystem.generated.h"
+class UCameraComponent;
 class ATwinLinkNavSystemPathFinder;
 class APLATEAUInstancedCityModel;
 class ANavMeshBoundsVolume;
-
+class ATwinLinkWorldViewer;
+class APlayerCameraManager;
 /*
  * @brief : パス検索などランタイム中のナビメッシュ関係を管理するクラス.
  */
@@ -25,6 +28,26 @@ class TWINLINK_API ATwinLinkNavSystem : public AActor {
     GENERATED_BODY()
 public:
     ATwinLinkNavSystem();
+
+    /*
+     * @brief : Worldに配置されているATwinLinkNavSystemをとってくる. 毎回同じこと書くの面倒なので
+     */
+    static ATwinLinkNavSystem* GetInstance(const UWorld* World);
+
+    /*
+     * @brief : Worldに配置されているATwinLinkWorldViewerをとってくる. 毎回同じこと書くの面倒なので
+     */
+    static ATwinLinkWorldViewer* GetWorldViewer(const UWorld* World);
+
+    /*
+     * @brief : Worldに配置されているAPlayerCameraManagerをとってくる. 毎回同じこと書くの面倒なので
+     */
+    static APlayerCameraManager* GetPlayerCameraManager(const UWorld* World);
+
+    /*
+     * @brief : Worldに配置されているATwinLinkNavSystemCameraをとってくる. 毎回同じこと書くの面倒なので
+     */
+    static ATwinLinkNavSystemCamera* GetNavSystemCamera(const UWorld* World);
 
     virtual void Tick(float DeltaSeconds) override;
 
@@ -84,12 +107,12 @@ public:
         ATwinLinkNavSystemPathFinder* GetNowPathFinder();
 
     UFUNCTION(BlueprintCallable)
-    const FTwinLinkNavSystemBuildingInfo& GetBaseBuilding() const {
+        const FTwinLinkNavSystemBuildingInfo& GetBaseBuilding() const {
         return BaseBuilding;
     }
 
     UFUNCTION(BlueprintCallable)
-    void SetBaseBuilding(const FTwinLinkNavSystemBuildingInfo& BaseBuilding) {
+        void SetBaseBuilding(const FTwinLinkNavSystemBuildingInfo& BaseBuilding) {
         this->BaseBuilding = BaseBuilding;
     }
 

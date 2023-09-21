@@ -11,6 +11,9 @@
 #include <NavSystem/TwinLinkNavSystemPathLocator.h>
 
 #include "TwinLinkActorEx.h"
+#include "TwinLinkMathEx.h"
+#include "TwinLinkWorldViewer.h"
+#include "Camera/CameraComponent.h"
 #include "NavSystem/TwinLinkNavSystem.h"
 namespace {
 
@@ -74,14 +77,52 @@ bool ATwinLinkNavSystemPathFinder::RequestStartPathFinding(FTwinLinkNavSystemFin
     return true;
 }
 
-bool ATwinLinkNavSystemPathFinder::TryGetPathLocation(NavSystemPathPointType Type, FVector& Out)
-{
+bool ATwinLinkNavSystemPathFinder::TryGetPathLocation(NavSystemPathPointType Type, FVector& Out) const {
     auto Ret = GetPathLocation(Type);
     if (Ret.has_value() == false)
         return false;
-
     Out = *Ret;
     return true;
+}
+
+bool ATwinLinkNavSystemPathFinder::TryGetCameraLocationAndLookAt(FVector& OutLocation, FVector& OutLookAt) const
+{
+    FVector Start;
+    const auto HasStart = TryGetPathLocation(NavSystemPathPointType::Start, Start);
+    FVector Dest;
+    const auto HasDest = TryGetPathLocation(NavSystemPathPointType::Dest, Dest);
+
+    const auto NavSystem = ATwinLinkNavSystem::GetInstance(GetWorld());
+    if (!NavSystem)
+        return false;
+    const auto Param = NavSystem->GetRuntimeParam();
+    if (!Param)
+        return false;
+    if (HasStart && HasDest) {
+        const auto Center = (Start + Dest) * 0.5f;
+        // Start -> Destの法線を求める
+        auto Dir = (Dest - Start);
+        Dir = FVector(Dir.Y, -Dir.X, 0).GetSafeNormal();
+        double PhiSi, PhiCo;
+        FMath::SinCos(&PhiSi, &PhiCo, FMath::DegreesToRadians(Param->RouteGuideStartCameraRotDist.Y));
+        const auto R = Param->RouteGuideStartCameraRotDist.Z;
+        OutLocation = Center + R * (PhiCo * Dir + PhiSi * FVector::UpVector);
+        OutLookAt = Center;
+        return true;
+    }
+
+    if (HasStart) {
+        OutLocation = Start + TwinLinkMathEx::PolarDegree2Cartesian(Param->RouteGuideStartCameraRotDist);
+        OutLookAt = Start;
+        return true;
+    }
+
+    if (HasDest) {
+        OutLocation = Dest + TwinLinkMathEx::PolarDegree2Cartesian(Param->RouteGuideStartCameraRotDist);
+        OutLookAt = Dest;
+        return true;
+    }
+    return false;
 }
 
 // Called when the game starts or when spawned
@@ -266,8 +307,7 @@ void ATwinLinkNavSystemPathFinderAnyLocation::SetPathLocation(NavSystemPathPoint
     }
 }
 
-void ATwinLinkNavSystemPathFinderAnyLocation::Clear()
-{
+void ATwinLinkNavSystemPathFinderAnyLocation::Clear() {
     for (auto& Item : PathLocatorActors)
         Item.Value->Destroy();
 }
@@ -283,13 +323,16 @@ ATwinLinkNavSystemPathLocator* ATwinLinkNavSystemPathFinderAnyLocation::GetOrSpa
     return Ret;
 }
 
-ATwinLinkNavSystemPathFinderListSelect::ATwinLinkNavSystemPathFinderListSelect()
-{}
+ATwinLinkNavSystemPathFinderListSelect::ATwinLinkNavSystemPathFinderListSelect() {
+}
 
-void ATwinLinkNavSystemPathFinderListSelect::Tick(float DeltaTime)
-{
+void ATwinLinkNavSystemPathFinderListSelect::Tick(float DeltaTime) {
     if (bDebugIsLocationMovable == false)
         return;
     Super::Tick(DeltaTime);
+}
+
+void ATwinLinkNavSystemPathFinderListSelect::SetPathLocation(NavSystemPathPointType Type, FVector Location) {
+    Super::SetPathLocation(Type, Location);
 }
 

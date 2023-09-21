@@ -37,6 +37,22 @@ ATwinLinkNavSystem::ATwinLinkNavSystem() {
     RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 }
 
+ATwinLinkNavSystem* ATwinLinkNavSystem::GetInstance(const UWorld* World) {
+    return TwinLinkActorEx::FindFirstActorInWorld<ATwinLinkNavSystem>(World);
+}
+
+ATwinLinkWorldViewer* ATwinLinkNavSystem::GetWorldViewer(const UWorld* World) {
+    return TwinLinkActorEx::FindFirstActorInWorld<ATwinLinkWorldViewer>(World);
+}
+
+APlayerCameraManager* ATwinLinkNavSystem::GetPlayerCameraManager(const UWorld* World) {
+    return TwinLinkActorEx::FindFirstActorInWorld<APlayerCameraManager>(World);
+}
+
+ATwinLinkNavSystemCamera* ATwinLinkNavSystem::GetNavSystemCamera(const UWorld* World) {
+    return TwinLinkActorEx::FindFirstActorInWorld<ATwinLinkNavSystemCamera>(World);
+}
+
 void ATwinLinkNavSystem::Tick(float DeltaSeconds) {
     Super::Tick(DeltaSeconds);
     if (PathFindInfo.has_value()) {
@@ -140,6 +156,9 @@ FTwinLinkNavSystemFindPathUiInfo ATwinLinkNavSystem::GetDrawMoveTimeUiInfo(const
     const auto Sec = Meter * 3.6f / RuntimeParam->WalkSpeedKmPerH;
 
     const auto Center = FMath::Max(0, HeightCheckedPoints.Num() - 1) >> 1;
+
+    FVector2D NearestPos;
+    float NearestSqrLen = -1;
     for (auto I = 0; I < HeightCheckedPoints.Num(); ++I) {
         const auto Index = Center + AlterSignSequence(I);
         FVector2D Tmp;
@@ -147,8 +166,15 @@ FTwinLinkNavSystemFindPathUiInfo ATwinLinkNavSystem::GetDrawMoveTimeUiInfo(const
             if (ScreenRange.IsInsideOrOn(Tmp)) {
                 return FTwinLinkNavSystemFindPathUiInfo(Meter, Sec, Tmp);
             }
+            const auto SqrLen = (ScreenRange.GetCenter() - Tmp).SquaredLength();
+            if (NearestSqrLen < 0.f || SqrLen < NearestSqrLen) {
+                NearestSqrLen = SqrLen;
+                NearestPos = Tmp;
+            }
         }
     }
+    if (NearestSqrLen >= 0.f)
+        return FTwinLinkNavSystemFindPathUiInfo(Meter, Sec, NearestPos);
     return FTwinLinkNavSystemFindPathUiInfo();
 }
 

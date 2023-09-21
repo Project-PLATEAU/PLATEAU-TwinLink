@@ -26,10 +26,13 @@ public:
      * @brief : パス検索を開始する
      */
     UFUNCTION(BlueprintCallable)
-    virtual bool RequestStartPathFinding(FTwinLinkNavSystemFindPathInfo& Out);
+        virtual bool RequestStartPathFinding(FTwinLinkNavSystemFindPathInfo& Out);
 
+    /*
+     * @brief : 指定したタイプの位置を取得する. 存在しない場合はfalse
+     */
     UFUNCTION(BlueprintCallable)
-    bool TryGetPathLocation(NavSystemPathPointType Type, FVector& Out);
+        bool TryGetPathLocation(NavSystemPathPointType Type, FVector& Out) const;
 
     /*
      * @brief : 指定したポイントの位置を取得
@@ -42,7 +45,10 @@ public:
      * @brief : 指定したポイントの位置を設定
      */
     UFUNCTION(BlueprintCallable)
-    virtual void SetPathLocation(NavSystemPathPointType Type, FVector Location) {}
+        virtual void SetPathLocation(NavSystemPathPointType Type, FVector Location) {}
+
+    UFUNCTION(BlueprintCallable)
+        virtual bool TryGetCameraLocationAndLookAt(FVector& OutLocation, FVector& OutLookAt) const;
 
     /*
      * @brief : パス検索の準備ができている(目的地が正しく選択されている)
@@ -54,7 +60,12 @@ public:
     /*
      * @brief : 状態の初期化
      */
-    virtual void Clear(){}
+    virtual void Clear() {}
+
+    /*
+     * @brief : 開始時に呼ばれる
+     */
+    virtual void OnStart() {}
 
     // パス検索が可能になったときに呼ばれる       
     OnReadyPathFindingDelegate OnReadyPathFinding;
@@ -152,10 +163,11 @@ class TWINLINK_API ATwinLinkNavSystemPathFinderListSelect : public ATwinLinkNavS
 public:
     // Sets default values for this actor's properties
     ATwinLinkNavSystemPathFinderListSelect();
-
 public:
     // Called every frame
     virtual void Tick(float DeltaTime) override;
+
+    virtual void SetPathLocation(NavSystemPathPointType Type, FVector Location) override;
 
 private:
     // 現在選択しているアクターのスクリーン位置オフセット

@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
 #include "TwinLinkWorldViewer.h"
@@ -104,6 +104,8 @@ void ATwinLinkWorldViewer::LookUp(const float Value) {
 
 void ATwinLinkWorldViewer::Click() {
     FHitResult HitResult;
+    if (!GetLocalViewingPlayerController())
+        return;
     GetLocalViewingPlayerController()->GetHitResultUnderCursorByChannel(
         UEngineTypes::ConvertToTraceType(ECC_Visibility), true, HitResult);
 
