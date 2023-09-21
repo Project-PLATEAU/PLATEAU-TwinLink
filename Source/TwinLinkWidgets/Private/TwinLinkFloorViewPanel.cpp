@@ -64,15 +64,23 @@ void UTwinLinkFloorViewPanel::SetupTwinLinkFloorView() {
 }
 
 void UTwinLinkFloorViewPanel::FinalizeTwinLinkFloorView() {
-    FloorViewChange(ElementWidgets["Exterior"]);
+    if (ElementWidgets.Find("Exterior") != nullptr) {
+        FloorViewChange(ElementWidgets["Exterior"]);
+    }
 }
 
 void UTwinLinkFloorViewPanel::FloorViewChange(TObjectPtr<UUserWidget> Element) {
     const auto Key = ElementWidgets.FindKey(Element);
     bool IsVisible = true;
 
-    LinkComponents["Exterior"]->SetVisibility(Key->Equals("Exterior"));
-    LinkComponents["Exterior"]->SetCollisionResponseToChannel(ECC_Visibility, Key->Equals("Exterior") ? ECR_Block : ECR_Ignore);
+    if (Key == nullptr) {
+        return;
+    }
+
+    if (LinkComponents.Find("Exterior") != nullptr) {
+        LinkComponents["Exterior"]->SetVisibility(Key->Equals("Exterior"));
+        LinkComponents["Exterior"]->SetCollisionResponseToChannel(ECC_Visibility, Key->Equals("Exterior") ? ECR_Block : ECR_Ignore);
+    }
 
     for (const auto& FloorKey : FloorKeys) {
         if (FloorKey.Equals("Exterior")) {
