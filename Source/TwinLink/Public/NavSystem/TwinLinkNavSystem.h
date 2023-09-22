@@ -84,12 +84,12 @@ public:
         ATwinLinkNavSystemPathFinder* GetNowPathFinder();
 
     UFUNCTION(BlueprintCallable)
-    const FTwinLinkNavSystemBuildingInfo& GetBaseBuilding() const {
+        const FTwinLinkNavSystemBuildingInfo& GetBaseBuilding() const {
         return BaseBuilding;
     }
 
     UFUNCTION(BlueprintCallable)
-    void SetBaseBuilding(const FTwinLinkNavSystemBuildingInfo& BaseBuilding) {
+        void SetBaseBuilding(const FTwinLinkNavSystemBuildingInfo& BaseBuilding) {
         this->BaseBuilding = BaseBuilding;
     }
 

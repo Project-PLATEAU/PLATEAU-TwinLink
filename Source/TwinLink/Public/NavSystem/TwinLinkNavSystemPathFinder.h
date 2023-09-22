@@ -26,10 +26,10 @@ public:
      * @brief : パス検索を開始する
      */
     UFUNCTION(BlueprintCallable)
-    virtual bool RequestStartPathFinding(FTwinLinkNavSystemFindPathInfo& Out);
+        virtual bool RequestStartPathFinding(FTwinLinkNavSystemFindPathInfo& Out);
 
     UFUNCTION(BlueprintCallable)
-    bool TryGetPathLocation(NavSystemPathPointType Type, FVector& Out);
+        bool TryGetPathLocation(NavSystemPathPointType Type, FVector& Out);
 
     /*
      * @brief : 指定したポイントの位置を取得
@@ -42,7 +42,7 @@ public:
      * @brief : 指定したポイントの位置を設定
      */
     UFUNCTION(BlueprintCallable)
-    virtual void SetPathLocation(NavSystemPathPointType Type, FVector Location) {}
+        virtual void SetPathLocation(NavSystemPathPointType Type, FVector Location) {}
 
     /*
      * @brief : パス検索の準備ができている(目的地が正しく選択されている)
@@ -54,7 +54,7 @@ public:
     /*
      * @brief : 状態の初期化
      */
-    virtual void Clear(){}
+    virtual void Clear() {}
 
     // パス検索が可能になったときに呼ばれる       
     OnReadyPathFindingDelegate OnReadyPathFinding;

@@ -74,8 +74,7 @@ bool ATwinLinkNavSystemPathFinder::RequestStartPathFinding(FTwinLinkNavSystemFin
     return true;
 }
 
-bool ATwinLinkNavSystemPathFinder::TryGetPathLocation(NavSystemPathPointType Type, FVector& Out)
-{
+bool ATwinLinkNavSystemPathFinder::TryGetPathLocation(NavSystemPathPointType Type, FVector& Out) {
     auto Ret = GetPathLocation(Type);
     if (Ret.has_value() == false)
         return false;
@@ -266,8 +265,7 @@ void ATwinLinkNavSystemPathFinderAnyLocation::SetPathLocation(NavSystemPathPoint
     }
 }
 
-void ATwinLinkNavSystemPathFinderAnyLocation::Clear()
-{
+void ATwinLinkNavSystemPathFinderAnyLocation::Clear() {
     for (auto& Item : PathLocatorActors)
         Item.Value->Destroy();
 }
@@ -283,11 +281,10 @@ ATwinLinkNavSystemPathLocator* ATwinLinkNavSystemPathFinderAnyLocation::GetOrSpa
     return Ret;
 }
 
-ATwinLinkNavSystemPathFinderListSelect::ATwinLinkNavSystemPathFinderListSelect()
-{}
+ATwinLinkNavSystemPathFinderListSelect::ATwinLinkNavSystemPathFinderListSelect() {
+}
 
-void ATwinLinkNavSystemPathFinderListSelect::Tick(float DeltaTime)
-{
+void ATwinLinkNavSystemPathFinderListSelect::Tick(float DeltaTime) {
     if (bDebugIsLocationMovable == false)
         return;
     Super::Tick(DeltaTime);
