@@ -50,6 +50,7 @@ public:
     UFUNCTION(BlueprintCallable)
         virtual bool TryGetCameraLocationAndLookAt(FVector& OutLocation, FVector& OutLookAt) const;
 
+
     /*
      * @brief : パス検索の準備ができている(目的地が正しく選択されている)
      */
@@ -61,6 +62,7 @@ public:
      * @brief : 状態の初期化
      */
     virtual void Clear() {}
+
 
     /*
      * @brief : 開始時に呼ばれる
@@ -83,7 +85,6 @@ private:
      * @brief : 指定した2点間のパス検索を行う
      */
     FTwinLinkNavSystemFindPathInfo RequestPathFinding(const FVector& Start, const FVector& End) const;
-
 };
 
 UCLASS()

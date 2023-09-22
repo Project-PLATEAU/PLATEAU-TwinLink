@@ -3,12 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "EnumT.h"
+#include "FTwinLinkEnumT.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "NavigationData.h"
 
 /*
- * @brief : パス検索しているときに現在開始地点/目的地点のどちらかを阿波らしているか
+ * @brief : パス検索しているときに現在開始地点/目的地点のどちらかを表しているか
  */
 
 UENUM(BlueprintType)
@@ -18,7 +18,7 @@ enum class NavSystemPathPointType : uint8 {
     Max    UMETA(DisplayName = "Max"),
     Undefined UMETA(DisplayName = "Undefined")
 };
-using NavSystemPathPointTypeT = EnumT<NavSystemPathPointType>;
+using NavSystemPathPointTypeT = FTwinLinkEnumT<NavSystemPathPointType>;
 
 /*
  * @brief : ナビメッシュ表示のモードタイプ
@@ -30,7 +30,7 @@ enum class NavSystemMode : uint8 {
     Max    UMETA(DisplayName = "Max"),
     Undefined UMETA(DisplayName = "Undefined")
 };
-using NavSystemModeT = EnumT<NavSystemMode>;
+using NavSystemModeT = FTwinLinkEnumT<NavSystemMode>;
 
 /*
  * @brief : ナビメッシュのパスポイントの状態を表す
@@ -46,4 +46,4 @@ enum class NavSystemPathLocatorState : uint8 {
     Max    UMETA(DisplayName = "Max"),
     Undefined UMETA(DisplayName = "Undefined")
 };
-using NavSystemPathLocatorStateT = EnumT<NavSystemPathLocatorState>;
+using NavSystemPathLocatorStateT = FTwinLinkEnumT<NavSystemPathLocatorState>;

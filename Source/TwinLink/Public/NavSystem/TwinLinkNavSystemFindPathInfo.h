@@ -12,13 +12,13 @@
 USTRUCT(BlueprintType)
 struct FTwinLinkNavSystemFindPathInfo {
     GENERATED_BODY()
-
+public:
     // ナビメッシュ側の検索結果
     FPathFindingResult PathFindResult;
 
     // 高さチェックを行った後のパスポイント
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Base")
-    TArray<FVector> HeightCheckedPoints = {};
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Base")
+        TArray<FVector> HeightCheckedPoints = {};
 
     // 現在高さチェックを行っているインデックス
     int32_t NowHeightCheckIndex = 0;

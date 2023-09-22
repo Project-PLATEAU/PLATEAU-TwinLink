@@ -49,10 +49,6 @@ APlayerCameraManager* ATwinLinkNavSystem::GetPlayerCameraManager(const UWorld* W
     return TwinLinkActorEx::FindFirstActorInWorld<APlayerCameraManager>(World);
 }
 
-ATwinLinkNavSystemCamera* ATwinLinkNavSystem::GetNavSystemCamera(const UWorld* World) {
-    return TwinLinkActorEx::FindFirstActorInWorld<ATwinLinkNavSystemCamera>(World);
-}
-
 void ATwinLinkNavSystem::Tick(float DeltaSeconds) {
     Super::Tick(DeltaSeconds);
     if (PathFindInfo.has_value()) {
@@ -113,6 +109,10 @@ void ATwinLinkNavSystem::ChangeMode(NavSystemMode Mode, bool bForce) {
     if (NavSystemModeT(NowSelectedMode).IsValid() == false)
         return;
 
+    if (!RuntimeParam) {
+        UKismetSystemLibrary::PrintString(this, "NavSystem RuntimeParam != nullptr");
+        return;
+    }
     // パス描画クラスを再生成する
     TwinLinkActorEx::SpawnChildActor(this, RuntimeParam->PathDrawerBp, TEXT("PathDrawerActor"));
     ForeachChildActor<AUTwinLinkNavSystemPathDrawer>(this, [&](AUTwinLinkNavSystemPathDrawer* Child) {

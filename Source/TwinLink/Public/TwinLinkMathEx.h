@@ -43,5 +43,4 @@ public:
     */
     static bool RayRayIntersection(const FVector2D& AOrigin, const FVector2D& ANormalizedDir, const FVector2D& BOrigin, const FVector2D& BNormalizedDir, FVector2D& Out);
     static bool RayRayIntersectionSafe(const FVector2D& AOrigin, const FVector2D& ADir, const FVector2D& BOrigin, const FVector2D& BDir, FVector2D& Out);
-    //static bool CalcCameraLocationToFitAllPoint(const APlayerController* PlayerController, const FBox2D& ScreenRange, const TArray<FVector>& Points, FVector& OutCameraLocation);
 };

@@ -85,8 +85,7 @@ bool ATwinLinkNavSystemPathFinder::TryGetPathLocation(NavSystemPathPointType Typ
     return true;
 }
 
-bool ATwinLinkNavSystemPathFinder::TryGetCameraLocationAndLookAt(FVector& OutLocation, FVector& OutLookAt) const
-{
+bool ATwinLinkNavSystemPathFinder::TryGetCameraLocationAndLookAt(FVector& OutLocation, FVector& OutLookAt) const {
     FVector Start;
     const auto HasStart = TryGetPathLocation(NavSystemPathPointType::Start, Start);
     FVector Dest;

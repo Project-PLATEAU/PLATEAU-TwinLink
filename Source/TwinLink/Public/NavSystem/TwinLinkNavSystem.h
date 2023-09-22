@@ -7,7 +7,6 @@
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "NavigationData.h"
-#include "TwinLinkNavSystemCamera.h"
 #include "TwinLinkNavSystemDef.h"
 #include "TwinLinkNavSystemFindPathInfo.h"
 #include "TwinLinkNavSystemPathDrawer.h"
@@ -43,11 +42,6 @@ public:
      * @brief : Worldに配置されているAPlayerCameraManagerをとってくる. 毎回同じこと書くの面倒なので
      */
     static APlayerCameraManager* GetPlayerCameraManager(const UWorld* World);
-
-    /*
-     * @brief : Worldに配置されているATwinLinkNavSystemCameraをとってくる. 毎回同じこと書くの面倒なので
-     */
-    static ATwinLinkNavSystemCamera* GetNavSystemCamera(const UWorld* World);
 
     virtual void Tick(float DeltaSeconds) override;
 
