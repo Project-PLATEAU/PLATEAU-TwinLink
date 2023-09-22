@@ -5,9 +5,8 @@
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "EditorLevelLibrary.h"
-#include <NavMesh/NavMeshBoundsVolume.h>
-#include <optional>
 
+#include "TwinLinkEditorNavSystemParam.h"
 #include "Subsystems/EditorActorSubsystem.h"
 #include "TwinLinkEditorNavSystem.generated.h"
 class APLATEAUInstancedCityModel;
@@ -27,7 +26,7 @@ public:
      * NavigationSystemにBuildを要求
      */
     UFUNCTION(BlueprintCallable, Category = "Nav")
-        static void MakeNavMesh(UEditorActorSubsystem* Editor, UWorld* World);
+        static void MakeNavMesh(UEditorActorSubsystem* Editor, UWorld* World, UTwinLinkEditorNavSystemParam* Param);
 
     /*
      * ワールドの全StaticMeshに対してbRelevantで指定した値でCanEverAffectNavigationを実行する

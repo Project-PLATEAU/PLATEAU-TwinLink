@@ -3,7 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "UnrealWidgetFwd.h"
 #include "Modules/ModuleManager.h"
+#include <Components/SlateWrapperTypes.h>
 
 #include "TwinLink.generated.h"
 
@@ -29,7 +31,7 @@ public:
     * @brief PluginのContentディレクトリのパスを取得します。
     */
     static FString GetContentDir();
-    
+
     /**
     * @brief 管理者モードを切り替えます。
     * @param bEnabled trueであれば管理者モードを有効化、falseであれば無効化します。
@@ -113,4 +115,11 @@ public:
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
         static void TwinLinkSetCityModel(AActor* Model);
+
+
+    /**
+    * @brief true -> Visible, false -> Hiddenを返す.
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        static ESlateVisibility AsSlateVisibility(bool visibility);
 };

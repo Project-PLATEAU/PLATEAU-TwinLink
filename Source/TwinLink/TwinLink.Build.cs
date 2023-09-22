@@ -30,7 +30,7 @@ public class TwinLink : ModuleRules
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
-                "Core", "CoreUObject", "Engine", "InputCore", "PLATEAURuntime", "Slate", "SlateCore",
+                "Core", "CoreUObject", "Engine", "InputCore", "PLATEAURuntime", "Slate", "SlateCore","Niagara",
             }
         );
 
@@ -46,6 +46,7 @@ public class TwinLink : ModuleRules
                 "Json",
                 "JsonUtilities",
                 "NavigationSystem",
+				"Niagara", "Imath", 
                 // ... add private dependencies that you statically link with here ...	
             }
         );
