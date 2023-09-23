@@ -1,6 +1,8 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
+
+#include <optional>
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
@@ -44,15 +46,34 @@ public:
      * @param Position
      * @param Rotation
     */
-    void SetLocation(const FVector& Position, const FRotator& Rotation);
-    void SetLocation(const FVector& Position, const FVector& RotationEulur);
+    void SetLocation(const FVector& Position, const FRotator& Rotation, bool bForce = true);
+    void SetLocation(const FVector& Position, const FVector& RotationEuler, bool bForce = true);
 
+
+    /**
+     * @brief 移動先の設定
+     * 現在は指定した先に瞬間移動する
+     * 後から高速移動に切り替えるかも
+     * @param Position
+     * @param LookAt
+     * @param bForce : trueの時は即座に適用
+    */
+    void SetLocationLookAt(const FVector& Position, const FVector& LookAt, bool bForce = true);
+
+private:
+    void ATwinLinkWorldViewer::SetLocationImpl(const FVector& Position, const FRotator& Rotation);
 public:
     // クリック
     FDelClickViewPort EvOnClickedFacility;
     FDelCanceledClickFacility EvOnCanceledClickFacility;
 
 private:
+    UFUNCTION(BlueprintCallable, Category = "Movement")
+        FVector GetNowCameraLocation() const;
+
+    UFUNCTION(BlueprintCallable, Category = "Movement")
+        FRotator GetNowCameraRotation() const;
+
     // BluePrint側から呼び出す処理
     UFUNCTION(BlueprintCallable, Category = "Movement")
     void MoveForward(const float Value);
@@ -99,4 +120,11 @@ private:
 
     bool bIsSelectingFacility;
 
+    struct Transform
+    {
+        FVector Location;
+        FRotator Rotation;
+    };
+
+    std::optional<Transform> TargetTransform;
 };

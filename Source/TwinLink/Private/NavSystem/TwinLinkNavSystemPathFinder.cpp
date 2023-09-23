@@ -124,6 +124,15 @@ bool ATwinLinkNavSystemPathFinder::TryGetCameraLocationAndLookAt(FVector& OutLoc
     return false;
 }
 
+void ATwinLinkNavSystemPathFinder::ChangeCameraLocation(bool bForce) const {
+    FVector Location, LookAt;
+    if (TryGetCameraLocationAndLookAt(Location, LookAt)) {
+        if (const auto Viewer = ATwinLinkNavSystem::GetWorldViewer(GetWorld())) {
+            Viewer->SetLocationLookAt(Location, LookAt, bForce);
+        }
+    }
+}
+
 // Called when the game starts or when spawned
 void ATwinLinkNavSystemPathFinder::BeginPlay() {
     Super::BeginPlay();

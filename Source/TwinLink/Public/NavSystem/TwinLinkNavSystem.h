@@ -118,6 +118,11 @@ public:
 
     UFUNCTION(BlueprintCallable)
         void Clear();
+
+    UFUNCTION(BlueprintCallable)
+        FVector2D GetDebugHudPosition() const {
+        return DebugHudPosition;
+    }
 private:
     /*
      * @brief : PathFinderからパス検索準備完了時のコールバックとして登録する
@@ -178,6 +183,10 @@ private:
     // デバッグ用) パス検索のデバッグ表示を行うかどうか
     UPROPERTY(EditAnywhere, Category = TwinLink_Test)
         bool DebugCallPathFinding = false;
+
+    // パス探索のアクター
+    UPROPERTY(EditAnywhere, Category = TwinLink_Test)
+        FVector2D DebugHudPosition = FVector2D::Zero();
 protected:
     virtual void BeginPlay() override;
 };

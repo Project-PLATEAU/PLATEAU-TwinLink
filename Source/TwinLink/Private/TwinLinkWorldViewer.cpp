@@ -4,6 +4,7 @@
 #include "TwinLinkWorldViewer.h"
 #include "Kismet/GameplayStatics.h"
 #include "TwinLinkCommon.h"
+#include "TwinLinkMathEx.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
@@ -47,6 +48,24 @@ void ATwinLinkWorldViewer::Tick(float DeltaTime) {
         CharMovementComponent->MaxAcceleration = MaxAcceleration;
     }
 
+    if (TargetTransform) {
+        auto NextLocation = FMath::Lerp(GetNowCameraLocation(), TargetTransform->Location, FMath::Clamp(CameraMovementSpeed * DeltaTime, 1e-5f, 1.f));
+        auto bEndLocation = false;
+        if ((NextLocation - TargetTransform->Location).SquaredLength() < 1e-3f) {
+            bEndLocation = true;
+            NextLocation = TargetTransform->Location;
+        }
+        auto NextRotation = FMath::Lerp(GetNowCameraRotation(), TargetTransform->Rotation, FMath::Clamp(CameraRotationSpeed * DeltaTime, 1e-5f, 1.f));
+        auto bEndRotation = false;
+        if ((NextRotation - TargetTransform->Rotation).Vector().SquaredLength() < 1e-3f) {
+            bEndRotation = true;
+            NextRotation = TargetTransform->Rotation;
+        }
+
+        SetLocationImpl(NextLocation, NextRotation);
+        if (bEndLocation && bEndRotation)
+            TargetTransform = std::nullopt;
+    }
 }
 
 // Called to bind functionality to input
@@ -64,6 +83,14 @@ void ATwinLinkWorldViewer::SetupPlayerInputComponent(UInputComponent* PlayerInpu
     // 移動コンポーネントを利用する前に取得
     CharMovementComponent = GetCharacterMovement();
     check(CharMovementComponent);
+}
+
+FVector ATwinLinkWorldViewer::GetNowCameraLocation() const {
+    return FVector::Zero();
+}
+
+FRotator ATwinLinkWorldViewer::GetNowCameraRotation() const {
+    return FRotator();
 }
 
 // カメラの前後移動
@@ -145,13 +172,27 @@ void ATwinLinkWorldViewer::Click() {
             bIsSelectingFacility = false;
         }
     }
-
 }
 
-void ATwinLinkWorldViewer::SetLocation(const FVector& Position, const FRotator& Rotation) {
+void ATwinLinkWorldViewer::SetLocationImpl(const FVector& Position, const FRotator& Rotation) {
     GetController()->ClientSetLocation(Position, Rotation);
 }
 
-void ATwinLinkWorldViewer::SetLocation(const FVector& Position, const FVector& RotationEulur) {
-    GetController()->ClientSetLocation(Position, FRotator::MakeFromEuler(RotationEulur));
+void ATwinLinkWorldViewer::SetLocation(const FVector& Position, const FRotator& Rotation, bool bForce) {
+    if (bForce) {
+        SetLocationImpl(Position, Rotation);
+        TargetTransform = std::nullopt;
+    }
+    else {
+        TargetTransform = Transform{ Position, Rotation };
+    }
+}
+
+void ATwinLinkWorldViewer::SetLocation(const FVector& Position, const FVector& RotationEuler, bool bForce) {
+    SetLocation(Position, FRotator::MakeFromEuler(RotationEuler), bForce);
+}
+
+void ATwinLinkWorldViewer::SetLocationLookAt(const FVector& Position, const FVector& LookAt, bool bForce) {
+    const auto Rotation = TwinLinkMathEx::CreateLookAtMatrix(Position, LookAt);
+    SetLocation(Position, FRotator(Rotation.ToQuat()), bForce);
 }
