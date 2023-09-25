@@ -124,11 +124,11 @@ bool ATwinLinkNavSystemPathFinder::TryGetCameraLocationAndLookAt(FVector& OutLoc
     return false;
 }
 
-void ATwinLinkNavSystemPathFinder::ChangeCameraLocation(bool bForce) const {
+void ATwinLinkNavSystemPathFinder::ChangeCameraLocation(float MoveSec) const {
     FVector Location, LookAt;
     if (TryGetCameraLocationAndLookAt(Location, LookAt)) {
         if (const auto Viewer = ATwinLinkNavSystem::GetWorldViewer(GetWorld())) {
-            Viewer->SetLocationLookAt(Location, LookAt, bForce);
+            Viewer->SetLocationLookAt(Location, LookAt, MoveSec);
         }
     }
 }

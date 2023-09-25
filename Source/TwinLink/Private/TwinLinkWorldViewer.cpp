@@ -49,22 +49,11 @@ void ATwinLinkWorldViewer::Tick(float DeltaTime) {
     }
 
     if (TargetTransform) {
-        auto NextLocation = FMath::Lerp(GetNowCameraLocationOrZero(), TargetTransform->Location, FMath::Clamp(CameraMovementSpeed * DeltaTime, 1e-5f, 1.f));
-        auto bEndLocation = false;
-        if ((NextLocation - TargetTransform->Location).SquaredLength() < 1e-3f) {
-            bEndLocation = true;
-            NextLocation = TargetTransform->Location;
-        }
-        auto NextRotation = FMath::Lerp(GetNowCameraRotationOrDefault(), TargetTransform->Rotation, FMath::Clamp(CameraRotationSpeed * DeltaTime, 1e-5f, 1.f));
-        auto bEndRotation = false;
-        if ((NextRotation - TargetTransform->Rotation).Vector().SquaredLength() < 1e-3f) {
-            bEndRotation = true;
-            NextRotation = TargetTransform->Rotation;
-        }
-
-        SetLocationImpl(NextLocation, NextRotation);
-        if (bEndLocation && bEndRotation)
+        FVector NextLocation;
+        FRotator NextRotation;
+        if (TargetTransform->Update(DeltaTime, NextLocation, NextRotation))
             TargetTransform = std::nullopt;
+        SetLocationImpl(NextLocation, NextRotation);
     }
 }
 
@@ -96,9 +85,13 @@ FVector ATwinLinkWorldViewer::GetNowCameraLocationOrZero() const {
 FRotator ATwinLinkWorldViewer::GetNowCameraRotationOrDefault() const {
     if (!GetController())
         return FRotator();
-    if (const auto ViewTarget = GetController()->GetViewTarget())
-        return ViewTarget->GetActorRotation();
-    return FRotator();
+    return GetControlRotation();
+
+    //if (const auto ViewTarget = GetController()->GetViewTarget()) {
+    //    ViewTarget->GetRot
+    //    return ViewTarget->GetActorRotation();
+    //}
+    //return FRotator();
 }
 
 // カメラの前後移動
@@ -182,25 +175,45 @@ void ATwinLinkWorldViewer::Click() {
     }
 }
 
+bool ATwinLinkWorldViewer::MoveInfo::Update(float DeltaSec, FVector& OutLocation, FRotator& OutRotation)
+{
+    PassSec = FMath::Max(0.f, PassSec) + DeltaSec;
+    if(PassSec >= MoveSec || MoveSec <= 0.f)
+    {
+        OutLocation = To.Location;
+        OutRotation = To.Rotation;
+        return true;
+    }
+
+    auto T = FMath::InterpEaseInOut(0.f, 1.f, PassSec / MoveSec, 1.f);
+    
+    OutLocation = FMath::Lerp(From.Location, To.Location, T);
+    OutRotation = FMath::Lerp(From.Rotation, To.Rotation, T);
+    return false;
+}
+
 void ATwinLinkWorldViewer::SetLocationImpl(const FVector& Position, const FRotator& Rotation) {
     GetController()->ClientSetLocation(Position, Rotation);
 }
 
-void ATwinLinkWorldViewer::SetLocation(const FVector& Position, const FRotator& Rotation, bool bForce) {
-    if (bForce) {
+void ATwinLinkWorldViewer::SetLocation(const FVector& Position, const FRotator& Rotation, float MoveSec) {
+    if (MoveSec <= 0.f) {
         SetLocationImpl(Position, Rotation);
         TargetTransform = std::nullopt;
     }
     else {
-        TargetTransform = Transform{ Position, Rotation };
+        TargetTransform = MoveInfo();
+        TargetTransform->From = Transform{ GetNowCameraLocationOrZero(), GetNowCameraRotationOrDefault() };
+        TargetTransform->To = Transform{ Position, Rotation };
+        TargetTransform->MoveSec = MoveSec;
     }
 }
 
-void ATwinLinkWorldViewer::SetLocation(const FVector& Position, const FVector& RotationEuler, bool bForce) {
-    SetLocation(Position, FRotator::MakeFromEuler(RotationEuler), bForce);
+void ATwinLinkWorldViewer::SetLocation(const FVector& Position, const FVector& RotationEuler, float MoveSec) {
+    SetLocation(Position, FRotator::MakeFromEuler(RotationEuler), MoveSec);
 }
 
-void ATwinLinkWorldViewer::SetLocationLookAt(const FVector& Position, const FVector& LookAt, bool bForce) {
+void ATwinLinkWorldViewer::SetLocationLookAt(const FVector& Position, const FVector& LookAt, float MoveSec) {
     const auto Rotation = TwinLinkMathEx::CreateLookAtMatrix(Position, LookAt);
-    SetLocation(Position, FRotator(Rotation.ToQuat()), bForce);
+    SetLocation(Position, FRotator(Rotation.ToQuat()), MoveSec);
 }

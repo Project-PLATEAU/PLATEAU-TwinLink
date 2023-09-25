@@ -54,7 +54,7 @@ public:
      * @brief : 現在のパスからカメラの位置を変更する
      */
     UFUNCTION(BlueprintCallable)
-        virtual void ChangeCameraLocation(bool bForce) const;
+        virtual void ChangeCameraLocation(float MoveSec) const;
 
     /*
      * @brief : パス検索の準備ができている(目的地が正しく選択されている)
