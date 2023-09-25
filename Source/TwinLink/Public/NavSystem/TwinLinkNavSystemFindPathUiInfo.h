@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "TwinLinkFacilityInfo.h"
 #include "UObject/Object.h"
 #include "TwinLinkNavSystemFindPathUiInfo.generated.h"
 
@@ -40,14 +41,12 @@ public:
 };
 
 USTRUCT(BlueprintType)
+
+
 struct FTwinLinkNavSystemBuildingInfo {
     GENERATED_BODY()
 public:
-    // 有効な情報かどうか
+    // 建物情報
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Base")
-        FString Name;
-
-    // 入口(ナビメッシュ状のポイント)
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Base")
-        FVector NavMeshEntranceLocation;
+        TWeakObjectPtr<UTwinLinkFacilityInfo> FacilityInfo;
 };

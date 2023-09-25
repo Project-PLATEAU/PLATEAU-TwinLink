@@ -13,6 +13,7 @@
 #include "TwinLinkNavSystemParam.h"
 #include "TwinLinkNavSystemFindPathUiInfo.h"
 #include "TwinLinkNavSystem.generated.h"
+class UTwinLinkFacilityInfo;
 class UCameraComponent;
 class ATwinLinkNavSystemPathFinder;
 class APLATEAUInstancedCityModel;
@@ -92,7 +93,7 @@ public:
      * @brief : 移動パスの情報取得
      */
     UFUNCTION(BlueprintCallable)
-        FTwinLinkNavSystemFindPathUiInfo GetDrawMoveTimeUiInfo(const FBox2D& ScreenRange) const;
+        FTwinLinkNavSystemFindPathUiInfo GetDrawMoveTimeUiInfo(TwinLinkNavSystemMoveType MoveType, const FBox2D& ScreenRange) const;
 
     /*
      * @brief : 現在のパス検索モードアクタ
@@ -101,20 +102,13 @@ public:
         ATwinLinkNavSystemPathFinder* GetNowPathFinder();
 
     UFUNCTION(BlueprintCallable)
-        const FTwinLinkNavSystemBuildingInfo& GetBaseBuilding() const {
-        return BaseBuilding;
-    }
-
-    UFUNCTION(BlueprintCallable)
-        void SetBaseBuilding(const FTwinLinkNavSystemBuildingInfo& BaseBuilding) {
-        this->BaseBuilding = BaseBuilding;
-    }
+        FTwinLinkNavSystemBuildingInfo GetBaseBuilding() const;
 
     /*
      * @brief : レベルに登録されている建物リストを取得する
      */
     UFUNCTION(BlueprintCallable)
-        TArray<FTwinLinkNavSystemBuildingInfo> GetBuildingInfo() const;
+        TArray<FTwinLinkNavSystemBuildingInfo> GetBuildingInfos() const;
 
     UFUNCTION(BlueprintCallable)
         void Clear();
@@ -123,6 +117,13 @@ public:
         FVector2D GetDebugHudPosition() const {
         return DebugHudPosition;
     }
+
+    /*
+     * @brief : 有効かどうか
+     * @param : includePathFinder : NowPathFinder含めて有効かどうか
+     */
+    UFUNCTION(BlueprintCallable)
+        bool IsValid() const;
 private:
     /*
      * @brief : PathFinderからパス検索準備完了時のコールバックとして登録する
@@ -133,6 +134,11 @@ private:
      * @brief : デバッグ描画実行
      */
     void DebugDraw();
+
+    /*
+     * @brief : デバッグ用のBeginPlay
+     */
+    void DebugBeginPlay();
 
     // -----------------------
     // Editor設定系
@@ -152,10 +158,6 @@ private:
     // 道路メッシュのAabb
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
         FBox DemCollisionAabb;
-
-    // 開始地点の建物
-    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
-        FTwinLinkNavSystemBuildingInfo BaseBuilding;
 
 private:
     // -----------------------
@@ -184,9 +186,17 @@ private:
     UPROPERTY(EditAnywhere, Category = TwinLink_Test)
         bool DebugCallPathFinding = false;
 
+    // デバッグ用) 仮の建物リストを使うかどうか
+    UPROPERTY(EditAnywhere, Category = TwinLink_Test)
+        bool DebugUseDebugBuildings = false;
+
     // パス探索のアクター
     UPROPERTY(EditAnywhere, Category = TwinLink_Test)
         FVector2D DebugHudPosition = FVector2D::Zero();
+
+    //    UTwinLinkFacilityInfo DebugStartBuilding;
+    UPROPERTY(EditAnywhere, Category = TwinLink_Test)
+        TArray<UTwinLinkFacilityInfo*> DebugFacilityInfos;
 protected:
     virtual void BeginPlay() override;
 };

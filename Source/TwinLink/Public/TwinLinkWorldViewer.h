@@ -69,10 +69,10 @@ public:
 
 private:
     UFUNCTION(BlueprintCallable, Category = "Movement")
-        FVector GetNowCameraLocation() const;
+        FVector GetNowCameraLocationOrZero() const;
 
     UFUNCTION(BlueprintCallable, Category = "Movement")
-        FRotator GetNowCameraRotation() const;
+        FRotator GetNowCameraRotationOrDefault() const;
 
     // BluePrint側から呼び出す処理
     UFUNCTION(BlueprintCallable, Category = "Movement")

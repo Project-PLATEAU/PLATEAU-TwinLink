@@ -49,13 +49,13 @@ void ATwinLinkWorldViewer::Tick(float DeltaTime) {
     }
 
     if (TargetTransform) {
-        auto NextLocation = FMath::Lerp(GetNowCameraLocation(), TargetTransform->Location, FMath::Clamp(CameraMovementSpeed * DeltaTime, 1e-5f, 1.f));
+        auto NextLocation = FMath::Lerp(GetNowCameraLocationOrZero(), TargetTransform->Location, FMath::Clamp(CameraMovementSpeed * DeltaTime, 1e-5f, 1.f));
         auto bEndLocation = false;
         if ((NextLocation - TargetTransform->Location).SquaredLength() < 1e-3f) {
             bEndLocation = true;
             NextLocation = TargetTransform->Location;
         }
-        auto NextRotation = FMath::Lerp(GetNowCameraRotation(), TargetTransform->Rotation, FMath::Clamp(CameraRotationSpeed * DeltaTime, 1e-5f, 1.f));
+        auto NextRotation = FMath::Lerp(GetNowCameraRotationOrDefault(), TargetTransform->Rotation, FMath::Clamp(CameraRotationSpeed * DeltaTime, 1e-5f, 1.f));
         auto bEndRotation = false;
         if ((NextRotation - TargetTransform->Rotation).Vector().SquaredLength() < 1e-3f) {
             bEndRotation = true;
@@ -85,11 +85,19 @@ void ATwinLinkWorldViewer::SetupPlayerInputComponent(UInputComponent* PlayerInpu
     check(CharMovementComponent);
 }
 
-FVector ATwinLinkWorldViewer::GetNowCameraLocation() const {
+FVector ATwinLinkWorldViewer::GetNowCameraLocationOrZero() const {
+    if (!GetController())
+        return FVector::Zero();
+    if (const auto ViewTarget = GetController()->GetViewTarget())
+        return ViewTarget->GetActorLocation();
     return FVector::Zero();
 }
 
-FRotator ATwinLinkWorldViewer::GetNowCameraRotation() const {
+FRotator ATwinLinkWorldViewer::GetNowCameraRotationOrDefault() const {
+    if (!GetController())
+        return FRotator();
+    if (const auto ViewTarget = GetController()->GetViewTarget())
+        return ViewTarget->GetActorRotation();
     return FRotator();
 }
 

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "TwinLinkNavSystemDef.h"
 #include "Engine/DataAsset.h"
 #include "TwinLinkNavSystemParam.generated.h"
 
@@ -14,7 +15,9 @@ UCLASS()
 class TWINLINK_API UTwinLinkNavSystemParam : public UPrimaryDataAsset {
     GENERATED_BODY()
 public:
-
+    UFUNCTION(BlueprintCallable)
+        float GetMoveSpeedKmPerH(TwinLinkNavSystemMoveType MoveType) const;
+public:
     UPROPERTY(EditAnywhere, meta = (Comment = "ワールド座標における1[m]のサイズ"), Category = "Path")
         float WorldUnitMeter = 100.f;
 
