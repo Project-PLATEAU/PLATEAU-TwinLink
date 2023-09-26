@@ -10,7 +10,7 @@
 class UTwinLinkFacilityInfo;
 
 /**
- *
+ * 施設情報名を表示する 3Dウィジェットの基底クラス
  */
 UCLASS(Abstract, Blueprintable, BlueprintType, ClassGroup = TwinLink)
 class TWINLINKWIDGETS_API UTwinLinkFacilityInfo3DPanelBase : public UTwinLink3DUMGBase {
@@ -18,14 +18,16 @@ class TWINLINKWIDGETS_API UTwinLinkFacilityInfo3DPanelBase : public UTwinLink3DU
 
 public:
     /**
-     * @brief ウィジェットとデータの連携
+     * @brief ウィジェット生成後に呼び出す
+     * ウィジェットとシステムの連携、初期設定を行う
      * @param Info 利用する施設情報
+     * @param MinimumHeightToDisplay 表示時の最低限の高さ
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
     void Setup(UObject* Info, float MinimumHeightToDisplay);
 
     /**
-     * @brief 施設情報の取得
+     * @brief 施設情報の取得する
      * @return
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
@@ -35,7 +37,7 @@ public:
     }
 
     /**
-     * @brief 表示位置
+     * @brief 表示位置を取得する
      * @return
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
