@@ -18,8 +18,6 @@
 #include "TwinLinkViewPointItem.h"
 #include "TwinLinkFacilityItem.h"
 
-#include "TwinLink3DUMGCanvasBase.h"
-
 // 
 #include "TwinLinkWorldViewer.h"
 
@@ -57,13 +55,4 @@ void UTwinLinkWidgetSetup::SetupFacilityInfoList(UTwinLinkScrollBoxBase* Widget,
     check(ElementImpl);
 
     Widget->Setup(Collection, ElementImpl);
-}
-
-void UTwinLinkWidgetSetup::SetupFacilityInfo3DCanvas(UTwinLink3DUMGCanvasBase* Widget) {
-    auto FacilityInfoSys = TwinLinkSubSystemHelper::GetInstance<UTwinLinkFacilityInfoSystem>();
-    check(FacilityInfoSys.IsValid());
-    auto Collection = FacilityInfoSys.Get()->GetFacilityInfoCollection().Get();
-    check(Collection != nullptr);
-
-    Widget->Setup(Collection);
 }

@@ -28,7 +28,4 @@ public:
     UFUNCTION(BlueprintCallable, Category = "TwinLink Widget Setup")
     static void SetupFacilityInfoList(UTwinLinkScrollBoxBase* Widget, UTwinLinkScrollBoxElementImpl* ElementImpl);
 
-    UFUNCTION(BlueprintCallable, Category = "TwinLink Widget Setup")
-    static void SetupFacilityInfo3DCanvas(UTwinLink3DUMGCanvasBase* Widget);
-
 };

@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -7,7 +7,7 @@
 #include "TwinLink3DUMGBase.generated.h"
 
 /**
- * 
+ * 3Dウィジェット用の基底クラス
  */
 UCLASS()
 class TWINLINKWIDGETS_API UTwinLink3DUMGBase : public UTwinLinkWidgetBase
