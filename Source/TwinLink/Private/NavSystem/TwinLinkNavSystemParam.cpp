@@ -3,10 +3,8 @@
 
 #include "NavSystem/TwinLinkNavSystemParam.h"
 
-float UTwinLinkNavSystemParam::GetMoveSpeedKmPerH(TwinLinkNavSystemMoveType MoveType) const
-{
-    switch (MoveType)
-    {
+float UTwinLinkNavSystemParam::GetMoveSpeedKmPerH(TwinLinkNavSystemMoveType MoveType) const {
+    switch (MoveType) {
     case TwinLinkNavSystemMoveType::Walk:
         return WalkSpeedKmPerH;
     case TwinLinkNavSystemMoveType::Car:

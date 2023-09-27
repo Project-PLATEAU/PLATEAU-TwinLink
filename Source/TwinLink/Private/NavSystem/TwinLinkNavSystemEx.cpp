@@ -14,8 +14,7 @@ FVector UTwinLinkNavSystemEx::GetFirstEntranceOrZero(const FTwinLinkNavSystemBui
 }
 
 bool UTwinLinkNavSystemEx::TryGetBuildingInfo(const FTwinLinkNavSystemBuildingInfo& Info, FString& OutBuildingName,
-    FString& OutBuildingIconKey, FVector& OutEntrance)
-{
+    FString& OutBuildingIconKey, FVector& OutEntrance) {
     if (!IsValidBuilding(Info))
         return false;
     OutBuildingName = Info.FacilityInfo->GetName();

@@ -96,8 +96,7 @@ void ATwinLinkNavSystem::DebugDraw() {
 #endif
 }
 
-void ATwinLinkNavSystem::DebugBeginPlay()
-{
+void ATwinLinkNavSystem::DebugBeginPlay() {
 #ifdef WITH_EDITOR
     const UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
     if (!NavSys)
@@ -206,7 +205,7 @@ const UTwinLinkNavSystemParam* ATwinLinkNavSystem::GetRuntimeParam() const {
 FTwinLinkNavSystemFindPathUiInfo ATwinLinkNavSystem::GetDrawMoveTimeUiInfo(TwinLinkNavSystemMoveType MoveType, const FBox2D& ScreenRange) const {
     if (PathFindInfo.has_value() == false || PathFindInfo->IsSuccess() == false)
         return FTwinLinkNavSystemFindPathUiInfo();
-    if(TwinLinkNavSystemMoveTypeT(MoveType).IsValid() == false)
+    if (TwinLinkNavSystemMoveTypeT(MoveType).IsValid() == false)
         return FTwinLinkNavSystemFindPathUiInfo();
 
     const APlayerController* Controller = UGameplayStatics::GetPlayerController(GetWorld(), 0);
@@ -293,7 +292,7 @@ TArray<FTwinLinkNavSystemBuildingInfo> ATwinLinkNavSystem::GetBuildingInfos() co
     }
     return Ret;
 
-    
+
 }
 
 void ATwinLinkNavSystem::Clear() {
