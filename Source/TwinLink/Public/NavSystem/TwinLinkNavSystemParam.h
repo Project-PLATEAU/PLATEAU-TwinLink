@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "TwinLinkNavSystemDef.h"
+#include "TwinLinkNavSystemPathDrawer.h"
 #include "Engine/DataAsset.h"
 #include "TwinLinkNavSystemParam.generated.h"
 

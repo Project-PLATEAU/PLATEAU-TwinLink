@@ -1,5 +1,29 @@
 #pragma once
 
+
+class FTwinLinkEnumEx {
+public:
+    template<class TEnum>
+    static bool IsValid(TEnum Self) {
+        return Self < TEnum::Max;
+    }
+};
+
+class FTwinLInkBitFlagEx {
+public:
+    /*
+     * @brief : BitFlag Selfの中に, TargetMaskの要素が一つでも入っているかどうか
+     */
+    template<class TEnumBitFlag>
+    static bool ContainsAny(TEnumBitFlag Self, TEnumBitFlag TargetMask) {
+        return (static_cast<uint8>(Self) & static_cast<uint8>(TargetMask)) != 0u;
+    }
+    template<class TEnumBitFlag>
+    static bool ContainsAll(TEnumBitFlag Self, TEnumBitFlag TargetMask) {
+        return (static_cast<uint8>(Self) & static_cast<uint8>(TargetMask)) != static_cast<uint8>(TargetMask);
+    }
+};
+
 template<class T>
 class FTwinLinkEnumT {
 public:
@@ -35,7 +59,7 @@ public:
     inline bool operator != (FTwinLinkEnumT<U> V) const = delete;
 
     // 有効な値かどうか
-    bool IsValid() const { return Val < T::Max; }
+    bool IsValid() const { return FTwinLinkEnumEx::IsValid(Val); }
 
     static FTwinLinkEnumType Max() { return T::Max; }
 

@@ -7,12 +7,16 @@
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "NavigationData.h"
+#include "TwinLinkFacilityInfoSystem.h"
+#include "TwinLinkNavSystemBuildingInfo.h"
 #include "TwinLinkNavSystemDef.h"
 #include "TwinLinkNavSystemFindPathInfo.h"
 #include "TwinLinkNavSystemPathDrawer.h"
 #include "TwinLinkNavSystemParam.h"
 #include "TwinLinkNavSystemFindPathUiInfo.h"
 #include "TwinLinkNavSystem.generated.h"
+class UPLATEAUCityObjectGroup;
+class UNavigationSystemV1;
 class UTwinLinkFacilityInfo;
 class UCameraComponent;
 class ATwinLinkNavSystemPathFinder;
@@ -20,6 +24,8 @@ class APLATEAUInstancedCityModel;
 class ANavMeshBoundsVolume;
 class ATwinLinkWorldViewer;
 class APlayerCameraManager;
+
+DECLARE_EVENT_TwoParams(ATwinLinkNavSystem, OnFacilityClickedDelegate, const FHitResult&, const FTwinLinkNavSystemBuildingInfo&);
 /*
  * @brief : パス検索などランタイム中のナビメッシュ関係を管理するクラス.
  */
@@ -44,6 +50,12 @@ public:
      */
     static APlayerCameraManager* GetPlayerCameraManager(const UWorld* World);
 
+    /*
+     * @brief : Worldに配置されているUTwinLinkFacilityInfoSystemをとってくる. 毎回同じこと書くの面倒なので
+     */
+    static UTwinLinkFacilityInfoSystem* GetFacilityInfoSystem(const UWorld* World);
+
+    static bool FindNavMeshPoint(const UNavigationSystemV1* NavSys, const UStaticMeshComponent* StaticMeshComp, FVector& OutPos);
     virtual void Tick(float DeltaSeconds) override;
 
     ECollisionChannel GetDemCollisionChannel() const {
@@ -64,6 +76,9 @@ public:
     float GetPathFindingHeightCheckInterval() const {
         return RuntimeParam->PathPointInterval;
     }
+
+    // 建物クリックしたときのコールバック
+    OnFacilityClickedDelegate OnFacilityClicked;
 
     /*
      * @brief : モード切替
@@ -131,6 +146,11 @@ private:
     void OnReadyPathFinding();
 
     /*
+     * @brief : WorldViewerで建物クリックしたときに呼ばれる
+     */
+    void OnFacilityClick(FHitResult Info);
+
+    /*
      * @brief : デバッグ描画実行
      */
     void DebugDraw();
@@ -159,6 +179,9 @@ private:
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
         FBox DemCollisionAabb;
 
+    // 建物情報のマップキャッシュ
+    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
+        TMap<FString, TWeakObjectPtr<UPLATEAUCityObjectGroup>> BuildingMap;
 private:
     // -----------------------
     // ランタイム系

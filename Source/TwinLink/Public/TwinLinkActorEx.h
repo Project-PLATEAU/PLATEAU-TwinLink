@@ -35,11 +35,8 @@ public:
 
     template<class T>
     static T* FindFirstActorInWorld(const UWorld* World) {
-        TArray<AActor*> Actors;
-        UGameplayStatics::GetAllActorsOfClass(World, T::StaticClass(), Actors);
-        ATwinLinkNavSystem* NavSystem = nullptr;
-        if (Actors.Num() == 0)
+        if (!World)
             return nullptr;
-        return Cast<T>(Actors[0]);
+        return Cast<T>(UGameplayStatics::GetActorOfClass(World, T::StaticClass()));
     }
 };

@@ -10,7 +10,9 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include <NavSystem/TwinLinkNavSystemPathLocator.h>
 
+#include "PLATEAUCityObjectGroup.h"
 #include "TwinLinkActorEx.h"
+#include "TwinLinkFacilityInfoSystem.h"
 #include "TwinLinkMathEx.h"
 #include "TwinLinkWorldViewer.h"
 #include "Camera/CameraComponent.h"
@@ -136,11 +138,18 @@ void ATwinLinkNavSystemPathFinder::ChangeCameraLocation(float MoveSec) const {
 // Called when the game starts or when spawned
 void ATwinLinkNavSystemPathFinder::BeginPlay() {
     Super::BeginPlay();
+    if (const auto System = ATwinLinkNavSystem::GetInstance(GetWorld())) {
+        System->OnFacilityClicked.AddUObject(this, &ATwinLinkNavSystemPathFinder::OnFacilityClick);
+    }
 }
 
 void ATwinLinkNavSystemPathFinder::Tick(float DeltaTime) {
     Super::Tick(DeltaTime);
 
+}
+
+void ATwinLinkNavSystemPathFinder::OnFacilityClick(const FHitResult& Info, const FTwinLinkNavSystemBuildingInfo& Facility) {
+    OnFacilityClicked.Broadcast(Info, Facility);
 }
 
 const ATwinLinkNavSystem* ATwinLinkNavSystemPathFinder::GetTwinLinkNavSystem() const {

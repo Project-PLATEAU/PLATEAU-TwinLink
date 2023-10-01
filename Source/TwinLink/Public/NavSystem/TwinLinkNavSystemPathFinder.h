@@ -5,6 +5,8 @@
 #include <optional>
 
 #include "CoreMinimal.h"
+#include "TwinLinkFacilityInfo.h"
+#include "TwinLinkNavSystemBuildingInfo.h"
 #include "TwinLinkNavSystemDef.h"
 #include "TwinLinkNavSystemFindPathInfo.h"
 #include "GameFramework/Actor.h"
@@ -16,6 +18,11 @@ class ATwinLinkNavSystem;
 UCLASS()
 class TWINLINK_API ATwinLinkNavSystemPathFinder : public AActor {
     GENERATED_BODY()
+public:
+
+    // クリックしたときのイベント
+    UDELEGATE(BlueprintAuthorityOnly)
+        DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnTwinLinkFacilityClicked, const FHitResult, HitResult, const FTwinLinkNavSystemBuildingInfo&, FacilityInfo);
 public:
     DECLARE_MULTICAST_DELEGATE(OnReadyPathFindingDelegate);
 
@@ -68,20 +75,20 @@ public:
      */
     virtual void Clear() {}
 
-
-    /*
-     * @brief : 開始時に呼ばれる
-     */
-    virtual void OnStart() {}
-
     // パス検索が可能になったときに呼ばれる       
     OnReadyPathFindingDelegate OnReadyPathFinding;
+
+    UPROPERTY(BlueprintAssignable)
+        FOnTwinLinkFacilityClicked OnFacilityClicked;
 protected:
     // Called when the game starts or when spawned
     virtual void BeginPlay() override;
 
     // Called every frame
     virtual void Tick(float DeltaTime) override;
+
+    // 
+    void OnFacilityClick(const FHitResult& Info, const FTwinLinkNavSystemBuildingInfo& Facility);
 
     // TwinLinkNavSystem
     const ATwinLinkNavSystem* GetTwinLinkNavSystem() const;
