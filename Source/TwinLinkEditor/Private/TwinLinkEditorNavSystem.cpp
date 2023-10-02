@@ -359,19 +359,15 @@ void UTwinLinkEditorNavSystem::MakeNavMesh(UEditorActorSubsystem* Editor, UWorld
     }
 
 
-    // NavSystemActorが存在しない場合は作成する
-    TArray<AActor*> NavSystemActors;
-    UGameplayStatics::GetAllActorsOfClass(World, ATwinLinkNavSystem::StaticClass(), NavSystemActors);
-    ATwinLinkNavSystem* NavSystem = nullptr;
-    if (NavSystemActors.Num() == 0) {
-        NavSystem = Cast<ATwinLinkNavSystem>(Editor->SpawnActorFromObject(Param->NavSystemBp, FVector::Zero(), FRotator::ZeroRotator));
-        NavSystem->SetActorLabel(TEXT("TwinLinkNavSystem"));
+    // 既存のNavSystemは破壊して作り直す
+    {
+        TArray<AActor*> NavSystemActors;
+        UGameplayStatics::GetAllActorsOfClass(World, ATwinLinkNavSystem::StaticClass(), NavSystemActors);
+        for (auto& Actor : NavSystemActors)
+            Actor->Destroy();
     }
-    else {
-        NavSystem = Cast<ATwinLinkNavSystem>(NavSystemActors[0]);
-    }
-
-
+    ATwinLinkNavSystem* NavSystem = Cast<ATwinLinkNavSystem>(Editor->SpawnActorFromObject(Param->NavSystemBp, FVector::Zero(), FRotator::ZeroRotator));
+    NavSystem->SetActorLabel(TEXT("TwinLinkNavSystem"));
     const auto Result = ::ApplyNavMeshAffect(World, NavSystem);
     TArray<AActor*> AllActors;
     UGameplayStatics::GetAllActorsOfClass(World, ANavMeshBoundsVolume::StaticClass(), AllActors);
