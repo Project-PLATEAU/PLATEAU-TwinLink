@@ -79,7 +79,7 @@ bool ATwinLinkNavSystem::FindNavMeshPoint(const UNavigationSystemV1* NavSys, con
     if (NavSys->ProjectPointToNavigation(Pos, OutLocation, Size + FVector::One() * 1000)) {
         OutPos = OutLocation.Location;
         // #TODO : 適当な値
-        OutPos.Z = Bb.GetCenter().Z;
+        OutPos.Z = Bb.Min.Z;
         return true;
     }
     return false;
@@ -199,7 +199,22 @@ void ATwinLinkNavSystem::BeginPlay() {
         TwinLinkPLATEAUCityModelEx::ForeachModels(InstanceCityModel, Req, [&](UPLATEAUCityObjectGroup* CityObjectGroup) {
             BuildingMap.Add(CityObjectGroup->GetName(), CityObjectGroup);
             });
+    }
 
+    // #TODO : 一時的にナビメッシュポイントは実行時に適当に設定する
+    if (const UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld())) {
+        if (const auto FacilitySystem = GetFacilityInfoSystem(GetWorld())) {
+            for (auto& Item : FacilitySystem->GetFacilityInfoCollectionAsMap()) {
+                const auto FeatureId = Item.Value->GetFeatureID();
+                if (BuildingMap.Contains(FeatureId)) {
+                    FVector OutPos;
+                    if (FindNavMeshPoint(NavSys, BuildingMap[FeatureId].Get(), OutPos)) {
+                        Item.Value->SetEntrances(TArray<FVector>{OutPos});
+                    }
+
+                }
+            }
+        }
     }
 
 #ifdef WITH_EDITOR
