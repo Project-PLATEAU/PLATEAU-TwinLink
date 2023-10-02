@@ -87,7 +87,7 @@ bool ATwinLinkNavSystemPathFinder::TryGetPathLocation(NavSystemPathPointType Typ
     return true;
 }
 
-bool ATwinLinkNavSystemPathFinder::TryGetCameraLocationAndLookAt(FVector& OutLocation, FVector& OutLookAt) const {
+bool ATwinLinkNavSystemPathFinder::TryGetCameraLocationAndLookAt(const FVector& NowCameraLocation, FVector& OutLocation, FVector& OutLookAt) const {
     FVector Start;
     const auto HasStart = TryGetPathLocation(NavSystemPathPointType::Start, Start);
     FVector Dest;
@@ -104,6 +104,9 @@ bool ATwinLinkNavSystemPathFinder::TryGetCameraLocationAndLookAt(FVector& OutLoc
         // Start -> Destの法線を求める
         auto Dir = (Dest - Start);
         Dir = FVector(Dir.Y, -Dir.X, 0).GetSafeNormal();
+        // 現在のカメラ位置に近いほうにする
+        if (Dir.Dot(NowCameraLocation - Center) < 0)
+            Dir = -Dir;
         double PhiSi, PhiCo;
         FMath::SinCos(&PhiSi, &PhiCo, FMath::DegreesToRadians(Param->RouteGuideStartCameraRotDist.Y));
         const auto R = Param->RouteGuideStartCameraRotDist.Z;
@@ -127,9 +130,10 @@ bool ATwinLinkNavSystemPathFinder::TryGetCameraLocationAndLookAt(FVector& OutLoc
 }
 
 void ATwinLinkNavSystemPathFinder::ChangeCameraLocation(float MoveSec) const {
-    FVector Location, LookAt;
-    if (TryGetCameraLocationAndLookAt(Location, LookAt)) {
-        if (const auto Viewer = ATwinLinkNavSystem::GetWorldViewer(GetWorld())) {
+
+    if (const auto Viewer = ATwinLinkNavSystem::GetWorldViewer(GetWorld())) {
+        FVector Location, LookAt;
+        if (TryGetCameraLocationAndLookAt(Viewer->GetNowCameraLocationOrZero(), Location, LookAt)) {
             Viewer->SetLocationLookAt(Location, LookAt, MoveSec);
         }
     }

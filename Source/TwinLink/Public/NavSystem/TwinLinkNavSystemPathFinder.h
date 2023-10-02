@@ -55,7 +55,7 @@ public:
         virtual void SetPathLocation(NavSystemPathPointType Type, FVector Location) {}
 
     UFUNCTION(BlueprintCallable)
-        virtual bool TryGetCameraLocationAndLookAt(FVector& OutLocation, FVector& OutLookAt) const;
+        virtual bool TryGetCameraLocationAndLookAt(const FVector& NowCameraLocation, FVector& OutLocation, FVector& OutLookAt) const;
 
     /*
      * @brief : 現在のパスからカメラの位置を変更する
