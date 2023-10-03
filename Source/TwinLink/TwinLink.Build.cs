@@ -1,4 +1,7 @@
 ﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+using UnrealBuildTool;
+using System;
+using System.IO;
 
 public class TwinLink : ModuleRules
 {

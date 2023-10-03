@@ -1,15 +1,13 @@
 // Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #include "TwinLinkPeopleFlowSystem.h"
-
 #include "HttpModule.h"
 #include "Interfaces/IHttpResponse.h"
 
-void UTwinLinkPeopleFlowSystem::Request(const FTwinLinkPeopleFlowApiRequest& Req)
-{
+void UTwinLinkPeopleFlowSystem::Request(const FTwinLinkPeopleFlowApiRequest& Req) {
     // https://dev.classmethod.jp/articles/unrealengine5-http-api-call/
-    static constexpr FString Url = "";
-    static constexpr FString Verb = "POST";
+    const FString Url = "";
+    const FString Verb = "POST";
 
 
     const FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
@@ -23,8 +21,7 @@ void UTwinLinkPeopleFlowSystem::Request(const FTwinLinkPeopleFlowApiRequest& Req
 }
 
 void UTwinLinkPeopleFlowSystem::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response,
-    bool bConnectionSuccessfully)
-{
+    bool bConnectionSuccessfully) {
     if (!bConnectionSuccessfully)
         return;
 
@@ -39,6 +36,4 @@ void UTwinLinkPeopleFlowSystem::OnResponseReceived(FHttpRequestPtr Request, FHtt
 
     // UEでログ出力（APIから受け取った文字列そのまま）
     UE_LOG(LogTemp, Display, TEXT("Response %s"), *Response->GetContentAsString());
-
-
 }
