@@ -8,6 +8,7 @@
 #include "Engine/DataAsset.h"
 #include "TwinLinkNavSystemParam.generated.h"
 
+class AUTwinLinkNavSystemPathDrawer;
 class ATwinLinkNavSystemPathFinder;
 /**
  *
