@@ -1,9 +1,5 @@
 ﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
-using UnrealBuildTool;
-using System;
-using System.IO;
-
 public class TwinLink : ModuleRules
 {
     public TwinLink(ReadOnlyTargetRules Target) : base(Target)
@@ -30,7 +26,7 @@ public class TwinLink : ModuleRules
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
-                "Core", "CoreUObject", "Engine", "InputCore", "PLATEAURuntime", "Slate", "SlateCore","Niagara",
+                "Core", "CoreUObject", "Engine", "InputCore", "PLATEAURuntime", "Slate", "SlateCore","Niagara", "HTTP", "Json"
             }
         );
 
@@ -46,7 +42,7 @@ public class TwinLink : ModuleRules
                 "Json",
                 "JsonUtilities",
                 "NavigationSystem",
-				"Niagara", "Imath", 
+                "Niagara", "Imath", 
                 // ... add private dependencies that you statically link with here ...	
             }
         );
