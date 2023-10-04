@@ -2,6 +2,8 @@
 
 
 #include "TwinLinkEditorNavSystem.h"
+
+#include <algorithm>
 #include <Kismet/GameplayStatics.h>
 #include <optional>
 #include <NavMesh/NavMeshBoundsVolume.h>
@@ -273,24 +275,8 @@ namespace {
         static NavMeshBuildProgress Complete() {
             return NavMeshBuildProgress(true, "");
         }
-        static NavMeshBuildProgress CheckProgress(UWorld* World) {
-            // まだ実行すらしていない
-            const auto TwinLinkNavSys = ::FindFirstPersistentLevelActor<ATwinLinkNavSystem>(World);
-            if (!TwinLinkNavSys)
-                return  Error("");
 
-            // モデルを読み込んでいない
-            const auto CityModel = ::FindFirstPersistentLevelActor<APLATEAUInstancedCityModel>(World);
-            if (!CityModel)
-                return  Error(TEXT("3D都市モデルが読み込まれていません"));
-
-            const auto CityModelLoader = ::FindFirstPersistentLevelActor<APLATEAUCityModelLoader>(World);
-            if (!CityModelLoader)
-                return  Error(TEXT("3D都市モデルが読み込まれていません"));
-
-            if (CityModelLoader->Phase != ECityModelLoadingPhase::Finished)
-                return Error(TEXT("3D都市モデルのインポートがまだ完了していません"));
-
+        static bool CheckCityModel(const APLATEAUInstancedCityModel* CityModel, FString& ErrMsg) {
             auto bExistRoadModel = false;
             ::ForeachDescendant(CityModel->GetRootComponent(), 1,
                 [&bExistRoadModel](const USceneComponent* Self) mutable {
@@ -310,9 +296,54 @@ namespace {
                     }
                 });
             // 道モデルが見つからない
-            if (bExistRoadModel == false)
-                return Error(TEXT("3D都市モデルにLOD1道路モデルが含まれていません"));
+            if (bExistRoadModel == false) {
+                ErrMsg = TEXT("3D都市モデルにLOD1道路モデルが含まれていません");
+                return false;
+            }
+            return true;
+        }
 
+        static NavMeshBuildProgress CheckProgress(UWorld* World) {
+            // まだ実行すらしていない
+            const auto TwinLinkNavSys = ::FindFirstPersistentLevelActor<ATwinLinkNavSystem>(World);
+            if (!TwinLinkNavSys)
+                return  Error("");
+
+            // モデルローダーが読み込まれていない
+            TArray<AActor*> CityModelLoaders;
+            UGameplayStatics::GetAllActorsOfClass(World, APLATEAUCityModelLoader::StaticClass(), CityModelLoaders);
+
+            // モデルローダーがロード中
+            for (const auto Actor : CityModelLoaders) {
+                const auto CityModelLoader = Cast<APLATEAUCityModelLoader>(Actor);
+                if (!CityModelLoader)
+                    continue;
+                if (CityModelLoader->Phase != ECityModelLoadingPhase::Finished)
+                    return Error(TEXT("3D都市モデルのインポートがまだ完了していません"));
+            }
+
+            // モデルを読み込んでいない
+            TArray<AActor*> CityModels;
+            UGameplayStatics::GetAllActorsOfClass(World, APLATEAUInstancedCityModel::StaticClass(), CityModels);
+            if (CityModels.IsEmpty())
+                return Error(TEXT("3D都市モデルが読み込まれていません"));
+
+            // CityModelの中に有効なモデルがあればOK
+            // #NOTE : 背景モデルと違い, このレベルの開始地点となる建物は建物単体でインポートされるので道情報などはない
+            {
+                auto bExistValidCityModel = false;
+                FString CityModelErrMsg;
+                for (const auto Actor : CityModels) {
+                    const auto CityModel = Cast<APLATEAUInstancedCityModel>(Actor);
+                    FString ErrMsg;
+                    bExistValidCityModel = bExistValidCityModel || CheckCityModel(CityModel, ErrMsg);
+                    if (bExistValidCityModel)
+                        break;
+                    CityModelErrMsg = ErrMsg;
+                }
+                if (!bExistValidCityModel)
+                    return Error(CityModelErrMsg);
+            }
             // https://docs.unrealengine.com/5.2/en-US/API/Runtime/NavigationSystem/UNavigationSystemV1/
             UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(World);
             if (!NavSys)
@@ -411,11 +442,11 @@ void UTwinLinkEditorNavSystem::SetCanEverAffectNavigationAllActors(UWorld* World
 }
 
 FString UTwinLinkEditorNavSystem::GetNavMeshBuildingMessage(UWorld* World) {
-    auto Ret = ::NavMeshBuildProgress::CheckProgress(World);
+    const auto Ret = ::NavMeshBuildProgress::CheckProgress(World);
     return Ret.Message;
 }
 
 bool UTwinLinkEditorNavSystem::IsNavMeshBuilt(UWorld* World) {
-    auto Ret = ::NavMeshBuildProgress::CheckProgress(World);
+    const auto Ret = ::NavMeshBuildProgress::CheckProgress(World);
     return Ret.bIsBuildComplete;
 }
