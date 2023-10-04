@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
 #include "TwinLinkFacilityInfo.h"
@@ -47,5 +47,16 @@ bool UTwinLinkFacilityInfo::Setup(const TArray<FString>& DataStr) {
         EvOnChanged.Broadcast();
     }
 
+    return true;
+}
+
+void UTwinLinkFacilityInfo::SetEntrances(const TArray<FVector>& Value) {
+    Entrances = Value;
+}
+
+bool UTwinLinkFacilityInfo::TryGetFirstEntrance(FVector& Out) const {
+    if (Entrances.IsEmpty())
+        return false;
+    Out = Entrances[0];
     return true;
 }

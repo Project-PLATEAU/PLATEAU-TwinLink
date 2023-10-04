@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -35,19 +35,24 @@ public:
     */
     bool Setup(const TArray<FString>& DataStr);
 
+    /*
+     * @brief : 入口情報を設定
+     */
+    void SetEntrances(const TArray<FVector>& Value);
+
     /**
      * @brief 施設名の取得
      * @return
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
-    FString GetName() const { return Name; }
+        FString GetName() const { return Name; }
 
     /**
      * @brief 施設カテゴリの取得
      * @return
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
-    FString GetCategory() const { return Category; }
+        FString GetCategory() const { return Category; }
 
     /**
      * @brief 地物IDの取得
@@ -55,28 +60,38 @@ public:
      * @return
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
-    FString GetFeatureID() const { return FeatureID; }
+        FString GetFeatureID() const { return FeatureID; }
 
     /**
      * @brief 施設イメージ名の取得
      * @return
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
-    FString GetImageFileName() const { return ImageFileName; }
+        FString GetImageFileName() const { return ImageFileName; }
 
     /**
      * @brief 施設詳細の取得
      * @return
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
-    FString GetDescription() const { return Description; }
+        FString GetDescription() const { return Description; }
 
     /**
      * @brief スポット情報の取得
      * @return
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
-    FString GetSpotInfo() const { return SpotInfo; }
+        FString GetSpotInfo() const { return SpotInfo; }
+
+    /**
+     * @brief 建物の入口座標を取得(経路探索用)
+     * @return
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        const TArray<FVector>& GetEntrances() const { return Entrances; }
+
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        bool TryGetFirstEntrance(FVector& Out) const;
 
 public:
     /** データが変更された **/
@@ -100,4 +115,7 @@ private:
 
     /** スポット情報 **/
     FString SpotInfo;
+
+    /** 建物の入口(ワールド座標) **/
+    TArray<FVector> Entrances;
 };

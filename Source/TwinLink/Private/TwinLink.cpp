@@ -57,7 +57,7 @@ void UTwinLinkBlueprintLibrary::TwinLinkSetCityModel(AActor* Model) {
 
 ESlateVisibility UTwinLinkBlueprintLibrary::AsSlateVisibility(bool visibility)
 {
-    return visibility ? ESlateVisibility::Visible : ESlateVisibility::Hidden;
+    return visibility ? ESlateVisibility::Visible : ESlateVisibility::Collapsed;
 }
 
 IMPLEMENT_MODULE(FTwinLinkModule, TwinLink)

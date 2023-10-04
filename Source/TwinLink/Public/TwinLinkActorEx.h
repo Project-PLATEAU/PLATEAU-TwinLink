@@ -16,13 +16,11 @@ public:
     }
 
     template<class T>
-    static const T* FindActorInOwner(const AActor* Self, bool bIncludeSelf = false)
-    {
+    static const T* FindActorInOwner(const AActor* Self, bool bIncludeSelf = false) {
         if (!Self)
             return nullptr;
         auto Actor = bIncludeSelf ? Self : Self->Owner;
-        while(Actor)
-        {
+        while (Actor) {
             if (auto Ret = Cast<T>(Actor))
                 return Ret;
             Actor = Actor->Owner;
@@ -31,8 +29,17 @@ public:
     }
 
     template<class T>
-    static T* FindActorInParent(AActor* Self, bool bIncludeSelf = false)
-    {
+    static T* FindActorInParent(AActor* Self, bool bIncludeSelf = false) {
         return const_cast<T*>(FindActorInParent<T>(const_cast<const AActor*>(Self), bIncludeSelf));
+    }
+
+    template<class T>
+    static T* FindFirstActorInWorld(const UWorld* World) {
+        TArray<AActor*> Actors;
+        UGameplayStatics::GetAllActorsOfClass(World, T::StaticClass(), Actors);
+        ATwinLinkNavSystem* NavSystem = nullptr;
+        if (Actors.Num() == 0)
+            return nullptr;
+        return Cast<T>(Actors[0]);
     }
 };

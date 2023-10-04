@@ -1,6 +1,8 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
+
+#include <optional>
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
@@ -44,59 +46,96 @@ public:
      * @param Position
      * @param Rotation
     */
-    void SetLocation(const FVector& Position, const FRotator& Rotation);
-    void SetLocation(const FVector& Position, const FVector& RotationEulur);
+    void SetLocation(const FVector& Position, const FRotator& Rotation, float MoveSec = 0.f);
+    void SetLocation(const FVector& Position, const FVector& RotationEuler, float MoveSec = 0.f);
 
+
+    /**
+     * @brief 移動先の設定
+     * 現在は指定した先に瞬間移動する
+     * 後から高速移動に切り替えるかも
+     * @param Position
+     * @param LookAt
+     * @param bForce : trueの時は即座に適用
+    */
+    void SetLocationLookAt(const FVector& Position, const FVector& LookAt, float MoveSec = 0.f);
+
+private:
+    void ATwinLinkWorldViewer::SetLocationImpl(const FVector& Position, const FRotator& Rotation);
 public:
     // クリック
     FDelClickViewPort EvOnClickedFacility;
     FDelCanceledClickFacility EvOnCanceledClickFacility;
 
 private:
+    UFUNCTION(BlueprintCallable, Category = "Movement")
+        FVector GetNowCameraLocationOrZero() const;
+
+    UFUNCTION(BlueprintCallable, Category = "Movement")
+        FRotator GetNowCameraRotationOrDefault() const;
+
     // BluePrint側から呼び出す処理
     UFUNCTION(BlueprintCallable, Category = "Movement")
-    void MoveForward(const float Value);
+        void MoveForward(const float Value);
 
     UFUNCTION(BlueprintCallable, Category = "Movement")
-    void MoveRight(const float Value);
+        void MoveRight(const float Value);
 
     UFUNCTION(BlueprintCallable, Category = "Movement")
-    void MoveUp(const float Value);
+        void MoveUp(const float Value);
 
     UFUNCTION(BlueprintCallable, Category = "Movement")
-    void Turn(const float Value);
+        void Turn(const float Value);
 
     UFUNCTION(BlueprintCallable, Category = "Movement")
-    void LookUp(const float Value);
+        void LookUp(const float Value);
 
     UFUNCTION(BlueprintCallable, Category = "Movement")
-    void Click();
+        void Click();
 
 private:
     /* カメラの移動速度 */
     UPROPERTY(EditAnywhere, Category = "TwinLink View Movement")
-    float CameraMovementSpeed = 500000.0f;
+        float CameraMovementSpeed = 500000.0f;
 
     /* カメラの回転速度 */
     UPROPERTY(EditAnywhere, Category = "TwinLink View Movement")
-    float CameraRotationSpeed = 1.0f;
+        float CameraRotationSpeed = 1.0f;
 
     /* 最大加速度(速度の変化率) */
     UPROPERTY(EditAnywhere, Category = "TwinLink View Movement", meta = (ClampMin = "0", UIMin = "0", ForceUnits = "%"))
-    float MaxAcceleration = 20000.f;
+        float MaxAcceleration = 20000.f;
 
     /* cm/sec 最大飛行速度 */
     UPROPERTY(EditAnywhere, Category = "TwinLink View Movement", meta = (ClampMin = "0", UIMin = "0", ForceUnits = "cm/s"))
-    float MaxFlySpeed = 50000.0f;
+        float MaxFlySpeed = 50000.0f;
 
 
     /* このプロパティ値で他のシステムの値を上書きする */
     UPROPERTY(EditAnywhere, AdvancedDisplay, Category = "TwinLink View Movement")
-    bool bOverrideOtherSystemValues = true;
+        bool bOverrideOtherSystemValues = true;
 
 
     UCharacterMovementComponent* CharMovementComponent;
 
     bool bIsSelectingFacility;
 
+    struct Transform {
+        FVector Location;
+        FRotator Rotation;
+    };
+
+    struct MoveInfo {
+        // 開始地点
+        Transform From;
+        // 目的地店
+        Transform To;
+        // 移動にかかる時間
+        float MoveSec = 0.f;
+        // 現在の経過時間
+        float PassSec = 0.f;
+        bool Update(float DeltaSec, FVector& OutLocation, FRotator& OutRotation);
+    };
+
+    std::optional<MoveInfo> TargetTransform;
 };

@@ -1,9 +1,10 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
 #include "TwinLinkWorldViewer.h"
 #include "Kismet/GameplayStatics.h"
 #include "TwinLinkCommon.h"
+#include "TwinLinkMathEx.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
@@ -47,6 +48,13 @@ void ATwinLinkWorldViewer::Tick(float DeltaTime) {
         CharMovementComponent->MaxAcceleration = MaxAcceleration;
     }
 
+    if (TargetTransform) {
+        FVector NextLocation;
+        FRotator NextRotation;
+        if (TargetTransform->Update(DeltaTime, NextLocation, NextRotation))
+            TargetTransform = std::nullopt;
+        SetLocationImpl(NextLocation, NextRotation);
+    }
 }
 
 // Called to bind functionality to input
@@ -64,6 +72,26 @@ void ATwinLinkWorldViewer::SetupPlayerInputComponent(UInputComponent* PlayerInpu
     // 移動コンポーネントを利用する前に取得
     CharMovementComponent = GetCharacterMovement();
     check(CharMovementComponent);
+}
+
+FVector ATwinLinkWorldViewer::GetNowCameraLocationOrZero() const {
+    if (!GetController())
+        return FVector::Zero();
+    if (const auto ViewTarget = GetController()->GetViewTarget())
+        return ViewTarget->GetActorLocation();
+    return FVector::Zero();
+}
+
+FRotator ATwinLinkWorldViewer::GetNowCameraRotationOrDefault() const {
+    if (!GetController())
+        return FRotator();
+    return GetControlRotation();
+
+    //if (const auto ViewTarget = GetController()->GetViewTarget()) {
+    //    ViewTarget->GetRot
+    //    return ViewTarget->GetActorRotation();
+    //}
+    //return FRotator();
 }
 
 // カメラの前後移動
@@ -104,6 +132,8 @@ void ATwinLinkWorldViewer::LookUp(const float Value) {
 
 void ATwinLinkWorldViewer::Click() {
     FHitResult HitResult;
+    if (!GetLocalViewingPlayerController())
+        return;
     GetLocalViewingPlayerController()->GetHitResultUnderCursorByChannel(
         UEngineTypes::ConvertToTraceType(ECC_Visibility), true, HitResult);
 
@@ -143,13 +173,47 @@ void ATwinLinkWorldViewer::Click() {
             bIsSelectingFacility = false;
         }
     }
-
 }
 
-void ATwinLinkWorldViewer::SetLocation(const FVector& Position, const FRotator& Rotation) {
+bool ATwinLinkWorldViewer::MoveInfo::Update(float DeltaSec, FVector& OutLocation, FRotator& OutRotation)
+{
+    PassSec = FMath::Max(0.f, PassSec) + DeltaSec;
+    if(PassSec >= MoveSec || MoveSec <= 0.f)
+    {
+        OutLocation = To.Location;
+        OutRotation = To.Rotation;
+        return true;
+    }
+
+    auto T = FMath::InterpEaseInOut(0.f, 1.f, PassSec / MoveSec, 1.f);
+    
+    OutLocation = FMath::Lerp(From.Location, To.Location, T);
+    OutRotation = FMath::Lerp(From.Rotation, To.Rotation, T);
+    return false;
+}
+
+void ATwinLinkWorldViewer::SetLocationImpl(const FVector& Position, const FRotator& Rotation) {
     GetController()->ClientSetLocation(Position, Rotation);
 }
 
-void ATwinLinkWorldViewer::SetLocation(const FVector& Position, const FVector& RotationEulur) {
-    GetController()->ClientSetLocation(Position, FRotator::MakeFromEuler(RotationEulur));
+void ATwinLinkWorldViewer::SetLocation(const FVector& Position, const FRotator& Rotation, float MoveSec) {
+    if (MoveSec <= 0.f) {
+        SetLocationImpl(Position, Rotation);
+        TargetTransform = std::nullopt;
+    }
+    else {
+        TargetTransform = MoveInfo();
+        TargetTransform->From = Transform{ GetNowCameraLocationOrZero(), GetNowCameraRotationOrDefault() };
+        TargetTransform->To = Transform{ Position, Rotation };
+        TargetTransform->MoveSec = MoveSec;
+    }
+}
+
+void ATwinLinkWorldViewer::SetLocation(const FVector& Position, const FVector& RotationEuler, float MoveSec) {
+    SetLocation(Position, FRotator::MakeFromEuler(RotationEuler), MoveSec);
+}
+
+void ATwinLinkWorldViewer::SetLocationLookAt(const FVector& Position, const FVector& LookAt, float MoveSec) {
+    const auto Rotation = TwinLinkMathEx::CreateLookAtMatrix(Position, LookAt);
+    SetLocation(Position, FRotator(Rotation.ToQuat()), MoveSec);
 }

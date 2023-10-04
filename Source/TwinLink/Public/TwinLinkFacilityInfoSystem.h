@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -127,6 +127,11 @@ public:
      * @return
     */
     TWeakObjectPtr<UTwinLinkObservableCollection> GetFacilityInfoCollection() const;
+
+    /*
+     * @brief : 施設情報群をマップとして取得する
+     */
+    const TMap<uint32, TObjectPtr<UTwinLinkFacilityInfo>>& GetFacilityInfoCollectionAsMap() const;
 
 private:
     /** 施設情報機能のバージョン　永続化時に組み込む **/

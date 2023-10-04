@@ -47,3 +47,14 @@ enum class NavSystemPathLocatorState : uint8 {
     Undefined UMETA(DisplayName = "Undefined")
 };
 using NavSystemPathLocatorStateT = FTwinLinkEnumT<NavSystemPathLocatorState>;
+
+UENUM(BlueprintType)
+enum class TwinLinkNavSystemMoveType : uint8 {
+    // 歩き
+    Walk        UMETA(DisplayName = "Walk"),
+    // 車
+    Car         UMETA(DisplayName = "Car"),
+    Max         UMETA(DisplayName = "Max"),
+    Undefined   UMETA(DisplayName = "Undefined")
+};
+using TwinLinkNavSystemMoveTypeT = FTwinLinkEnumT<TwinLinkNavSystemMoveType>;

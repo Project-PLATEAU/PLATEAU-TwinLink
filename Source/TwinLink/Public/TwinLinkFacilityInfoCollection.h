@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -33,10 +33,16 @@ public:
         return FacilityInfoCollection.end();
     }
 
+    /*
+     * @brief : 元のマップを返す
+     */
+    const TMap<uint32, TObjectPtr<UTwinLinkFacilityInfo>>& GetFacilityInfoCollection() const {
+        return FacilityInfoCollection;
+    }
 private:
     /** 視点情報群 **/
     UPROPERTY()
-    TMap<uint32, TObjectPtr<UTwinLinkFacilityInfo>> FacilityInfoCollection;
+        TMap<uint32, TObjectPtr<UTwinLinkFacilityInfo>> FacilityInfoCollection;
 
 
 };

@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
 #include "TwinLinkFacilityInfoSystem.h"
@@ -165,7 +165,7 @@ void UTwinLinkFacilityInfoSystem::ImportFacilityInfo() {
 }
 
 bool UTwinLinkFacilityInfoSystem::EditFacilityInfo(
-    const TWeakObjectPtr<UTwinLinkFacilityInfo>& FacilityInfo, 
+    const TWeakObjectPtr<UTwinLinkFacilityInfo>& FacilityInfo,
     const FString& Name, const FString& Category, const FString& ImageFileName, const FString& Guide, const FString& SpotInfo) {
     ensure(FacilityInfo.IsValid());
     if (FacilityInfo.IsValid() == false) {
@@ -278,6 +278,11 @@ TWeakObjectPtr<UPrimitiveComponent> UTwinLinkFacilityInfoSystem::FindFacility(co
 
 TWeakObjectPtr<UTwinLinkObservableCollection> UTwinLinkFacilityInfoSystem::GetFacilityInfoCollection() const {
     return FacilityInfoCollection;
+}
+
+const TMap<uint32, TObjectPtr<UTwinLinkFacilityInfo>>& UTwinLinkFacilityInfoSystem::
+GetFacilityInfoCollectionAsMap() const {
+    return FacilityInfoCollection->GetFacilityInfoCollection();
 }
 
 void UTwinLinkFacilityInfoSystem::InitializeCategoryMap() {
