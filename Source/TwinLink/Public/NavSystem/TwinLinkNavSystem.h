@@ -188,17 +188,19 @@ private:
     // -----------------------
 
     // 現在どのポイントを編集しているかどうか
-    UPROPERTY(EditAnywhere, Category = TwinLink_Path)
+    UPROPERTY(EditAnywhere, Category = TwinLink_Runtime)
         NavSystemMode NowSelectedMode = NavSystemMode::Undefined;
 
     // パス描画のアクター
-    UPROPERTY(EditAnywhere, Category = TwinLink_Path)
+    UPROPERTY(EditAnywhere, Category = TwinLink_Runtime)
         TArray<AUTwinLinkNavSystemPathDrawer*> PathDrawers;
 
     // パス探索のアクター
-    UPROPERTY(EditAnywhere, Category = TwinLink_Path)
+    UPROPERTY(EditAnywhere, Category = TwinLink_Runtime)
         ATwinLinkNavSystemPathFinder* NowPathFinder = nullptr;
 
+    UPROPERTY(EditAnywhere, Category = TwinLink_Runtime)
+        UTwinLinkFacilityInfo* BaseBuildingInfo = nullptr;
     // パス検索情報
     std::optional<FTwinLinkNavSystemFindPathInfo> PathFindInfo;
 
