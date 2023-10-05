@@ -4,14 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "TwinLinkDataObjBase.h"
+#include "TwinLinkObservableDataObjBase.h"
 #include "TwinLinkViewPointInfo.generated.h"
 
 /**
  * TwinLinkの視点情報クラス
  */
 UCLASS(BlueprintType)
-class TWINLINK_API UTwinLinkViewPointInfo : public UTwinLinkDataObjBase {
+class TWINLINK_API UTwinLinkViewPointInfo : public UTwinLinkObservableDataObjBase {
     GENERATED_BODY()
 
 public:

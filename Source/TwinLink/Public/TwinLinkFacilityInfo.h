@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "TwinLinkDataObjBase.h"
+#include "TwinLinkObservableDataObjBase.h"
 #include "TwinLinkFacilityInfo.generated.h"
 
 // 施設情報変更時のイベント
@@ -12,8 +12,8 @@ DECLARE_EVENT(UTwinLinkFacilityInfo, FDelOnChanged);
 /**
  * 施設情報を保持するクラス
  */
-UCLASS(BlueprintType, BlueprintType)
-class TWINLINK_API UTwinLinkFacilityInfo : public UTwinLinkDataObjBase {
+UCLASS(BlueprintType)
+class TWINLINK_API UTwinLinkFacilityInfo : public UTwinLinkObservableDataObjBase {
     GENERATED_BODY()
 
 public:
@@ -92,10 +92,6 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
         bool TryGetFirstEntrance(FVector& Out) const;
-
-public:
-    /** データが変更された **/
-    FDelOnChanged EvOnChanged;
 
 private:
     /** 施設名 **/

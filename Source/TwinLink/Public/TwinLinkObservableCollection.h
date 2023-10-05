@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "TwinLinkDataObjBase.h"
 #include "TwinLinkObservableCollection.generated.h"
 
 DECLARE_EVENT_OneParam(UTwinLinkObservableCollection, FDelOnPostAdd, const TWeakObjectPtr<UObject>, Obj);
@@ -14,7 +15,7 @@ DECLARE_EVENT(UTwinLinkObservableCollection, FDelOnPostReset);
  * 通知機能付きのコレクションラッパークラス
  */
 UCLASS(Abstract)
-class TWINLINK_API UTwinLinkObservableCollection : public UObject {
+class TWINLINK_API UTwinLinkObservableCollection : public UTwinLinkDataObjBase {
     GENERATED_BODY()
 
 public:

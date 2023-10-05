@@ -9,6 +9,9 @@
 // 実装
 class UTwinLinkScrollBoxElementImpl;
 
+// データオブジェクト
+class UTwinLinkDataObjBase;
+
 /**
  * 情報リストの要素のウィジェットに継承させるクラス
  */
