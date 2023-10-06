@@ -7,6 +7,9 @@ bool UTwinLinkViewPointInfo::Setup(const FString& ViewPointName, const FVector& 
     this->Name = ViewPointName;
     this->Position = ViewPointPosition;
     this->RotationEuler = ViewPointRotationEuler;
+
+    BroadcastEvOnChanged();
+
     return true;
 }
 
@@ -29,6 +32,8 @@ bool UTwinLinkViewPointInfo::Setup(const TArray<FString>& StrInfo) {
     this->Name = StrInfo[RefIdx]; RefIdx += 1;
     this->Position = FVector(FCString::Atof(*StrInfo[RefIdx]), FCString::Atof(*StrInfo[RefIdx + 1]), FCString::Atof(*StrInfo[RefIdx + 2])); RefIdx += 3;
     this->RotationEuler = FVector(FCString::Atof(*StrInfo[RefIdx]), FCString::Atof(*StrInfo[RefIdx + 1]), FCString::Atof(*StrInfo[RefIdx + 2])); RefIdx += 3;
+
+    BroadcastEvOnChanged();
 
     return true;
 }

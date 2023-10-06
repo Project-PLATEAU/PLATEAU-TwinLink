@@ -13,16 +13,6 @@ void UTwinLinkFacilityItem::OnSetup(UObject* Data) const {
 
     auto CastedElement = Cast<UTwinLinkFacilityInfo>(Data);
     check(CastedElement);
-
-    //// 登録済みのイベントを削除
-    //if (EvOnChangedHnd.IsValid()) {
-    //    CastedElement->EvOnChanged.Remove(EvOnChangedHnd);
-    //    EvOnChangedHnd.Reset();
-    //}
-
-    //EvOnChangedHnd = CastedElement->EvOnChanged.AddLambda([]() {
-    //    Onchanged
-    //    });
 }
 
 void UTwinLinkFacilityItem::OnRequestRemove(UObject* Data) const {

@@ -19,9 +19,8 @@ bool UTwinLinkFacilityInfo::Setup(
     check(!Category.IsEmpty());
     check(!FeatureID.IsEmpty());
 
-    if (EvOnChanged.IsBound()) {
-        EvOnChanged.Broadcast();
-    }
+    BroadcastEvOnChanged();
+
     return true;
 }
 
@@ -43,9 +42,7 @@ bool UTwinLinkFacilityInfo::Setup(const TArray<FString>& DataStr) {
     check(!Category.IsEmpty());
     check(!FeatureID.IsEmpty());
 
-    if (EvOnChanged.IsBound()) {
-        EvOnChanged.Broadcast();
-    }
+    BroadcastEvOnChanged();
 
     return true;
 }

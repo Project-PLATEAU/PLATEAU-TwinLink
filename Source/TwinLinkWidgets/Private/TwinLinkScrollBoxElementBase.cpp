@@ -7,9 +7,21 @@
 
 #include "TwinLinkScrollBoxElementImpl.h"
 
+// 通知機能付きのデータオブジェクトクラス
+#include "TwinLinkObservableDataObjBase.h"
+
 void UTwinLinkScrollBoxElementBase::Setup(UTwinLinkScrollBoxElementImpl* _Impl, UObject* Obj) {
     check(_Impl);
     check(Obj);
+
+    // 所持しているデータが通知機能付きのデータオブジェクトクラスなら購読を解除
+    if (UTwinLinkObservableDataObjBase* CastedData =
+        Cast<UTwinLinkObservableDataObjBase>(WidgetData.Get())) {
+        CastedData->EvOnChanged.Remove(EvOnChangedHnd);
+        EvOnChangedHnd.Reset();
+    }
+
+    // データの設定
     WidgetData = Obj;
 
     Impl = _Impl;
@@ -18,15 +30,13 @@ void UTwinLinkScrollBoxElementBase::Setup(UTwinLinkScrollBoxElementImpl* _Impl, 
     if (Impl.IsValid())
         Impl->OnSetup(WidgetData.Get());
 
-    //// 登録済みのイベントを削除
-    //if (EvOnChangedHnd.IsValid()) {
-    //    CastedElement->EvOnChanged.Remove(EvOnChangedHnd);
-    //    EvOnChangedHnd.Reset();
-    //}
-
-    //EvOnChangedHnd = CastedElement->EvOnChanged.AddLambda([]() {
-    //    Onchanged
-    //    });
+    // 通知機能付きのデータオブジェクトクラスなら公開しているイベントを購読する
+    if (UTwinLinkObservableDataObjBase* CastedData =
+        Cast<UTwinLinkObservableDataObjBase>(WidgetData.Get())) {
+        EvOnChangedHnd = CastedData->EvOnChanged.AddLambda([this]() {
+            OnChangedElement();
+            });
+    }
 
     OnChangedElement();
 }

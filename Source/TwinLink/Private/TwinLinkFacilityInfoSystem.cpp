@@ -185,7 +185,11 @@ bool UTwinLinkFacilityInfoSystem::EditFacilityInfo(
         return false;
     }
 
-    const auto isSuc = FacilityInfo->Setup(Name, Category, FeatureID, ImageFileName, Guide, SpotInfo);
+    // 表示用カテゴリ名を識別用カテゴリ名に変換
+    const auto CategoryName = ReverseCategoryDisplayNameMap.Find(Category);
+    check(CategoryName != nullptr);
+
+    const auto isSuc = FacilityInfo->Setup(Name, *CategoryName, FeatureID, ImageFileName, Guide, SpotInfo);
     if (isSuc == false) {
         UE_TWINLINK_LOG(LogTemp, Log, TEXT("Failed Setup Facility Info: %s"), *FacilityInfo->GetName());
         return false;

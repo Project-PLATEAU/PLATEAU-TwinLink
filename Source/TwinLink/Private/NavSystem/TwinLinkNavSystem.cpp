@@ -5,6 +5,7 @@
 
 #include "NavigationSystem.h"
 #include "PLATEAUInstancedCityModel.h"
+#include "TwinLink.h"
 #include "TwinLinkActorEx.h"
 #include "TwinLinkFacilityInfo.h"
 #include "TwinLinkFacilityInfoSystem.h"
@@ -187,6 +188,7 @@ void ATwinLinkNavSystem::BeginPlay() {
         Viewer->EvOnClickedFacility.AddUObject(this, &ATwinLinkNavSystem::OnFacilityClick);
     }
 
+    // #TODO : FacilityInfoSystem::FindFacilityを使った方がよさそうだが毎回全検索しているので自前でキャッシュ作るようにする
     TArray<AActor*> AllActors;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), APLATEAUInstancedCityModel::StaticClass(), AllActors);
     for (auto Actor : AllActors) {
@@ -201,8 +203,14 @@ void ATwinLinkNavSystem::BeginPlay() {
             });
     }
 
+    // #TODO : 一時的に管理対象物の情報も仮で設定する
+    auto& TwinLinkModule = FTwinLinkModule::Get();
+    auto Info = NewObject<UTwinLinkFacilityInfo>();
+    Info->Setup(TEXT("Hotel"), TEXT("管理対象"), TwinLinkModule.GetFacilityModel()->GetName(), TEXT(""), TEXT(""), TEXT(""));
+
     // #TODO : 一時的にナビメッシュポイントは実行時に適当に設定する
-    if (const UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld())) {
+    const UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+    if (NavSys) {
         if (const auto FacilitySystem = GetFacilityInfoSystem(GetWorld())) {
             for (auto& Item : FacilitySystem->GetFacilityInfoCollectionAsMap()) {
                 const auto FeatureId = Item.Value->GetFeatureID();
@@ -215,7 +223,21 @@ void ATwinLinkNavSystem::BeginPlay() {
                 }
             }
         }
+        if(Info)
+        {
+            FVector OutPos;
+            if(auto CityModel = Cast<APLATEAUInstancedCityModel>(TwinLinkModule.GetFacilityModel()))
+            {
+                const auto Visitor = TwinLinkPLATEAUInstancedCityModelVisitor(CityModel);
+               /* for(auto v : Visitor)
+                {
+                }*/
+            }
+            
+        }
+
     }
+
 
 #ifdef WITH_EDITOR
     DebugBeginPlay();
@@ -317,6 +339,8 @@ FTwinLinkNavSystemBuildingInfo ATwinLinkNavSystem::GetBaseBuilding() const {
         return Infos[0];
     }
 #endif
+   
+    //TwinLinkModule.GetFacilityModel()
     if (const auto FacilityInfo = GetFacilityInfoSystem(GetWorld())) {
         const auto Collection = Cast<UTwinLinkFacilityInfoCollection>(FacilityInfo->GetFacilityInfoCollection());
         if (!Collection)
@@ -355,9 +379,8 @@ TArray<FTwinLinkNavSystemBuildingInfo> ATwinLinkNavSystem::GetBuildingInfos() co
         }
     }
     return Ret;
-
-
 }
+
 void ATwinLinkNavSystem::OnFacilityClick(FHitResult Info) {
     const auto CityObject = Cast<UPLATEAUCityObjectGroup>(Info.Component);
     if (!CityObject) {
