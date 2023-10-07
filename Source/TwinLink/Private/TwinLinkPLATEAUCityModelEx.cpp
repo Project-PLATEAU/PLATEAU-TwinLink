@@ -1,6 +1,8 @@
 #include "TwinLinkPLATEAUCityModelEx.h"
 
+#include "Components/SceneComponent.h" 
 #include "FTwinLinkEnumT.h"
+#include "TwinLinkActorEx.h"
 
 bool TwinLinkPLATEAUCityModelFindRequest::IsTargetMeshType(FTwinLinkFindCityModelMeshType MeshType) const {
     if (FTwinLinkEnumEx::IsValid(MeshType) == false)
@@ -12,20 +14,138 @@ bool TwinLinkPLATEAUCityModelFindRequest::IsTargetMeshType(FTwinLinkFindCityMode
 bool TwinLinkPLATEAUCityModelFindRequest::IsTargetLod(int LodLevel, int MinLodLevel, int MaxLodLevel) const {
     if (FTwinLInkBitFlagEx::ContainsAny(FindLodTypeMask, FTwinLinkFindCityModelLodTypeMask::MMaxLod) && LodLevel == MaxLodLevel)
         return true;
-
     if (FTwinLInkBitFlagEx::ContainsAny(FindLodTypeMask, FTwinLinkFindCityModelLodTypeMask::MMinLod) && LodLevel == MinLodLevel)
         return true;
     return false;
 }
 
-const char* TwinLinkPLATEAUCityModelEx::GetComponentNamePrefix(FTwinLinkFindCityModelMeshType Type) {
+bool TwinLinkPLATEAUInstancedCityModelIterator::CheckCityObjectGroup(
+    const TArray<TObjectPtr<USceneComponent>>& CityObjectGroups, int& CityObjectGroupIndex) {
+    while (CityObjectGroupIndex >= 0 && CityObjectGroupIndex < CityObjectGroups.Num() && Cast<UPLATEAUCityObjectGroup>(CityObjectGroups[CityObjectGroupIndex]) == nullptr) {
+        CityObjectGroupIndex++;
+    }
+
+    return CityObjectGroupIndex < CityObjectGroups.Num();
+}
+
+bool TwinLinkPLATEAUInstancedCityModelIterator::CheckLod(const TArray<TObjectPtr<USceneComponent>>& Lods, int& LodIndex,
+    int& CityObjectGroupIndex) {
+    while (LodIndex >= 0 && LodIndex < Lods.Num() && CheckCityObjectGroup(Lods[LodIndex]->GetAttachChildren(), CityObjectGroupIndex) == false) {
+        LodIndex++;
+        CityObjectGroupIndex = 0;
+    }
+    return LodIndex < Lods.Num();
+}
+
+bool TwinLinkPLATEAUInstancedCityModelIterator::CheckChildren(const TArray<TObjectPtr<USceneComponent>>& Children,
+    int& ChildIndex, int& LodIndex, int& CityObjectGroupIndex) {
+    while (ChildIndex >= 0 && ChildIndex < Children.Num() && CheckLod(Children[ChildIndex]->GetAttachChildren(), LodIndex, CityObjectGroupIndex) == false) {
+        ChildIndex++;
+        LodIndex = CityObjectGroupIndex = 0;
+    }
+    return ChildIndex < Children.Num();
+}
+
+TwinLinkPLATEAUInstancedCityModelIterator TwinLinkPLATEAUInstancedCityModelIterator::operator++(int) {
+    const auto Ret = *this;
+    this->operator++();
+    return Ret;
+}
+
+TwinLinkPLATEAUInstancedCityModelIterator& TwinLinkPLATEAUInstancedCityModelIterator::operator++() {
+    CityObjectGroupIndex++;
+    Check();
+    return *this;
+}
+
+bool TwinLinkPLATEAUInstancedCityModelIterator::operator==(const TwinLinkPLATEAUInstancedCityModelIterator& Other) const {
+    return Target == Other.Target &&
+        ChildIndex == Other.ChildIndex &&
+        LodIndex == Other.LodIndex &&
+        CityObjectGroupIndex == Other.CityObjectGroupIndex;
+}
+
+bool TwinLinkPLATEAUInstancedCityModelIterator::operator!=(const TwinLinkPLATEAUInstancedCityModelIterator& Other) const {
+    return !(*this == Other);
+}
+
+FTwinLinkCityObjectGroupModel TwinLinkPLATEAUInstancedCityModelIterator::operator*() const {
+    FTwinLinkCityObjectGroupModel Ret;
+    FTwinLinkPlateauCityModelEx::TryParseLodLevel(TwinLinkActorEx::GetChild(Target.Get(), { ChildIndex, LodIndex })->GetName(), Ret.LodLevel);
+    Ret.CityObjectGroup = Cast<UPLATEAUCityObjectGroup>(TwinLinkActorEx::GetChild(Target.Get(), { ChildIndex, LodIndex, CityObjectGroupIndex }));
+    Ret.MeshType = FTwinLinkFindCityModelMeshType::Undefined;
+    if (Ret.CityObjectGroup.IsValid())
+        Ret.MeshType = FTwinLinkPlateauCityModelEx::ParseMeshType(Ret.CityObjectGroup->GetName());
+    return Ret;;
+}
+
+TwinLinkPLATEAUInstancedCityModelIterator::TwinLinkPLATEAUInstancedCityModelIterator(TWeakObjectPtr<APLATEAUInstancedCityModel> CityModel, int ChildI, int LodI,
+    int ObjectI)
+    : Target(CityModel->GetRootComponent())
+    , ChildIndex(ChildI)
+    , LodIndex(LodI)
+    , CityObjectGroupIndex(ObjectI) {
+    Check();
+}
+
+void TwinLinkPLATEAUInstancedCityModelIterator::Check() {
+    auto& Children = Target->GetAttachChildren();
+    // すでに範囲外なら何もしない
+    if (ChildIndex >= Children.Num())
+        return;
+
+    auto& Child = Children[ChildIndex];
+    auto& Lods = Child->GetAttachChildren();
+    auto NextChildren = [this, &Children]() {
+        ChildIndex++;
+        LodIndex = CityObjectGroupIndex = 0;
+        CheckChildren(Children, ChildIndex, LodIndex, CityObjectGroupIndex);
+    };
+    // 本来ありえないがこの段階でLodが範囲外ならChildを進めて正しい方向に修正する
+    if (LodIndex >= Lods.Num()) {
+        NextChildren();
+        return;
+    }
+
+    auto& Lod = Lods[LodIndex];
+    auto& CityObjectGroups = Lod->GetAttachChildren();
+    // 現在のCItyObjectGroupが正しいかどうかチェックする
+    if (CheckCityObjectGroup(CityObjectGroups, CityObjectGroupIndex))
+        return;
+
+    // 正しくない場合はLodを進めてチェックする
+    LodIndex++;
+    CityObjectGroupIndex = 0;
+    if (CheckLod(Lods, LodIndex, CityObjectGroupIndex))
+        return;
+
+    // それも範囲外の場合はChildも進めてチェックする
+    NextChildren();
+}
+
+
+TwinLinkPLATEAUInstancedCityModelIterator::TwinLinkPLATEAUInstancedCityModelIterator() {}
+
+TwinLinkPLATEAUInstancedCityModelScanner::TwinLinkPLATEAUInstancedCityModelScanner(
+    TWeakObjectPtr<APLATEAUInstancedCityModel> CityModel) : Target(CityModel) {
+}
+
+TwinLinkPLATEAUInstancedCityModelIterator TwinLinkPLATEAUInstancedCityModelScanner::begin() const {
+    return TwinLinkPLATEAUInstancedCityModelIterator(Target, 0, 0, 0);
+}
+
+TwinLinkPLATEAUInstancedCityModelIterator TwinLinkPLATEAUInstancedCityModelScanner::end() const {
+    return TwinLinkPLATEAUInstancedCityModelIterator(Target, Target->GetRootComponent()->GetAttachChildren().Num(), 0, 0);
+}
+
+const char* FTwinLinkPlateauCityModelEx::GetComponentNamePrefix(FTwinLinkFindCityModelMeshType Type) {
     switch (Type) {
     case FTwinLinkFindCityModelMeshType::Bldg:
-        return "bldg";
+        return "bldg_";
     case FTwinLinkFindCityModelMeshType::Dem:
-        return "dem";
+        return "dem_";
     case FTwinLinkFindCityModelMeshType::Tran:
-        return "tran";
+        return "tran_";
     case FTwinLinkFindCityModelMeshType::Max:
     case FTwinLinkFindCityModelMeshType::Undefined:
     default:;
@@ -33,16 +153,16 @@ const char* TwinLinkPLATEAUCityModelEx::GetComponentNamePrefix(FTwinLinkFindCity
     return "__invalid__";
 }
 
-FTwinLinkFindCityModelMeshType TwinLinkPLATEAUCityModelEx::ParseMeshType(const FString& MeshTypeName) {
+FTwinLinkFindCityModelMeshType FTwinLinkPlateauCityModelEx::ParseMeshType(const FString& MeshTypeName) {
     for (auto I = 0; I < static_cast<int>(FTwinLinkFindCityModelMeshType::Max); ++I) {
         const auto Type = static_cast<FTwinLinkFindCityModelMeshType>(I);
-        if (MeshTypeName.Contains(GetComponentNamePrefix(Type)))
+        if (MeshTypeName.StartsWith(GetComponentNamePrefix(Type)))
             return Type;
     }
     return FTwinLinkFindCityModelMeshType::Undefined;
 }
 
-bool TwinLinkPLATEAUCityModelEx::TryParseLodLevel(const FString& LodName, int& OutLodLevel) {
+bool FTwinLinkPlateauCityModelEx::TryParseLodLevel(const FString& LodName, int& OutLodLevel) {
     OutLodLevel = -1;
 
     // LODで始まっているかチェックする
@@ -69,7 +189,7 @@ bool TwinLinkPLATEAUCityModelEx::TryParseLodLevel(const FString& LodName, int& O
     return true;
 }
 
-bool TwinLinkPLATEAUCityModelEx::TryGetMinMaxLodLevel(const USceneComponent* MeshRootComponent, int& OutMinLodLevel,
+bool FTwinLinkPlateauCityModelEx::TryGetMinMaxLodLevel(const USceneComponent* MeshRootComponent, int& OutMinLodLevel,
     int& OutMaxLodLevel) {
     if (!MeshRootComponent)
         return false;

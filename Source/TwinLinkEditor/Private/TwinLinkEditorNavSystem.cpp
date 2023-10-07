@@ -10,6 +10,7 @@
 #include "PLATEAUInstancedCityModel.h"
 #include "NavigationSystem.h"
 #include "PLATEAUCityModelLoader.h"
+#include "TwinLinkPLATEAUCityModelEx.h"
 #include "TwinLink/Public/NavSystem/TwinLinkNavSystem.h"
 namespace {
     /*
@@ -428,6 +429,8 @@ void UTwinLinkEditorNavSystem::MakeNavMesh(UEditorActorSubsystem* Editor, UWorld
             NavSys->Build();
         }
     }
+
+
 }
 
 void UTwinLinkEditorNavSystem::SetCanEverAffectNavigationAllActors(UWorld* World, bool bRelevant) {

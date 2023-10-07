@@ -198,7 +198,7 @@ void ATwinLinkNavSystem::BeginPlay() {
         TwinLinkPLATEAUCityModelFindRequest Req;
         Req.FindMeshTypeMask = FTwinLinkFindCityModelMeshTypeMask::MBldg;
         Req.FindLodTypeMask = FTwinLinkFindCityModelLodTypeMask::MMaxLod;
-        TwinLinkPLATEAUCityModelEx::ForeachModels(InstanceCityModel, Req, [&](UPLATEAUCityObjectGroup* CityObjectGroup) {
+        FTwinLinkPlateauCityModelEx::ForeachModels(InstanceCityModel, Req, [&](UPLATEAUCityObjectGroup* CityObjectGroup) {
             BuildingMap.Add(CityObjectGroup->GetName(), CityObjectGroup);
             });
     }
@@ -223,17 +223,11 @@ void ATwinLinkNavSystem::BeginPlay() {
                 }
             }
         }
-        if(Info)
-        {
-            FVector OutPos;
-            if(auto CityModel = Cast<APLATEAUInstancedCityModel>(TwinLinkModule.GetFacilityModel()))
-            {
-                const auto Visitor = TwinLinkPLATEAUInstancedCityModelVisitor(CityModel);
-               /* for(auto v : Visitor)
-                {
-                }*/
+        if (Info) {
+            if (auto CityModel = Cast<APLATEAUInstancedCityModel>(TwinLinkModule.GetFacilityModel())) {
+                // #TODO : 
             }
-            
+
         }
 
     }
@@ -339,9 +333,12 @@ FTwinLinkNavSystemBuildingInfo ATwinLinkNavSystem::GetBaseBuilding() const {
         return Infos[0];
     }
 #endif
-   
+
     //TwinLinkModule.GetFacilityModel()
     if (const auto FacilityInfo = GetFacilityInfoSystem(GetWorld())) {
+        auto TargetModel = FTwinLinkModule::Get().GetFacilityModel();
+        if (!TargetModel)
+            return FTwinLinkNavSystemBuildingInfo();
         const auto Collection = Cast<UTwinLinkFacilityInfoCollection>(FacilityInfo->GetFacilityInfoCollection());
         if (!Collection)
             return FTwinLinkNavSystemBuildingInfo();
@@ -381,7 +378,7 @@ TArray<FTwinLinkNavSystemBuildingInfo> ATwinLinkNavSystem::GetBuildingInfos() co
     return Ret;
 }
 
-void ATwinLinkNavSystem::OnFacilityClick(FHitResult Info) {
+void ATwinLinkNavSystem::OnFacilityClick(FHitResult Info) const {
     const auto CityObject = Cast<UPLATEAUCityObjectGroup>(Info.Component);
     if (!CityObject) {
         UKismetSystemLibrary::PrintString(this, "Invalid CityObject");

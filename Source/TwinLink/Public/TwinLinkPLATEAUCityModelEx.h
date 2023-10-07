@@ -1,7 +1,7 @@
 #pragma once
 #include "PLATEAUInstancedCityModel.h"
 class APlayerController;
-
+class USceneComponent;
 UENUM(BlueprintType)
 enum class FTwinLinkFindCityModelMeshType : uint8 {
     // 建物
@@ -65,119 +65,67 @@ struct TwinLinkPLATEAUCityModelFindRequest {
     FTwinLinkFindCityModelMeshTypeMask FindMeshTypeMask;
 };
 
-class TWINLINK_API TwinLinkPLATEAUInstancedCityModelVisitor {
-    static bool NextCityObjectGroup(const TArray<TObjectPtr<USceneComponent>>& CityObjectGroups, int& CityObjectGroupIndex) {
-        do {
-            CityObjectGroupIndex++;
-        } while (CityObjectGroupIndex < CityObjectGroups.Num() && Cast<UPLATEAUCityObjectGroup>(CityObjectGroups[CityObjectGroupIndex]) == nullptr);
-
-        return CityObjectGroupIndex >= CityObjectGroups.Num();
-    }
-
-    static bool NextLod(const TArray<TObjectPtr<USceneComponent>>& Lods, int& LodIndex, int& CityObjectGroupIndex) {
-        do {
-            LodIndex++;
-            CityObjectGroupIndex = 0;
-        } while (LodIndex < Lods.Num() && NextCityObjectGroup(Lods[LodIndex]->GetAttachChildren(), CityObjectGroupIndex));
-        return LodIndex < Lods.Num();
-    }
+struct FTwinLinkCityObjectGroupModel {
 public:
-    struct Iterator {
-        Iterator operator++(int) {
-            auto Ret = *this;
-            this->operator++();
-            return Ret;
-        }
+    TWeakObjectPtr<UPLATEAUCityObjectGroup> CityObjectGroup;
+    FTwinLinkFindCityModelMeshType MeshType;
+    int LodLevel;
+};
 
-        Iterator& operator++() {
-            auto& Children = Self->GetAttachChildren();
-            // すでに範囲外の場合は何もしない
-            while (ChildIndex < Children.Num()) {
-                auto& Child = Children[ChildIndex];
-                auto& Lods = Child->GetAttachChildren();
-                auto& Lod = Lods[LodIndex];
-                auto& CityObjectGroups = Lod->GetAttachChildren();
-                if (NextCityObjectGroup(CityObjectGroups, CityObjectGroupIndex) == false)
-                    return *this;
+/*
+ * @brief : APLATEAUInstancedCityModelの中にあるUPLATEAUCityObjectGroupのイテレータ
+ */
+struct TWINLINK_API TwinLinkPLATEAUInstancedCityModelIterator {
 
-                if (NextLod(Lods, LodIndex, CityObjectGroupIndex) == false)
-                    return *this;
-
-                ChildIndex++;
-                LodIndex = CityObjectGroupIndex = 0;
-            }
-            return *this;
-        }
-
-        bool operator==(const Iterator& Other) const {
-            return Self == Other.Self &&
-                ChildIndex == Other.ChildIndex &&
-                LodIndex == Other.LodIndex &&
-                CityObjectGroupIndex == Other.CityObjectGroupIndex;
-        }
-
-        Iterator() {}
-
-        Iterator(TWeakObjectPtr<USceneComponent> CityModel)
-            : Self(CityModel) {
-        }
-
-        Iterator(TWeakObjectPtr<USceneComponent> CityModel, int Index)
-            : Self(CityModel)
-            , ChildIndex(Index) {
-        }
-
-        UPLATEAUCityObjectGroup* operator*(){
-            return GetCityObjectGroup();
-        }
-
-        UPLATEAUCityObjectGroup* GetCityObjectGroup() {
-            return Cast<UPLATEAUCityObjectGroup>(GetChild(Self.Get(), { ChildIndex, LodIndex, CityObjectGroupIndex }));
-        }
-    private:
-        TWeakObjectPtr<USceneComponent> Self;
-        int ChildIndex = 0;
-        int LodIndex = 0;
-        int CityObjectGroupIndex = 0;
-    };
 public:
-    TwinLinkPLATEAUInstancedCityModelVisitor(TWeakObjectPtr<APLATEAUInstancedCityModel> CityModel)
-        : Target(CityModel) {
-    }
-    static USceneComponent* GetChildImpl(USceneComponent* Self, const int* now, const int* end) {
-        if (now == end)
-            return Self;
+    // CityObjectGroupが見つかるまでCityObjectGroupIndexを進める(現在位置がすでにCityObjectGroupの場合は無視される)
+    // true : 正常に進められた, false : 配列の終端に達した
+    static bool CheckCityObjectGroup(const TArray<TObjectPtr<USceneComponent>>& CityObjectGroups, int& CityObjectGroupIndex);
 
-        auto& Children = Self->GetAttachChildren();
-        if (*now >= Children.Num())
-            return nullptr;
+    // CityObjectGroupが見つかるまでLodIndexを進める. CityObjectGroupIndexは見つかったときのCityObjectGroupのインデックスが入る(現在位置がすでにCityObjectGroupの場合は無視される
+    // true : 正常に進められた, false : 配列の終端に達した
+    static bool CheckLod(const TArray<TObjectPtr<USceneComponent>>& Lods, int& LodIndex, int& CityObjectGroupIndex);
 
-        return GetChildImpl(Children[*now], ++now, end);
-    }
+    // CityObjectGroupが見つかるまでChildIndexを進める, LodIndex, CityObjectGroupIndexは見つかったときのLod,CityObjectGroupのインデックスが入る(現在位置がすでにCityObjectGroupの場合は無視される
+    // true : 正常に進められた, false : 配列の終端に達した
+    static bool CheckChildren(const TArray<TObjectPtr<USceneComponent>>& Children, int& ChildIndex, int& LodIndex, int& CityObjectGroupIndex);
 
-    static USceneComponent* GetChild(USceneComponent* Self, const std::initializer_list<int>& Indices) {
-        return GetChildImpl(Self, Indices.begin(), Indices.end());
-    }
-    Iterator begin() const {
-        // 0番目の要素が正しいかチェックする
-        const auto Comp = Target->GetRootComponent();
-        if (Cast<UPLATEAUCityObjectGroup>(GetChild(Comp, { 0, 0, 0 })))
-            return Iterator(Comp);
+public:
+    TwinLinkPLATEAUInstancedCityModelIterator operator++(int);
 
-        Iterator Ret(Comp);
-        ++Ret;
-        return Ret;
-    }
+    TwinLinkPLATEAUInstancedCityModelIterator& operator++();
 
-    Iterator end() const {
-        const auto Comp = Target->GetRootComponent();
-        return Iterator(Comp, Comp->GetAttachChildren().Num());
-    }
+    bool operator==(const TwinLinkPLATEAUInstancedCityModelIterator& Other) const;
+
+    bool operator!=(const TwinLinkPLATEAUInstancedCityModelIterator& Other) const;
+
+    FTwinLinkCityObjectGroupModel operator*() const;
+    TwinLinkPLATEAUInstancedCityModelIterator();
+    TwinLinkPLATEAUInstancedCityModelIterator(TWeakObjectPtr<APLATEAUInstancedCityModel> CityModel, int ChildI, int LodI, int ObjectI);
+private:
+    // 現在指しているオブジェクトが正しいものになるまで進める
+    void Check();
+private:
+    // APLATEAUInstancedCityModelのRootComponent
+    TWeakObjectPtr<USceneComponent> Target = nullptr;
+    int ChildIndex = 0;
+    int LodIndex = 0;
+    int CityObjectGroupIndex = 0;
+    FTwinLinkFindCityModelMeshType NowChildMeshType = FTwinLinkFindCityModelMeshType::Undefined;
+};
+/*
+ * @brief : APLATEAUInstancedCityModelの中にあるUPLATEAUCityObjectGroupを走査するためのコンテナ
+ */
+class TWINLINK_API TwinLinkPLATEAUInstancedCityModelScanner {
+public:
+    TwinLinkPLATEAUInstancedCityModelScanner(TWeakObjectPtr<APLATEAUInstancedCityModel> CityModel);
+    TwinLinkPLATEAUInstancedCityModelIterator begin() const;
+    TwinLinkPLATEAUInstancedCityModelIterator end() const;
 private:
     TWeakObjectPtr<APLATEAUInstancedCityModel> Target;
 };
 
-class TWINLINK_API TwinLinkPLATEAUCityModelEx {
+class TWINLINK_API FTwinLinkPlateauCityModelEx {
 public:
     /*
      * @brief: Typeに応じたコンポーネントの名前のプリフィックスを返す. 不正値の場合は__invalid__が返る
@@ -205,15 +153,12 @@ public:
         const auto Root = Self->GetRootComponent();
         if (!Root)
             return;
-        for (auto& Child : Root->GetAttachChildren()) {
-            FString ChildName;
-            Child->GetName(ChildName);
-            // メッシュで判定する
-            const auto MeshType = ParseMeshType(ChildName);
-            if (Request.IsTargetMeshType(MeshType) == false)
-                continue;
 
-            // LODレベルを取ってくる
+        for (auto& Child : Root->GetAttachChildren()) {
+            // RootComponentの直下のコンポーネントの名前は任意なので判断できない
+
+
+           // LODレベルを取ってくる
             int MaxLodLevel = -1;
             int MinLodLevel;
             if (TryGetMinMaxLodLevel(Child, MinLodLevel, MaxLodLevel) == false)

@@ -148,7 +148,7 @@ private:
     /*
      * @brief : WorldViewerで建物クリックしたときに呼ばれる
      */
-    void OnFacilityClick(FHitResult Info);
+    void OnFacilityClick(FHitResult Info) const;
 
     /*
      * @brief : デバッグ描画実行
