@@ -8,6 +8,9 @@ TwinLinkCSVContents::Standard::Standard(const TwinLinkSystemVersionInfo& Version
 }
 
 bool TwinLinkCSVContents::Standard::Parse(TArray<FString> RowElements) {
+    KeyContents.Reset();
+    MainContents.Reset();
+
     const auto bIsEmpty = RowElements.IsEmpty();
     ensure(bIsEmpty == false);
     if (bIsEmpty)
@@ -34,7 +37,7 @@ bool TwinLinkCSVContents::Standard::Parse(TArray<FString> RowElements) {
     // Bodyの情報を保存する
     TArray<FString> TempBuffer;
     for (const auto& Elements : RowElements) {
-        Elements.ParseIntoArray(TempBuffer, TEXT(","), true);
+        Elements.ParseIntoArray(TempBuffer, TEXT(","), false);
         MainContents.Add(TempBuffer);
     }
 

@@ -125,7 +125,10 @@ public:
     static bool CopyFile(const FString& Src, const FString& Dest);
 
     /**
-     * @brief ディレクトリーの作成
+     * @brief 親ディレクトリを含むディレクトリを作成し、
+     * ディレクトリが作成されているか既に存在する場合は true を返します。
+     * @param Directory 
+     * @return 
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink OpenFileDialog")
     static bool CreateDirectoryTree(const FString& Directory);

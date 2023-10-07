@@ -19,6 +19,18 @@ FString TwinLinkPersistentPaths::CreateFacilityImagePath(const FString& FileName
     return FString::Printf(TEXT("%s/%s/%s"), *GetProjSaveDir(), TEXT("FacilityImage"), *FileName);
 }
 
+FString TwinLinkPersistentPaths::CreateFloorInfoFolderPath() {
+    return FString::Printf(TEXT("%s%s"), *GetProjSaveDir(), TEXT("FloorInfo"));
+}
+
+FString TwinLinkPersistentPaths::CreateFloorInfoFolderPath(const FString& SubFolderName) {
+    return FString::Printf(TEXT("%s%s/%s"), *GetProjSaveDir(), TEXT("FloorInfo"), *SubFolderName);
+}
+
+FString TwinLinkPersistentPaths::CreateFloorInfoFilePath(const FString& SubFolderName, const FString& FileName) {
+    return FString::Printf(TEXT("%s%s/%s/%s"), *GetProjSaveDir(), TEXT("FloorInfo"), *SubFolderName, *FileName);
+}
+
 FString TwinLinkPersistentPaths::GetProjSaveDir() {
     return FPaths::ProjectSavedDir() + TEXT("TwinLink/");
 }

@@ -34,11 +34,14 @@ public:
         UTwinLinkScrollBoxElementImpl* _ElmentImpl);
 
     /**
-     * @brief 情報追加ダイアログの表示 未実装
-     * @param Element
+     * @brief コレクションを取得する
+     * 同期する際に使用する
+     * 
+     * 目的を達成するために定義済みのイベントが利用できるならそちらを優先して使うこと
+     * @return
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
-    void RequestDisplayAddDialog();
+    TArray<UObject*> GetCollection() const;
 
     /**
      * @brief コレクションに要素が追加された時に呼び出される
@@ -104,14 +107,6 @@ protected:
         return ElmentImpl.Get();
     }
 
-protected:
-    /**
-     * @brief TwinLinkのシステムと連帯する設定を行う
-     * 継承先でこの基底クラスで利用するコレクションを引数に設定してください
-     * @param Collection このクラスで利用するUTwinLinkObservableCollectionの出力先
-    */
-    virtual void OnSetupOnTwinLink(TWeakObjectPtr<UTwinLinkObservableCollection>* OutCollection) const {};
-
 private:
     /**
      * @brief システム層が保持するコレクションへの参照
@@ -127,5 +122,10 @@ private:
      * @brief 管理ウィジェット検索用マップ
     */
     TMap<int, UTwinLinkScrollBoxElementBase*> ScrollBoxElementWidgets;
+
+private:
+    FDelegateHandle EvOnPostAddHnd;
+    FDelegateHandle EvOnPostRemoveHnd;
+    FDelegateHandle EvOnPostResetHnd;
 
 };

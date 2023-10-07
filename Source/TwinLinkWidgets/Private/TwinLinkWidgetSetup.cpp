@@ -14,6 +14,7 @@
 
 #include "TwinLinkViewPointSystem.h"
 #include "TwinLinkFacilityInfoSystem.h"
+#include "TwinLinkFloorInfoSystem.h"
 
 #include "TwinLinkViewPointItem.h"
 #include "TwinLinkFacilityItem.h"
@@ -55,4 +56,26 @@ void UTwinLinkWidgetSetup::SetupFacilityInfoList(UTwinLinkScrollBoxBase* Widget,
     check(ElementImpl);
 
     Widget->Setup(Collection, ElementImpl);
+}
+void UTwinLinkWidgetSetup::SetupFloorInfoList(UTwinLinkScrollBoxBase* Widget, UTwinLinkScrollBoxElementImpl* ElementImpl) {
+    UTwinLinkObservableCollection* Collection =
+        GetSelectedFloorInfoCollection();
+
+    Widget->Setup(Collection, ElementImpl);
+
+}
+
+UTwinLinkObservableCollection* UTwinLinkWidgetSetup::GetSelectedFloorInfoCollection() {
+    auto FacilityInfoSys = TwinLinkSubSystemHelper::GetInstance<UTwinLinkFloorInfoSystem>();
+    check(FacilityInfoSys.IsValid());
+
+    FString Key = FacilityInfoSys->GetKeyBySelectedFloor();
+    if (Key.IsEmpty()) {
+        Key = TEXT("dummy_key");
+    }
+
+    auto Collection = FacilityInfoSys.Get()->GetFloorInfoCollection(Key).Get();
+    check(Collection != nullptr);
+
+    return Collection;
 }

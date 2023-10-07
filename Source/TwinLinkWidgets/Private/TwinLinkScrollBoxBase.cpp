@@ -13,6 +13,12 @@
 void UTwinLinkScrollBoxBase::Setup(
     UTwinLinkObservableCollection* Collection,
     UTwinLinkScrollBoxElementImpl* _ElmentImpl) {
+    // 既に登録済みのコレクションがあるなら連携を切る
+    if (ObservableCollection.IsValid()) {
+        ObservableCollection->EvOnPostAdd.Remove(EvOnPostAddHnd);
+        ObservableCollection->EvOnPostRemove.Remove(EvOnPostRemoveHnd);
+        ObservableCollection->EvOnPostReset.Remove(EvOnPostResetHnd);
+    }
 
     ObservableCollection = Collection;
     check(ObservableCollection.IsValid());
@@ -28,7 +34,7 @@ void UTwinLinkScrollBoxBase::Setup(
     }
 
     // 要素が追加された時にUI側の処理を行う
-    ObservableCollection.Get()->EvOnPostAdd.AddLambda(
+    EvOnPostAddHnd = ObservableCollection.Get()->EvOnPostAdd.AddLambda(
         [this](const TWeakObjectPtr<UObject> Obj) {
             if (Obj.IsValid()) {
                 OnPostAddElement(Obj.Get());
@@ -36,7 +42,7 @@ void UTwinLinkScrollBoxBase::Setup(
         });
 
     // 要素が削除された時にUI側の処理を行う
-    ObservableCollection.Get()->EvOnPostRemove.AddLambda(
+    EvOnPostRemoveHnd = ObservableCollection.Get()->EvOnPostRemove.AddLambda(
         [this](const TWeakObjectPtr<UObject> Obj) {
             if (Obj.IsValid()) {
                 OnPostRemoveElement(Obj.Get());
@@ -44,15 +50,15 @@ void UTwinLinkScrollBoxBase::Setup(
         });
 
     // 要素がリセットされた時にUI側の処理を行う
-    ObservableCollection.Get()->EvOnPostReset.AddLambda(
+    EvOnPostResetHnd = ObservableCollection.Get()->EvOnPostReset.AddLambda(
         [this]() {
             OnPostReset();
         });
 
 }
 
-void UTwinLinkScrollBoxBase::RequestDisplayAddDialog() {
-    UE_TWINLINK_LOG(LogTemp, Log, TEXT("Called RequestDisplayAddDialog()"));
+TArray<UObject*> UTwinLinkScrollBoxBase::GetCollection() const {
+    return ObservableCollection->GetCollectionRaw();
 }
 
 UTwinLinkScrollBoxElementBase* UTwinLinkScrollBoxBase::FindChild(UObject* Elements) {

@@ -7,6 +7,8 @@
 #include "TwinLinkMathEx.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
+#include "Components/CapsuleComponent.h"
+
 // Sets default values
 ATwinLinkWorldViewer::ATwinLinkWorldViewer() {
     // Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -36,6 +38,9 @@ TWeakObjectPtr<ATwinLinkWorldViewer> ATwinLinkWorldViewer::GetInstance(UWorld* W
 void ATwinLinkWorldViewer::BeginPlay() {
     Super::BeginPlay();
 
+    TWeakObjectPtr<UCapsuleComponent> _CapsuleComponent = GetComponentByClass<UCapsuleComponent>();
+    _CapsuleComponent.Get()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    
 }
 
 // Called every frame

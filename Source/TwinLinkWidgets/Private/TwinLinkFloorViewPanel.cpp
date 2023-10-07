@@ -1,9 +1,13 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #include "TwinLinkFloorViewPanel.h"
+#include "TwinLinkCommon.h"
+
 #include "TwinLinkFloorViewElement.h"
 #include "Components/PanelWidget.h"
 #include "TwinLink.h"
+
+#include "TwinLinkFloorInfoSystem.h"
 
 void UTwinLinkFloorViewPanel::SetupTwinLinkFloorView() {
     const auto CityModel = FTwinLinkModule::Get().GetFacilityModel();
@@ -93,4 +97,16 @@ void UTwinLinkFloorViewPanel::FloorViewChange(TObjectPtr<UUserWidget> Element) {
             IsVisible = false;
         }
     }
+
+    // フロア情報システムに選択状況を保持する　　（フロア情報の設計的に対応できなかったのこの形で実装）
+    const auto FloorInfoSys = TwinLinkSubSystemHelper::GetInstance<UTwinLinkFloorInfoSystem>();
+    check(FloorInfoSys.IsValid());
+    FloorInfoSys->SelectedFloor(
+        LinkComponents["Exterior"]->GetName(), 
+        LinkComponents[*Key]->GetName(), *Key);
+
+    // 階層切替が行われたことをブループリントに通知する  
+    // (本当はUTwinLinkFloorInfoSystemを経由しないで実装したかったが利用先の設計的に受け取れないことが分かったので妥協)
+    OnChangedFloorView();
+
 }

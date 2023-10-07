@@ -38,7 +38,7 @@ public:
      * @return
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
-    bool IsActiveAdminMode();
+    bool IsActiveAdminMode() const;
 
 private:
     // 登録デリゲードの管理Handle
