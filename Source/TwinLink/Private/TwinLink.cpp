@@ -2,6 +2,7 @@
 
 #include "TwinLink.h"
 
+#include "TwinLinkPLATEAUCityModelEx.h"
 #include "Interfaces/IPluginManager.h"
 void FTwinLinkModule::StartupModule() {
     bAdminMode = false;
@@ -37,6 +38,23 @@ void FTwinLinkModule::SetAdminMode(const bool bEnabled) {
 
 bool FTwinLinkModule::IsAdminModeEnabled() const {
     return bAdminMode;
+}
+
+TWeakObjectPtr<UPLATEAUCityObjectGroup> FTwinLinkModule::GetFacilityModelBuildingComponent() const
+{
+    const auto ModelActor = Cast<APLATEAUInstancedCityModel>(GetFacilityModel());
+    if (!ModelActor)
+        return nullptr;
+
+    // 最初に見つかったBuilding建築物を返す
+    const auto Scanner = TwinLinkPLATEAUInstancedCityModelScanner(ModelActor);
+    const auto It = std::find_if(Scanner.begin(), Scanner.end(), [](const FTwinLinkCityObjectGroupModel& Item) {
+        return Item.MeshType == FTwinLinkFindCityModelMeshType::Bldg;
+        });
+    if (It == Scanner.end())
+        return nullptr;
+
+    return (*It).CityObjectGroup;
 }
 
 void UTwinLinkBlueprintLibrary::SetAdminMode(const bool bEnabled) {

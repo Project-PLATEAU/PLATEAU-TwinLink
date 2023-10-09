@@ -133,6 +133,10 @@ public:
      */
     const TMap<uint32, TObjectPtr<UTwinLinkFacilityInfo>>& GetFacilityInfoCollectionAsMap() const;
 
+    /*
+     * @brief : 地物IDからUTwinLinkFacilityInfoを取得する. 全探索するので重い
+     */
+    TWeakObjectPtr<UTwinLinkFacilityInfo> FindFacilityInfoByFeatureId(const FString& FeatureId) const;
 private:
     /** 施設情報機能のバージョン　永続化時に組み込む **/
     const TwinLinkSystemVersionInfo VersionInfo = TwinLinkSystemVersionInfo(0, 0, 0);

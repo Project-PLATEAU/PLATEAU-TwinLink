@@ -2,7 +2,7 @@
 #include "NavSystem/TwinLinkNavSystemBuildingInfo.h"
 #include "NavSystem/TwinLinkNavSystemFindPathUiInfo.h"
 bool UTwinLinkNavSystemEx::IsValidBuilding(const FTwinLinkNavSystemBuildingInfo& Info) {
-    return Info.FacilityInfo != nullptr;
+    return Info.FacilityInfo != nullptr && Info.CityObjectGroup.IsValid();
 }
 
 FVector UTwinLinkNavSystemEx::GetFirstEntranceOrZero(const FTwinLinkNavSystemBuildingInfo& Info) {

@@ -116,6 +116,9 @@ public:
     UFUNCTION(BlueprintCallable)
         ATwinLinkNavSystemPathFinder* GetNowPathFinder();
 
+    /*
+     * @brief : 管理対象建物情報を取得する.
+     */
     UFUNCTION(BlueprintCallable)
         FTwinLinkNavSystemBuildingInfo GetBaseBuilding() const;
 
@@ -123,7 +126,7 @@ public:
      * @brief : レベルに登録されている建物リストを取得する
      */
     UFUNCTION(BlueprintCallable)
-        TArray<FTwinLinkNavSystemBuildingInfo> GetBuildingInfos() const;
+        TArray<FTwinLinkNavSystemBuildingInfo> GetBuildingInfos();
 
     UFUNCTION(BlueprintCallable)
         void Clear();
@@ -180,8 +183,9 @@ private:
         FBox DemCollisionAabb;
 
     // 建物情報のマップキャッシュ
+    // key : UPLATEAUCityObjectGroup::GetName()
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
-        TMap<FString, TWeakObjectPtr<UPLATEAUCityObjectGroup>> BuildingMap;
+        TMap<FString, FTwinLinkNavSystemBuildingInfo> BuildingMap;
 private:
     // -----------------------
     // ランタイム系
@@ -199,8 +203,6 @@ private:
     UPROPERTY(EditAnywhere, Category = TwinLink_Runtime)
         ATwinLinkNavSystemPathFinder* NowPathFinder = nullptr;
 
-    UPROPERTY(EditAnywhere, Category = TwinLink_Runtime)
-        UTwinLinkFacilityInfo* BaseBuildingInfo = nullptr;
     // パス検索情報
     std::optional<FTwinLinkNavSystemFindPathInfo> PathFindInfo;
 

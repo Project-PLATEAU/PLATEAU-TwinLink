@@ -35,12 +35,14 @@ public:
 
     /*
      * @brief : 元のマップを返す
+     * key : UTwinLinkFacilityInfo::GetUniqueID()
      */
     const TMap<uint32, TObjectPtr<UTwinLinkFacilityInfo>>& GetFacilityInfoCollection() const {
         return FacilityInfoCollection;
     }
 private:
     /** 視点情報群 **/
+    // key : UTwinLinkFacilityInfo::GetUniqueID()
     UPROPERTY()
         TMap<uint32, TObjectPtr<UTwinLinkFacilityInfo>> FacilityInfoCollection;
 

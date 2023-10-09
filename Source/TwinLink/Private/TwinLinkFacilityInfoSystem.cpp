@@ -289,6 +289,15 @@ GetFacilityInfoCollectionAsMap() const {
     return FacilityInfoCollection->GetFacilityInfoCollection();
 }
 
+TWeakObjectPtr<UTwinLinkFacilityInfo> UTwinLinkFacilityInfoSystem::FindFacilityInfoByFeatureId(
+    const FString& FeatureId) const {
+    for (auto& Item : GetFacilityInfoCollectionAsMap()) {
+        if (Item.Value->GetFeatureID() == FeatureId)
+            return Item.Value.Get();
+    }
+    return nullptr;
+}
+
 void UTwinLinkFacilityInfoSystem::InitializeCategoryMap() {
 
     // 必要に応じて外部ファイルを読み込むようにする
