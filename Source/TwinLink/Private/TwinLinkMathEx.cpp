@@ -33,14 +33,13 @@ FVector TwinLinkMathEx::PolarDegree2Cartesian(const FVector& V) {
     return PolarRadian2Cartesian(FVector(FMath::DegreesToRadians(V.X), FMath::DegreesToRadians(V.Y), V.Z));
 }
 
-FRotationMatrix TwinLinkMathEx::CreateLookAtMatrix(const FVector& Location, const FVector& LookAt, const FVector& UpVector)
-{
-    const auto Dir = (LookAt - Location).GetSafeNormal(1e-8f,FVector::ForwardVector);
+FRotationMatrix TwinLinkMathEx::CreateLookAtMatrix(const FVector& Location, const FVector& LookAt, const FVector& UpVector) {
+    const auto Dir = (LookAt - Location).GetSafeNormal(1e-8f, FVector::ForwardVector);
     return FRotationMatrix::MakeFromXZ(Dir, UpVector).Rotator();
 }
 
 bool TwinLinkMathEx::RayRayIntersection(const FVector2D& AOrigin, const FVector2D& ANormalizedDir, const FVector2D& BOrigin,
-                                        const FVector2D& BNormalizedDir, FVector2D& Out) {
+    const FVector2D& BNormalizedDir, FVector2D& Out) {
     // 平行な場合はfalseを返す
     if (FMath::Abs(ANormalizedDir.Dot(BNormalizedDir)) > (1.f - 1e-6))
         return false;

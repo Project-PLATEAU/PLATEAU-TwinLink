@@ -45,7 +45,6 @@ public:
     UFUNCTION(BlueprintCallable)
         static FString GetDistanceTest(const FTwinLinkNavSystemFindPathUiInfo& Info);
 
-
     /*
      * @brief : 移動距離をテキストで取得
      */

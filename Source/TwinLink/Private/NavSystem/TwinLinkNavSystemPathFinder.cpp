@@ -200,7 +200,9 @@ FTwinLinkNavSystemFindPathInfo ATwinLinkNavSystemPathFinder::RequestPathFinding(
                     LastPos = P;
                 }
             }
+            Ret.PathPointsIndices.Add(Ret.HeightCheckedPoints.Num());
             Ret.HeightCheckedPoints.Add(Pos);
+
             LastPos = Pos;
         }
     }

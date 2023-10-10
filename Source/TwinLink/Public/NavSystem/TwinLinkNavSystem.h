@@ -111,6 +111,13 @@ public:
         FTwinLinkNavSystemFindPathUiInfo GetDrawMoveTimeUiInfo(TwinLinkNavSystemMoveType MoveType, const FBox2D& ScreenRange) const;
 
     /*
+     * @brief : 移動パスの情報出力情報取得
+     */
+    UFUNCTION(BlueprintCallable)
+        bool GetOutputPathInfo(FTwinLinkNavSystemOutputPathInfo& Out) const;
+
+
+    /*
      * @brief : 現在のパス検索モードアクタ
      */
     UFUNCTION(BlueprintCallable)
@@ -128,14 +135,11 @@ public:
     UFUNCTION(BlueprintCallable)
         TArray<FTwinLinkNavSystemBuildingInfo> GetBuildingInfos();
 
+    /*
+     * @brief : 状態初期化
+     */
     UFUNCTION(BlueprintCallable)
         void Clear();
-
-    UFUNCTION(BlueprintCallable)
-        FVector2D GetDebugHudPosition() const {
-        return DebugHudPosition;
-    }
-
     /*
      * @brief : 有効かどうか
      * @param : includePathFinder : NowPathFinder含めて有効かどうか
@@ -219,7 +223,7 @@ private:
 
     // パス探索のアクター
     UPROPERTY(EditAnywhere, Category = TwinLink_Test)
-        FVector2D DebugHudPosition = FVector2D::Zero();
+        bool DebugDrawInfo = false;
 
     //    UTwinLinkFacilityInfo DebugStartBuilding;
     UPROPERTY(EditAnywhere, Category = TwinLink_Test)

@@ -284,10 +284,7 @@ FTwinLinkNavSystemFindPathUiInfo ATwinLinkNavSystem::GetDrawMoveTimeUiInfo(TwinL
     auto& HeightCheckedPoints = PathFindInfo->HeightCheckedPoints;
 
     // 総距離
-    auto Length = 0.f;
-    for (auto I = 0; I < HeightCheckedPoints.Num() - 1; ++I) {
-        Length += (HeightCheckedPoints[I + 1] - HeightCheckedPoints[I]).Length();
-    }
+    const auto Length = PathFindInfo->GetTotalLength();
 
     const auto Meter = Length / RuntimeParam->WorldUnitMeter;
     const auto Sec = Meter * 3.6f / RuntimeParam->GetMoveSpeedKmPerH(MoveType);
@@ -313,6 +310,39 @@ FTwinLinkNavSystemFindPathUiInfo ATwinLinkNavSystem::GetDrawMoveTimeUiInfo(TwinL
     if (NearestSqrLen >= 0.f)
         return FTwinLinkNavSystemFindPathUiInfo(Meter, Sec, NearestPos);
     return FTwinLinkNavSystemFindPathUiInfo();
+}
+
+bool ATwinLinkNavSystem::GetOutputPathInfo(FTwinLinkNavSystemOutputPathInfo& Out) const {
+    if (PathFindInfo.has_value() == false || PathFindInfo->IsSuccess() == false)
+        return false;
+
+    const auto& TwinLinkModule = FTwinLinkModule::Get();
+    const auto CityModel = Cast<APLATEAUInstancedCityModel>(TwinLinkModule.GetCityModel());
+    if (!CityModel)
+        return false;
+    auto& Geo = CityModel->GeoReference.GetData();
+    FTwinLinkNavSystemOutputPathInfo Ret;
+
+
+    const auto& Points = PathFindInfo->HeightCheckedPoints;
+    const auto& Indices = PathFindInfo->PathPointsIndices;
+    auto ToGeoCoord = [&](int I) {
+        const auto V = Points[Indices[I]];
+        return TVec3d(V.X, V.Y, V.Z);
+    };
+    Ret.Start = Geo.unproject(ToGeoCoord(0));
+    Ret.End = Geo.unproject(ToGeoCoord(Indices.Num() - 1));
+    for (auto i = 1; i < Indices.Num() - 1; ++i)
+        Ret.Route.Add(Geo.unproject(ToGeoCoord(i)));
+
+    // 総距離
+    const auto Length = PathFindInfo->GetTotalLength();
+    const auto Meter = Length / RuntimeParam->WorldUnitMeter;
+    Ret.MinutesByWalk = Meter * 3.6f / 60.f / RuntimeParam->GetMoveSpeedKmPerH(TwinLinkNavSystemMoveType::Walk);
+    Ret.MinutesByCar = Meter * 3.6f / 60.f / RuntimeParam->GetMoveSpeedKmPerH(TwinLinkNavSystemMoveType::Car);
+
+    Out = Ret;
+    return true;
 }
 
 ATwinLinkNavSystemPathFinder* ATwinLinkNavSystem::GetNowPathFinder() {
@@ -382,6 +412,12 @@ void ATwinLinkNavSystem::OnFacilityClick(FHitResult Info) const {
     const auto& BuildingInfo = BuildingMap[Key];
     if (BuildingInfo.FacilityInfo.IsValid()) {
         OnFacilityClicked.Broadcast(Info, BuildingInfo);
+    }
+
+    if (const auto CityModel = Cast<APLATEAUInstancedCityModel>(CityObject->GetAttachParentActor())) {
+        const TVec3d Point(Info.Location.X, Info.Location.Y, Info.Location.Z);
+        const auto Geo = CityModel->GeoReference.GetData().unproject(Point);
+        UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("Lat : %f, Lon : %f"), Geo.latitude, Geo.longitude));
     }
 }
 void ATwinLinkNavSystem::Clear() {

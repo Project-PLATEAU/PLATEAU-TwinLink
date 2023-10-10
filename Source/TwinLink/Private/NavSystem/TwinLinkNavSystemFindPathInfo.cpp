@@ -35,6 +35,14 @@ void FTwinLinkNavSystemFindPathInfo::Update(const UWorld* World, const ECollisio
     }
 }
 
+float FTwinLinkNavSystemFindPathInfo::GetTotalLength() const {
+    auto Length = 0.f;
+    for (auto I = 0; I < HeightCheckedPoints.Num() - 1; ++I) {
+        Length += (HeightCheckedPoints[I + 1] - HeightCheckedPoints[I]).Length();
+    }
+    return Length;
+}
+
 FTwinLinkNavSystemFindPathInfo::FTwinLinkNavSystemFindPathInfo(FPathFindingResult&& Result)
     : PathFindResult(std::move(Result)) {
 }

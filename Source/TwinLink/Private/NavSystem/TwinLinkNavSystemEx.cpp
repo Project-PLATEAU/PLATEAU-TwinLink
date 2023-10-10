@@ -33,8 +33,7 @@ FString UTwinLinkNavSystemEx::GetDistanceTest(const FTwinLinkNavSystemFindPathUi
 }
 
 void UTwinLinkNavSystemEx::GetTimeAndDistanceText(const FTwinLinkNavSystemFindPathUiInfo& Info, FString& OutTimeText,
-    FString& OutDistanceText)
-{
+    FString& OutDistanceText) {
     OutTimeText = GetTimeText(Info);
     OutDistanceText = GetDistanceTest(Info);
 }
