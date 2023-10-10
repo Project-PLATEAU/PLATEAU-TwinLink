@@ -40,6 +40,23 @@ public:
     */
     static FString CreateFacilityImagePath(const FString& FileName);
 
+    /**
+     * @brief 建物内施設情報を保存するフォルダのパスを作成する
+     * @param SubFolderName サブフォルダ名
+     *  例 基本フォルダパス/bldg_AAA_1F
+     * @return 
+    */
+    static FString CreateFloorInfoFolderPath();
+    static FString CreateFloorInfoFolderPath(const FString& SubFolderName);
+
+    /**
+     * @brief 建物内施設情報を保存するファイルのパスを作成する
+     * @param SubFolderName サブフォルダ名 (地物の階層単位で存在するフォルダ)
+     * @param FileName 拡張子付きのファイル名
+     * @return
+    */
+    static FString CreateFloorInfoFilePath(const FString& SubFolderName, const FString& FileName);
+
 private:
     static FString GetProjSaveDir();
 };

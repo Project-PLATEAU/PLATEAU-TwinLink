@@ -25,6 +25,16 @@ public:
     */
     virtual void NativeDestruct() override;
 
+public:
+    /**
+     * @brief 表示しているGrpIDと一致しているかチェックする
+     * ライントレースで選択した階層が表示されている階層と一致しているかの確認で使っている
+     * @param InGrpID 
+     * @return 
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+    bool CheckIsSelectedGrpID(const FString& InGrpID);
+
 protected:
     /**
      * @brief 有効化された時に呼び出される関数

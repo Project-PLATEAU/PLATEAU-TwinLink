@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -33,6 +33,13 @@ public:
      * @param Element
     */
     void FloorViewChange(TObjectPtr<UUserWidget> Element);
+
+    /**
+     * @brief 選択している階層が変更された時に呼ばれる
+     * （ただし現状は同じ階層を選択しても呼ばれる）
+    */
+    UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
+    void OnChangedFloorView();
 
 public:
     /** 階層表示パネル要素追加先パネルウィジェット **/

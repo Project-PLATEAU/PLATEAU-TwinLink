@@ -14,7 +14,7 @@ DECLARE_EVENT(UTwinLinkObservableCollection, FDelOnPostReset);
 /**
  * 通知機能付きのコレクションラッパークラス
  */
-UCLASS(Abstract)
+UCLASS(Abstract, Blueprintable)
 class TWINLINK_API UTwinLinkObservableCollection : public UTwinLinkDataObjBase {
     GENERATED_BODY()
 

@@ -15,7 +15,7 @@ void UTwinLinkWidgetBase::NativeDestruct() {
     Super::NativeDestruct();
 }
 
-bool UTwinLinkWidgetBase::IsActiveAdminMode() {
+bool UTwinLinkWidgetBase::IsActiveAdminMode() const {
     auto& Mod = FTwinLinkModule::Get();
     return Mod.IsAdminModeEnabled();
 }

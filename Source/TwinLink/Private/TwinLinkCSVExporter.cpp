@@ -22,15 +22,24 @@ void TwinLinkCSVExporter::SetHeaderContents(const TArray<FString> Header) {
         HeaderContents.Append(content);
         HeaderContents.Append(TEXT(","));
     }
+    HeaderContents.RemoveAt(HeaderContents.Len() - 1, FString(TEXT(",")).Len());
 }
 
 void TwinLinkCSVExporter::AddBodyContents(const FString Contents) {
     BodyContents.Append(Contents);
-    BodyContents.Append(TEXT(",\n"));
+    BodyContents.Append(TEXT("\n"));
 }
 
 bool TwinLinkCSVExporter::ExportCSV(const TCHAR* Filepath) {
     BodyContents.RemoveFromEnd(TEXT("\n"));
     const FString CSVContents = HeaderContents + FString("\n") + BodyContents;
     return FFileHelper::SaveStringToFile(CSVContents, Filepath);
+}
+
+void TwinLinkCSVExporter::ResetBodyContents() {
+    BodyContents.Empty();
+}
+
+bool TwinLinkCSVExporter::IsHasBodyContents() {
+    return BodyContents.IsEmpty() == false;
 }
