@@ -50,9 +50,14 @@ USTRUCT(BlueprintType)
 struct FTwinLinkNavSystemOutputPathInfo {
     GENERATED_BODY()
 public:
+    // 開始地点
     plateau::geometry::GeoCoordinate Start;
+    // 終了地点
     plateau::geometry::GeoCoordinate End;
+    // 途中経路
     TArray<plateau::geometry::GeoCoordinate> Route;
+    // 来るまでかかる時間
     int MinutesByCar;
+    // 歩きでかかる時間
     int MinutesByWalk;
 };

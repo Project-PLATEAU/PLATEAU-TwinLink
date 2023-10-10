@@ -116,6 +116,11 @@ public:
     UFUNCTION(BlueprintCallable)
         bool GetOutputPathInfo(FTwinLinkNavSystemOutputPathInfo& Out) const;
 
+    /*
+     * @brief : 移動パスの情報出力情報取得(ファイル出力)
+     */
+    UFUNCTION(BlueprintCallable)
+        bool ExportOutputPathInfo() const;
 
     /*
      * @brief : 現在のパス検索モードアクタ

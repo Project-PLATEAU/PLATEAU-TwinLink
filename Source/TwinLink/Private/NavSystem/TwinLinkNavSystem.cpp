@@ -318,8 +318,10 @@ bool ATwinLinkNavSystem::GetOutputPathInfo(FTwinLinkNavSystemOutputPathInfo& Out
 
     const auto& TwinLinkModule = FTwinLinkModule::Get();
     const auto CityModel = Cast<APLATEAUInstancedCityModel>(TwinLinkModule.GetCityModel());
-    if (!CityModel)
+    if (!CityModel) {
+        UE_LOG(LogTemp, Error, TEXT("TwinLinkModuleにCityModelが設定されていません"));
         return false;
+    }
     auto& Geo = CityModel->GeoReference.GetData();
     FTwinLinkNavSystemOutputPathInfo Ret;
 
@@ -342,6 +344,17 @@ bool ATwinLinkNavSystem::GetOutputPathInfo(FTwinLinkNavSystemOutputPathInfo& Out
     Ret.MinutesByCar = Meter * 3.6f / 60.f / RuntimeParam->GetMoveSpeedKmPerH(TwinLinkNavSystemMoveType::Car);
 
     Out = Ret;
+    return true;
+}
+
+bool ATwinLinkNavSystem::ExportOutputPathInfo() const
+{
+    FTwinLinkNavSystemOutputPathInfo Out;
+    if (GetOutputPathInfo(Out) == false)
+        return false;
+
+    // #TODO : 出力形式が決まったら出力処理を書く
+    UKismetSystemLibrary::PrintString(GetWorld(), TEXT("Output Path"));
     return true;
 }
 
