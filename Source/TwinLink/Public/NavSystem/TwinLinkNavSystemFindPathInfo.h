@@ -5,8 +5,9 @@
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "NavigationData.h"
-#include "TwinLinkGeoReferenceEx.h"
+#include "plateau/geometry/geo_coordinate.h"
 #include "TwinLinkNavSystemFindPathInfo.generated.h"
+
 /*
  * @brief : パス検索結果の情報
  */
