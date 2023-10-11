@@ -2,12 +2,13 @@
 
 #include "TwinLinkPeopleFlowSystem.h"
 #include "HttpModule.h"
+#include "JsonObjectConverter.h"
 #include "Interfaces/IHttpResponse.h"
 
 void UTwinLinkPeopleFlowSystem::Request(const FTwinLinkPeopleFlowApiRequest& Req) {
     // https://dev.classmethod.jp/articles/unrealengine5-http-api-call/
     const FString Url = "";
-    const FString Verb = "POST";
+    const FString Verb = "GET";
 
 
     const FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
@@ -15,8 +16,18 @@ void UTwinLinkPeopleFlowSystem::Request(const FTwinLinkPeopleFlowApiRequest& Req
 
     // パラメータ設定
     Request->SetURL(Url);
+    FJsonObject Json;
+    // https://synesthesias.atlassian.net/wiki/spaces/plateaubimkukanid/pages/174751754
+    // https://eukarya.notion.site/API-5587dd0c756c44d6bd697b4089bc366b
+    // リクエストのjsonフォーマットはない為, 
+    TArray<FString> SpatialIds;
+    for (auto& Id : Req.SpatialIds)
+        SpatialIds.Add(Id.AsString());
+    const auto Ids = FString::Join(SpatialIds, TEXT(","));
+    const auto Time = Req.DateTime.ToFormattedString(TEXT("yyyy-MM-ddThh:mm:ss"));
+    const auto Query = FString::Printf(TEXT("id=\"%s\"&time=\"%s\""), *Ids, *Time);
+    Request->SetURL(FString::Printf(TEXT("%s?%s"), *Url, *Query));
     Request->SetVerb(Verb);
-
     Request->ProcessRequest();
 }
 
