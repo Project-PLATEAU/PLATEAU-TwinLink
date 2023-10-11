@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "TwinLinkSpatialID.h"
 #include "TwinLinkSubSystemBase.h"
 #include "Interfaces/IHttpRequest.h"
 #include "TwinLinkPeopleFlowSystem.generated.h"
@@ -10,37 +11,29 @@
 struct FPLATEAUGeoReference;
 
 USTRUCT(BlueprintType)
-struct FTwinLinkSpatialId {
-    GENERATED_BODY();
-public:
-    int X;
-    int Y;
-    int F; // 高さ
-    int Z; // ズームレベル
-    bool bTwoDimension; // 高さを無視するかどうか
-
-    FString AsString() const {
-        return FString::Printf(TEXT("%d/%d/%d/%d/%d"), Z, F, X, Y);
-    }
-};
-
-USTRUCT(BlueprintType)
 struct FTwinLinkPeopleFlowApiRequest {
     GENERATED_BODY();
 public:
     // 空間Idのリスト
-    TArray<FTwinLinkSpatialId> SpatialIds;
+    UPROPERTY(EditAnywhere)
+        TArray<FString> SpatialIds;
     // 時刻
-    FDateTime DateTime;
+    UPROPERTY(EditAnywhere)
+        FDateTime DateTime;
 };
 USTRUCT(BlueprintType)
 struct FTwinLinkPopulationValue {
     GENERATED_BODY();
 public:
     // タイムスタンプ
-    FDateTime TimeStamp;
+    UPROPERTY(EditAnywhere)
+        FDateTime TimeStamp;
     // 人流度
-    int PeopleFlow;
+    UPROPERTY(EditAnywhere)
+        FString Unit;
+    // 人流度
+    UPROPERTY(EditAnywhere)
+        int PeopleFlow;
 };
 
 USTRUCT(BlueprintType)
@@ -48,9 +41,15 @@ struct FTwinLinkPopulationData {
     GENERATED_BODY();
 public:
     // 対応する空間ID
-    FTwinLinkSpatialId SpatialId;
-    FString Type;
-    TArray<FTwinLinkPopulationValue> Values;
+
+    UPROPERTY(EditAnywhere)
+        FString SpatialId;
+
+    UPROPERTY(EditAnywhere)
+        FString Type;
+
+    UPROPERTY(EditAnywhere)
+        TArray<FTwinLinkPopulationValue> Values;
 };
 
 
@@ -59,8 +58,8 @@ struct FTWinLinkPeopleFlowApiResult {
     GENERATED_BODY();
 public:
     // リクエストが成功したかどうか
-    bool bSuccess = false;
-
+    UPROPERTY(EditAnywhere)
+        bool bSuccess = false;
 };
 
 /**

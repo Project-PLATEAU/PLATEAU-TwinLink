@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #include "TwinLinkSpatialID.h"
 #include "TwinLinkCommon.h"
@@ -55,7 +55,7 @@ namespace {
 
 }
 
-FTwinLinkSpatialID::FTwinLinkSpatialID() 
+FTwinLinkSpatialID::FTwinLinkSpatialID()
     : bIsValidAltitude(false)
     , Z(0.0)
     , F(0.0)
@@ -151,4 +151,8 @@ FBox FTwinLinkSpatialID::GetSpatialIDArea(FPLATEAUGeoReference& GeoReference) co
     const auto Point2 = UPLATEAUGeoReferenceBlueprintLibrary::Project(GeoReference, GeoCoordinate2);
 
     return FBox(Point1, Point2);
+}
+
+FString FTwinLinkSpatialID::StringZFXY() const {
+    return FString::Printf(TEXT("%d/%d/%d/%d"), Z, F, X, Y);
 }

@@ -64,6 +64,15 @@ UTwinLinkFacilityInfoSystem* ATwinLinkNavSystem::GetFacilityInfoSystem(const UWo
     return GameInstance->GetSubsystem<UTwinLinkFacilityInfoSystem>();
 }
 
+UTwinLinkPeopleFlowSystem* ATwinLinkNavSystem::GetPeopleFlowSystem(const UWorld* World) {
+    if (!World)
+        return nullptr;
+    const auto GameInstance = World->GetGameInstance();
+    if (!GameInstance)
+        return nullptr;
+    return GameInstance->GetSubsystem<UTwinLinkPeopleFlowSystem>();
+}
+
 bool ATwinLinkNavSystem::FindNavMeshPoint(const UNavigationSystemV1* NavSys, const UStaticMeshComponent* StaticMeshComp, FVector& OutPos) {
     if (!StaticMeshComp || !NavSys)
         return false;
@@ -122,7 +131,13 @@ void ATwinLinkNavSystem::DebugDraw() {
             if (NowPathFinder->RequestStartPathFinding(Tmp)) {
                 PathFindInfo = Tmp;
             }
+        }
+    }
 
+    if (DebugCallPeopleFlow) {
+        DebugCallPeopleFlow = false;
+        if (auto FlowSystem = GetPeopleFlowSystem(GetWorld())) {
+            FlowSystem->Request(DebugPeopleFlowRequest);
         }
     }
 
@@ -347,8 +362,7 @@ bool ATwinLinkNavSystem::GetOutputPathInfo(FTwinLinkNavSystemOutputPathInfo& Out
     return true;
 }
 
-bool ATwinLinkNavSystem::ExportOutputPathInfo() const
-{
+bool ATwinLinkNavSystem::ExportOutputPathInfo() const {
     FTwinLinkNavSystemOutputPathInfo Out;
     if (GetOutputPathInfo(Out) == false)
         return false;

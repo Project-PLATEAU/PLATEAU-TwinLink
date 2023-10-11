@@ -7,7 +7,7 @@
 
 void UTwinLinkPeopleFlowSystem::Request(const FTwinLinkPeopleFlowApiRequest& Req) {
     // https://dev.classmethod.jp/articles/unrealengine5-http-api-call/
-    const FString Url = "";
+    const FString Url = "http://localhost:3000/population";
     const FString Verb = "GET";
 
 
@@ -22,7 +22,7 @@ void UTwinLinkPeopleFlowSystem::Request(const FTwinLinkPeopleFlowApiRequest& Req
     // リクエストのjsonフォーマットはない為, 
     TArray<FString> SpatialIds;
     for (auto& Id : Req.SpatialIds)
-        SpatialIds.Add(Id.AsString());
+        SpatialIds.Add(Id);
     const auto Ids = FString::Join(SpatialIds, TEXT(","));
     const auto Time = Req.DateTime.ToFormattedString(TEXT("yyyy-MM-ddThh:mm:ss"));
     const auto Query = FString::Printf(TEXT("id=\"%s\"&time=\"%s\""), *Ids, *Time);
@@ -46,5 +46,22 @@ void UTwinLinkPeopleFlowSystem::OnResponseReceived(FHttpRequestPtr Request, FHtt
         return;
 
     // UEでログ出力（APIから受け取った文字列そのまま）
+    auto Datas = ResponseObj->GetArrayField(TEXT("data"));
+    for(auto& Data : Datas)
+    {
+        auto& Json = Data->AsObject();
+        FTwinLinkPopulationData D;
+        D.SpatialId = Json->GetStringField(TEXT("id"));
+        D.Type = Json->GetStringField(TEXT("type"));
+        for(auto& V : Json->GetArrayField(TEXT("values")))
+        {
+            auto& JsonV = V->AsObject();
+            FTwinLinkPopulationValue Val;
+            FDateTime::Parse(JsonV->GetStringField("timestamp"), Val.TimeStamp);
+            Val.Unit = JsonV->GetStringField(TEXT("unit"));
+            Val.PeopleFlow = JsonV->GetIntegerField(TEXT("peopleFlow"));
+            D.Values.Add(Val);
+        }
+    }
     UE_LOG(LogTemp, Display, TEXT("Response %s"), *Response->GetContentAsString());
 }

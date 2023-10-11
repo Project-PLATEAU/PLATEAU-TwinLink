@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -94,6 +94,11 @@ public:
      * @return UE上のワールド座標
     */
     FBox GetSpatialIDArea(FPLATEAUGeoReference& GeoReference) const;
+
+    /*
+     * @brief : Z/F/X/Yの文字列に変換
+     */
+    FString StringZFXY() const;
 
 private:
     /** 高度が正当な値か **/

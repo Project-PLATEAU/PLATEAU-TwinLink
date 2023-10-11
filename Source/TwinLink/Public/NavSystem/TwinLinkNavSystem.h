@@ -14,6 +14,7 @@
 #include "TwinLinkNavSystemPathDrawer.h"
 #include "TwinLinkNavSystemParam.h"
 #include "TwinLinkNavSystemFindPathUiInfo.h"
+#include "TwinLinkPeopleFlowSystem.h"
 #include "TwinLinkNavSystem.generated.h"
 class UPLATEAUCityObjectGroup;
 class UNavigationSystemV1;
@@ -54,6 +55,11 @@ public:
      * @brief : Worldに配置されているUTwinLinkFacilityInfoSystemをとってくる. 毎回同じこと書くの面倒なので
      */
     static UTwinLinkFacilityInfoSystem* GetFacilityInfoSystem(const UWorld* World);
+
+    /*
+     * @brief : Worldに配置されているUTwinLinkPeopleFlowSystemをとってくる. 毎回同じこと書くの面倒なので
+     */
+    static UTwinLinkPeopleFlowSystem* GetPeopleFlowSystem(const UWorld* World);
 
     static bool FindNavMeshPoint(const UNavigationSystemV1* NavSys, const UStaticMeshComponent* StaticMeshComp, FVector& OutPos);
     virtual void Tick(float DeltaSeconds) override;
@@ -222,9 +228,13 @@ private:
     UPROPERTY(EditAnywhere, Category = TwinLink_Test)
         bool DebugCallPathFinding = false;
 
-    // デバッグ用) 仮の建物リストを使うかどうか
+    // デバッグ用) 人流データ取得リクエストを呼ぶ
     UPROPERTY(EditAnywhere, Category = TwinLink_Test)
-        bool DebugUseDebugBuildings = false;
+        bool DebugCallPeopleFlow = false;
+
+    // デバッグ用) 人流データ取得リクエスト
+    UPROPERTY(EditAnywhere, Category = TwinLink_Test)
+        FTwinLinkPeopleFlowApiRequest DebugPeopleFlowRequest;
 
     // パス探索のアクター
     UPROPERTY(EditAnywhere, Category = TwinLink_Test)
