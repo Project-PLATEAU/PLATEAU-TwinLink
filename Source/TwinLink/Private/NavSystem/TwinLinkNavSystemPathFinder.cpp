@@ -10,7 +10,9 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include <NavSystem/TwinLinkNavSystemPathLocator.h>
 
+#include "PLATEAUCityObjectGroup.h"
 #include "TwinLinkActorEx.h"
+#include "TwinLinkFacilityInfoSystem.h"
 #include "TwinLinkMathEx.h"
 #include "TwinLinkWorldViewer.h"
 #include "Camera/CameraComponent.h"
@@ -85,7 +87,7 @@ bool ATwinLinkNavSystemPathFinder::TryGetPathLocation(NavSystemPathPointType Typ
     return true;
 }
 
-bool ATwinLinkNavSystemPathFinder::TryGetCameraLocationAndLookAt(FVector& OutLocation, FVector& OutLookAt) const {
+bool ATwinLinkNavSystemPathFinder::TryGetCameraLocationAndLookAt(const FVector& NowCameraLocation, FVector& OutLocation, FVector& OutLookAt) const {
     FVector Start;
     const auto HasStart = TryGetPathLocation(NavSystemPathPointType::Start, Start);
     FVector Dest;
@@ -102,6 +104,9 @@ bool ATwinLinkNavSystemPathFinder::TryGetCameraLocationAndLookAt(FVector& OutLoc
         // Start -> Destの法線を求める
         auto Dir = (Dest - Start);
         Dir = FVector(Dir.Y, -Dir.X, 0).GetSafeNormal();
+        // 現在のカメラ位置に近いほうにする
+        if (Dir.Dot(NowCameraLocation - Center) < 0)
+            Dir = -Dir;
         double PhiSi, PhiCo;
         FMath::SinCos(&PhiSi, &PhiCo, FMath::DegreesToRadians(Param->RouteGuideStartCameraRotDist.Y));
         const auto R = Param->RouteGuideStartCameraRotDist.Z;
@@ -125,9 +130,10 @@ bool ATwinLinkNavSystemPathFinder::TryGetCameraLocationAndLookAt(FVector& OutLoc
 }
 
 void ATwinLinkNavSystemPathFinder::ChangeCameraLocation(float MoveSec) const {
-    FVector Location, LookAt;
-    if (TryGetCameraLocationAndLookAt(Location, LookAt)) {
-        if (const auto Viewer = ATwinLinkNavSystem::GetWorldViewer(GetWorld())) {
+
+    if (const auto Viewer = ATwinLinkNavSystem::GetWorldViewer(GetWorld())) {
+        FVector Location, LookAt;
+        if (TryGetCameraLocationAndLookAt(Viewer->GetNowCameraLocationOrZero(), Location, LookAt)) {
             Viewer->SetLocationLookAt(Location, LookAt, MoveSec);
         }
     }
@@ -136,11 +142,18 @@ void ATwinLinkNavSystemPathFinder::ChangeCameraLocation(float MoveSec) const {
 // Called when the game starts or when spawned
 void ATwinLinkNavSystemPathFinder::BeginPlay() {
     Super::BeginPlay();
+    if (const auto System = ATwinLinkNavSystem::GetInstance(GetWorld())) {
+        System->OnFacilityClicked.AddUObject(this, &ATwinLinkNavSystemPathFinder::OnFacilityClick);
+    }
 }
 
 void ATwinLinkNavSystemPathFinder::Tick(float DeltaTime) {
     Super::Tick(DeltaTime);
 
+}
+
+void ATwinLinkNavSystemPathFinder::OnFacilityClick(const FHitResult& Info, const FTwinLinkNavSystemBuildingInfo& Facility) {
+    OnFacilityClicked.Broadcast(Info, Facility);
 }
 
 const ATwinLinkNavSystem* ATwinLinkNavSystemPathFinder::GetTwinLinkNavSystem() const {
@@ -187,7 +200,9 @@ FTwinLinkNavSystemFindPathInfo ATwinLinkNavSystemPathFinder::RequestPathFinding(
                     LastPos = P;
                 }
             }
+            Ret.PathPointsIndices.Add(Ret.HeightCheckedPoints.Num());
             Ret.HeightCheckedPoints.Add(Pos);
+
             LastPos = Pos;
         }
     }

@@ -60,6 +60,12 @@ public:
     */
     void SetLocationLookAt(const FVector& Position, const FVector& LookAt, float MoveSec = 0.f);
 
+    UFUNCTION(BlueprintCallable, Category = "Movement")
+        FVector GetNowCameraLocationOrZero() const;
+
+    UFUNCTION(BlueprintCallable, Category = "Movement")
+        FRotator GetNowCameraRotationOrDefault() const;
+
 private:
     void ATwinLinkWorldViewer::SetLocationImpl(const FVector& Position, const FRotator& Rotation);
 public:
@@ -68,12 +74,6 @@ public:
     FDelCanceledClickFacility EvOnCanceledClickFacility;
 
 private:
-    UFUNCTION(BlueprintCallable, Category = "Movement")
-        FVector GetNowCameraLocationOrZero() const;
-
-    UFUNCTION(BlueprintCallable, Category = "Movement")
-        FRotator GetNowCameraRotationOrDefault() const;
-
     // BluePrint側から呼び出す処理
     UFUNCTION(BlueprintCallable, Category = "Movement")
         void MoveForward(const float Value);

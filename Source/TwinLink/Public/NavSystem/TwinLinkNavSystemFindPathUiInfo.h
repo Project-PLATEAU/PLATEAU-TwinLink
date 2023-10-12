@@ -39,14 +39,3 @@ public:
         , ScreenPos(Screen) {
     }
 };
-
-USTRUCT(BlueprintType)
-
-
-struct FTwinLinkNavSystemBuildingInfo {
-    GENERATED_BODY()
-public:
-    // 建物情報
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Base")
-        TWeakObjectPtr<UTwinLinkFacilityInfo> FacilityInfo;
-};

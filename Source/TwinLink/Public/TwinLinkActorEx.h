@@ -1,7 +1,13 @@
 #pragma once
-
-class TwinLinkActorEx {
+class USceneComponent;
+class TWINLINK_API TwinLinkActorEx {
 public:
+    /*
+     * @brief: Selfの子をIndicesで指定した番号に従い子孫をたどって取得する
+     * SelfのIndices[0]番目の子のIndices[1]番目の子の...Indices[...]番目の子を取得する
+     */
+    static USceneComponent* GetChild(USceneComponent* Self, const std::initializer_list<int>& Indices);
+
     template<class T>
     static auto SpawnChildActor(AActor* Self, const TSubclassOf<T>& Class, const TCHAR* Name) -> T* {
         FActorSpawnParameters Params;
@@ -35,11 +41,8 @@ public:
 
     template<class T>
     static T* FindFirstActorInWorld(const UWorld* World) {
-        TArray<AActor*> Actors;
-        UGameplayStatics::GetAllActorsOfClass(World, T::StaticClass(), Actors);
-        ATwinLinkNavSystem* NavSystem = nullptr;
-        if (Actors.Num() == 0)
+        if (!World)
             return nullptr;
-        return Cast<T>(Actors[0]);
+        return Cast<T>(UGameplayStatics::GetActorOfClass(World, T::StaticClass()));
     }
 };

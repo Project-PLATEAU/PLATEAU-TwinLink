@@ -7,6 +7,7 @@
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "TwinLinkNavSystemEx.generated.h"
+struct FTwinLinkNavSystemFindPathUiInfo;
 struct FTwinLinkNavSystemBuildingInfo;
 /*
  * @brief : ナビメッシュ関係の便利関数
@@ -32,4 +33,21 @@ public:
      */
     UFUNCTION(BlueprintCallable)
         static bool TryGetBuildingInfo(const FTwinLinkNavSystemBuildingInfo& Info, FString& OutBuildingName, FString& OutBuildingIconKey, FVector& OutEntrance);
+
+    /*
+     * @brief : 移動時間をテキストで取得
+     */
+    UFUNCTION(BlueprintCallable)
+        static FString GetTimeText(const FTwinLinkNavSystemFindPathUiInfo& Info);
+    /*
+     * @brief : 移動距離をテキストで取得
+     */
+    UFUNCTION(BlueprintCallable)
+        static FString GetDistanceTest(const FTwinLinkNavSystemFindPathUiInfo& Info);
+
+    /*
+     * @brief : 移動距離をテキストで取得
+     */
+    UFUNCTION(BlueprintCallable)
+        static void GetTimeAndDistanceText(const FTwinLinkNavSystemFindPathUiInfo& Info, FString& OutTimeText, FString& OutDistanceText);
 };

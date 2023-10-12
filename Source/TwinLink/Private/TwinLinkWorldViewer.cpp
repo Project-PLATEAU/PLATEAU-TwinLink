@@ -149,7 +149,6 @@ void ATwinLinkWorldViewer::Click() {
     };
 
     if (HitResult.Component.IsValid()) {
-
         // 想定されるプレフィックスが付与されているかチェックする
         const auto MaxPrefixCnt = 6;    // テキトウな値 利用されるプレフィックスの最大文字数+_
         const auto ProbablyPrefix = HitResult.Component->GetName().Left(MaxPrefixCnt);

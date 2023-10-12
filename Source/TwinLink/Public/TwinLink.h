@@ -9,6 +9,7 @@
 
 #include "TwinLink.generated.h"
 
+class UPLATEAUCityObjectGroup;
 DECLARE_EVENT(FTwinLinkModule, DelEvOnChangedAdminMode)
 
 class TWINLINK_API FTwinLinkModule : public IModuleInterface {
@@ -66,6 +67,11 @@ public:
     * @return 都市のアクタ
     */
     TObjectPtr<AActor> GetCityModel() const { return CityModel; }
+
+    /*
+     * @brief : 管理対象建築物の全体モデルのUPLATEAUCityObjectGroupを取得する
+     */
+    TWeakObjectPtr<UPLATEAUCityObjectGroup> GetFacilityModelBuildingComponent() const;
 
 public:
     /** 管理者モード有効化時に呼ばれる **/

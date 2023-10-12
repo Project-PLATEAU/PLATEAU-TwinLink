@@ -5,9 +5,12 @@
 
 #include "NavigationSystem.h"
 #include "PLATEAUInstancedCityModel.h"
+#include "TwinLink.h"
 #include "TwinLinkActorEx.h"
 #include "TwinLinkFacilityInfo.h"
 #include "TwinLinkFacilityInfoSystem.h"
+#include "TwinLinkPLATEAUCityModelEx.h"
+#include "TwinLinkWorldViewer.h"
 #include "Camera/CameraComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
@@ -50,6 +53,37 @@ ATwinLinkWorldViewer* ATwinLinkNavSystem::GetWorldViewer(const UWorld* World) {
 
 APlayerCameraManager* ATwinLinkNavSystem::GetPlayerCameraManager(const UWorld* World) {
     return TwinLinkActorEx::FindFirstActorInWorld<APlayerCameraManager>(World);
+}
+
+UTwinLinkFacilityInfoSystem* ATwinLinkNavSystem::GetFacilityInfoSystem(const UWorld* World) {
+    if (!World)
+        return nullptr;
+    const auto GameInstance = World->GetGameInstance();
+    if (!GameInstance)
+        return nullptr;
+    return GameInstance->GetSubsystem<UTwinLinkFacilityInfoSystem>();
+}
+
+bool ATwinLinkNavSystem::FindNavMeshPoint(const UNavigationSystemV1* NavSys, const UStaticMeshComponent* StaticMeshComp, FVector& OutPos) {
+    if (!StaticMeshComp || !NavSys)
+        return false;
+    const auto StaMesh = StaticMeshComp->GetStaticMesh();
+    if (!StaMesh)
+        return false;
+    const auto Bounds = StaMesh->GetBounds();
+    const auto Bb = Bounds.GetBox();
+    // ナビメッシュの範囲内かどうか
+    auto Pos = Bb.GetCenter();
+    Pos.Z = 0.f;
+    const auto Size = Bb.GetSize();
+    FNavLocation OutLocation;
+    if (NavSys->ProjectPointToNavigation(Pos, OutLocation, Size + FVector::One() * 1000)) {
+        OutPos = OutLocation.Location;
+        // #TODO : 適当な値
+        OutPos.Z = Bb.Min.Z;
+        return true;
+    }
+    return false;
 }
 
 void ATwinLinkNavSystem::Tick(float DeltaSeconds) {
@@ -127,20 +161,13 @@ void ATwinLinkNavSystem::DebugBeginPlay() {
                     const auto StaMeshComp = Cast<UStaticMeshComponent>(ChildComp);
                     if (!StaMeshComp)
                         continue;
-                    StaMeshComp->SetCanEverAffectNavigation(true);
                     const auto StaMesh = StaMeshComp->GetStaticMesh();
                     if (!StaMesh)
                         continue;
                     FString Name;
                     Lod->GetName(Name);
-                    auto Bounds = StaMesh->GetBounds();
-                    auto Bb = Bounds.GetBox();
-                    // ナビメッシュの範囲内かどうか
-                    auto Pos = Bb.GetCenter();
-                    Pos.Z = 0.f;
-                    auto Size = Bb.GetSize();
-                    FNavLocation OutPos;
-                    if (NavSys->ProjectPointToNavigation(Pos, OutPos, Size + FVector::One() * 1000)) {
+                    FVector OutPos;
+                    if (FindNavMeshPoint(NavSys, StaMeshComp, OutPos)) {
                         auto Elem = NewObject<UTwinLinkFacilityInfo>();
                         Elem->Setup(MeshName, "Test", "TestID", "TestImage", "TestDesc", "TestSpot");
                         Elem->SetEntrances(TArray<FVector>{OutPos});
@@ -156,6 +183,51 @@ void ATwinLinkNavSystem::DebugBeginPlay() {
 
 void ATwinLinkNavSystem::BeginPlay() {
     Super::BeginPlay();
+
+    if (auto* Viewer = GetWorldViewer(GetWorld())) {
+        Viewer->EvOnClickedFacility.AddUObject(this, &ATwinLinkNavSystem::OnFacilityClick);
+    }
+
+    // #TODO : FacilityInfoSystem::FindFacilityを使った方がよさそうだが毎回全検索しているので自前でキャッシュ作るようにする
+    TArray<AActor*> AllActors;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), APLATEAUInstancedCityModel::StaticClass(), AllActors);
+    for (const auto Actor : AllActors) {
+        const auto InstanceCityModel = Cast<APLATEAUInstancedCityModel>(Actor);
+        if (!InstanceCityModel)
+            continue;
+        for (auto [CityObjectGroup, MeshType, LodLevel] : TwinLinkPLATEAUInstancedCityModelScanner(InstanceCityModel)) {
+            if (MeshType == FTwinLinkFindCityModelMeshType::Bldg) {
+                BuildingMap.Add(CityObjectGroup->GetName(), FTwinLinkNavSystemBuildingInfo(CityObjectGroup));
+            }
+        }
+    }
+
+    // FacilityInfoを設定する
+    if (const auto FacilitySystem = GetFacilityInfoSystem(GetWorld())) {
+        for (auto& Item : FacilitySystem->GetFacilityInfoCollectionAsMap()) {
+            auto FeatureId = Item.Value->GetFeatureID();
+            if (BuildingMap.Contains(FeatureId))
+                BuildingMap[FeatureId].FacilityInfo = Item.Value;
+        }
+    }
+
+    // #TODO : 一時的にナビメッシュポイントは実行時に適当に設定する
+    const UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+    if (NavSys) {
+        if (const auto FacilitySystem = GetFacilityInfoSystem(GetWorld())) {
+            for (auto& Item : FacilitySystem->GetFacilityInfoCollectionAsMap()) {
+                const auto FeatureId = Item.Value->GetFeatureID();
+                if (BuildingMap.Contains(FeatureId)) {
+                    FVector OutPos;
+                    if (FindNavMeshPoint(NavSys, BuildingMap[FeatureId].CityObjectGroup.Get(), OutPos)) {
+                        Item.Value->SetEntrances(TArray<FVector>{OutPos});
+                    }
+
+                }
+            }
+        }
+    }
+
 #ifdef WITH_EDITOR
     DebugBeginPlay();
 #endif
@@ -212,10 +284,7 @@ FTwinLinkNavSystemFindPathUiInfo ATwinLinkNavSystem::GetDrawMoveTimeUiInfo(TwinL
     auto& HeightCheckedPoints = PathFindInfo->HeightCheckedPoints;
 
     // 総距離
-    auto Length = 0.f;
-    for (auto I = 0; I < HeightCheckedPoints.Num() - 1; ++I) {
-        Length += (HeightCheckedPoints[I + 1] - HeightCheckedPoints[I]).Length();
-    }
+    const auto Length = PathFindInfo->GetTotalLength();
 
     const auto Meter = Length / RuntimeParam->WorldUnitMeter;
     const auto Sec = Meter * 3.6f / RuntimeParam->GetMoveSpeedKmPerH(MoveType);
@@ -243,58 +312,127 @@ FTwinLinkNavSystemFindPathUiInfo ATwinLinkNavSystem::GetDrawMoveTimeUiInfo(TwinL
     return FTwinLinkNavSystemFindPathUiInfo();
 }
 
+bool ATwinLinkNavSystem::GetOutputPathInfo(FTwinLinkNavSystemOutputPathInfo& Out) const {
+    if (PathFindInfo.has_value() == false || PathFindInfo->IsSuccess() == false)
+        return false;
+
+    const auto& TwinLinkModule = FTwinLinkModule::Get();
+    const auto CityModel = Cast<APLATEAUInstancedCityModel>(TwinLinkModule.GetCityModel());
+    if (!CityModel) {
+        UE_LOG(LogTemp, Error, TEXT("TwinLinkModuleにCityModelが設定されていません"));
+        return false;
+    }
+    auto& Geo = CityModel->GeoReference.GetData();
+    FTwinLinkNavSystemOutputPathInfo Ret;
+
+
+    const auto& Points = PathFindInfo->HeightCheckedPoints;
+    const auto& Indices = PathFindInfo->PathPointsIndices;
+    auto ToGeoCoord = [&](int I) {
+        const auto V = Points[Indices[I]];
+        return TVec3d(V.X, V.Y, V.Z);
+    };
+    Ret.Start = Geo.unproject(ToGeoCoord(0));
+    Ret.End = Geo.unproject(ToGeoCoord(Indices.Num() - 1));
+    for (auto i = 1; i < Indices.Num() - 1; ++i)
+        Ret.Route.Add(Geo.unproject(ToGeoCoord(i)));
+
+    // 総距離
+    const auto Length = PathFindInfo->GetTotalLength();
+    const auto Meter = Length / RuntimeParam->WorldUnitMeter;
+    Ret.MinutesByWalk = Meter * 3.6f / 60.f / RuntimeParam->GetMoveSpeedKmPerH(TwinLinkNavSystemMoveType::Walk);
+    Ret.MinutesByCar = Meter * 3.6f / 60.f / RuntimeParam->GetMoveSpeedKmPerH(TwinLinkNavSystemMoveType::Car);
+
+    Out = Ret;
+    return true;
+}
+
+bool ATwinLinkNavSystem::ExportOutputPathInfo() const
+{
+    FTwinLinkNavSystemOutputPathInfo Out;
+    if (GetOutputPathInfo(Out) == false)
+        return false;
+
+    // #TODO : 出力形式が決まったら出力処理を書く
+    UKismetSystemLibrary::PrintString(GetWorld(), TEXT("Output Path"));
+    return true;
+}
+
 ATwinLinkNavSystemPathFinder* ATwinLinkNavSystem::GetNowPathFinder() {
     return NowPathFinder;
 }
 
 FTwinLinkNavSystemBuildingInfo ATwinLinkNavSystem::GetBaseBuilding() const {
-#ifdef WITH_EDITOR
-    if (DebugUseDebugBuildings) {
-        auto Infos = GetBuildingInfos();
-        if (Infos.IsEmpty())
-            return FTwinLinkNavSystemBuildingInfo();
-        return Infos[0];
-    }
-#endif
-    const auto GameInstance = GetWorld()->GetGameInstance();
-    if (const auto FacilityInfo = GameInstance->GetSubsystem<UTwinLinkFacilityInfoSystem>()) {
-        const auto Collection = Cast<UTwinLinkFacilityInfoCollection>(FacilityInfo->GetFacilityInfoCollection());
-        if (!Collection)
-            return FTwinLinkNavSystemBuildingInfo();
-        for (auto Item : *Collection) {
-            if (!Item.Value.Get())
-                continue;
-            FTwinLinkNavSystemBuildingInfo Elem{ Item.Value };
-            return Elem;
-        }
-    }
+    // #TODO : 一時的に管理対象物の情報も仮で設定する
+    const auto& TwinLinkModule = FTwinLinkModule::Get();
+
+    // 管理対象物
+    const auto TargetBuilding = TwinLinkModule.GetFacilityModelBuildingComponent();
+    if (TargetBuilding.IsValid() == false)
+        return FTwinLinkNavSystemBuildingInfo();
+
+    if (BuildingMap.Contains(TargetBuilding->GetName()))
+        return BuildingMap[TargetBuilding->GetName()];
+
     return FTwinLinkNavSystemBuildingInfo();
 }
 
-TArray<FTwinLinkNavSystemBuildingInfo> ATwinLinkNavSystem::GetBuildingInfos() const {
-#ifdef WITH_EDITOR
-    if (DebugUseDebugBuildings) {
-        TArray<FTwinLinkNavSystemBuildingInfo> Ret;
-        for (auto& Info : DebugFacilityInfos)
-            Ret.Add(FTwinLinkNavSystemBuildingInfo{ Info });
-        return Ret;
-    }
-#endif
+TArray<FTwinLinkNavSystemBuildingInfo> ATwinLinkNavSystem::GetBuildingInfos() {
+
+    const UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
     TArray<FTwinLinkNavSystemBuildingInfo> Ret;
     const auto GameInstance = GetWorld()->GetGameInstance();
+    auto BaseBuilding = GetBaseBuilding();
     if (const auto FacilityInfo = GameInstance->GetSubsystem<UTwinLinkFacilityInfoSystem>()) {
         for (auto Item : FacilityInfo->GetFacilityInfoCollectionAsMap()) {
             if (!Item.Value.Get())
                 continue;
-            FTwinLinkNavSystemBuildingInfo Elem{ Item.Value };
-            Ret.Add(Elem);
+            if (Item.Value->GetEntrances().IsEmpty()) {
+                //FindNavMeshPoint(NavSys, Item.Value->)
+            }
+
+            // 管理対象物は除く
+            if (BaseBuilding.CityObjectGroup.IsValid() && Item.Value->GetFeatureID() == BaseBuilding.CityObjectGroup->GetName())
+                continue;
+
+            if (BuildingMap.Contains(Item.Value->GetFeatureID())) {
+                auto& Info = BuildingMap[Item.Value->GetFeatureID()];
+                // FacilityInfoが更新されていれば設定(新規で追加された建物など)
+                if (Info.FacilityInfo != Item.Value)
+                    Info.FacilityInfo = Item.Value;
+                Ret.Add(Info);
+            }
         }
     }
     return Ret;
-
-
 }
 
+void ATwinLinkNavSystem::OnFacilityClick(FHitResult Info) const {
+    const auto CityObject = Cast<UPLATEAUCityObjectGroup>(Info.Component);
+    if (!CityObject) {
+        UKismetSystemLibrary::PrintString(this, "Invalid CityObject");
+        return;
+    }
+    const auto Key = CityObject->GetName();
+    if (!BuildingMap.Contains(Key))
+        return;
+
+    // 管理対象の建物の場合は除く
+    const auto BaseBuilding = GetBaseBuilding();
+    if (BaseBuilding.CityObjectGroup == CityObject)
+        return;
+
+    const auto& BuildingInfo = BuildingMap[Key];
+    if (BuildingInfo.FacilityInfo.IsValid()) {
+        OnFacilityClicked.Broadcast(Info, BuildingInfo);
+    }
+
+    if (const auto CityModel = Cast<APLATEAUInstancedCityModel>(CityObject->GetAttachParentActor())) {
+        const TVec3d Point(Info.Location.X, Info.Location.Y, Info.Location.Z);
+        const auto Geo = CityModel->GeoReference.GetData().unproject(Point);
+        UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("Lat : %f, Lon : %f"), Geo.latitude, Geo.longitude));
+    }
+}
 void ATwinLinkNavSystem::Clear() {
     if (NowPathFinder) {
         NowPathFinder->Clear();

@@ -7,12 +7,16 @@
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "NavigationData.h"
+#include "TwinLinkFacilityInfoSystem.h"
+#include "TwinLinkNavSystemBuildingInfo.h"
 #include "TwinLinkNavSystemDef.h"
 #include "TwinLinkNavSystemFindPathInfo.h"
 #include "TwinLinkNavSystemPathDrawer.h"
 #include "TwinLinkNavSystemParam.h"
 #include "TwinLinkNavSystemFindPathUiInfo.h"
 #include "TwinLinkNavSystem.generated.h"
+class UPLATEAUCityObjectGroup;
+class UNavigationSystemV1;
 class UTwinLinkFacilityInfo;
 class UCameraComponent;
 class ATwinLinkNavSystemPathFinder;
@@ -20,6 +24,8 @@ class APLATEAUInstancedCityModel;
 class ANavMeshBoundsVolume;
 class ATwinLinkWorldViewer;
 class APlayerCameraManager;
+
+DECLARE_EVENT_TwoParams(ATwinLinkNavSystem, OnFacilityClickedDelegate, const FHitResult&, const FTwinLinkNavSystemBuildingInfo&);
 /*
  * @brief : パス検索などランタイム中のナビメッシュ関係を管理するクラス.
  */
@@ -44,6 +50,12 @@ public:
      */
     static APlayerCameraManager* GetPlayerCameraManager(const UWorld* World);
 
+    /*
+     * @brief : Worldに配置されているUTwinLinkFacilityInfoSystemをとってくる. 毎回同じこと書くの面倒なので
+     */
+    static UTwinLinkFacilityInfoSystem* GetFacilityInfoSystem(const UWorld* World);
+
+    static bool FindNavMeshPoint(const UNavigationSystemV1* NavSys, const UStaticMeshComponent* StaticMeshComp, FVector& OutPos);
     virtual void Tick(float DeltaSeconds) override;
 
     ECollisionChannel GetDemCollisionChannel() const {
@@ -64,6 +76,9 @@ public:
     float GetPathFindingHeightCheckInterval() const {
         return RuntimeParam->PathPointInterval;
     }
+
+    // 建物クリックしたときのコールバック
+    OnFacilityClickedDelegate OnFacilityClicked;
 
     /*
      * @brief : モード切替
@@ -96,11 +111,26 @@ public:
         FTwinLinkNavSystemFindPathUiInfo GetDrawMoveTimeUiInfo(TwinLinkNavSystemMoveType MoveType, const FBox2D& ScreenRange) const;
 
     /*
+     * @brief : 移動パスの情報出力情報取得
+     */
+    UFUNCTION(BlueprintCallable)
+        bool GetOutputPathInfo(FTwinLinkNavSystemOutputPathInfo& Out) const;
+
+    /*
+     * @brief : 移動パスの情報出力情報取得(ファイル出力)
+     */
+    UFUNCTION(BlueprintCallable)
+        bool ExportOutputPathInfo() const;
+
+    /*
      * @brief : 現在のパス検索モードアクタ
      */
     UFUNCTION(BlueprintCallable)
         ATwinLinkNavSystemPathFinder* GetNowPathFinder();
 
+    /*
+     * @brief : 管理対象建物情報を取得する.
+     */
     UFUNCTION(BlueprintCallable)
         FTwinLinkNavSystemBuildingInfo GetBaseBuilding() const;
 
@@ -108,16 +138,13 @@ public:
      * @brief : レベルに登録されている建物リストを取得する
      */
     UFUNCTION(BlueprintCallable)
-        TArray<FTwinLinkNavSystemBuildingInfo> GetBuildingInfos() const;
+        TArray<FTwinLinkNavSystemBuildingInfo> GetBuildingInfos();
 
+    /*
+     * @brief : 状態初期化
+     */
     UFUNCTION(BlueprintCallable)
         void Clear();
-
-    UFUNCTION(BlueprintCallable)
-        FVector2D GetDebugHudPosition() const {
-        return DebugHudPosition;
-    }
-
     /*
      * @brief : 有効かどうか
      * @param : includePathFinder : NowPathFinder含めて有効かどうか
@@ -129,6 +156,11 @@ private:
      * @brief : PathFinderからパス検索準備完了時のコールバックとして登録する
      */
     void OnReadyPathFinding();
+
+    /*
+     * @brief : WorldViewerで建物クリックしたときに呼ばれる
+     */
+    void OnFacilityClick(FHitResult Info) const;
 
     /*
      * @brief : デバッグ描画実行
@@ -159,21 +191,25 @@ private:
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
         FBox DemCollisionAabb;
 
+    // 建物情報のマップキャッシュ
+    // key : UPLATEAUCityObjectGroup::GetName()
+    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
+        TMap<FString, FTwinLinkNavSystemBuildingInfo> BuildingMap;
 private:
     // -----------------------
     // ランタイム系
     // -----------------------
 
     // 現在どのポイントを編集しているかどうか
-    UPROPERTY(EditAnywhere, Category = TwinLink_Path)
+    UPROPERTY(EditAnywhere, Category = TwinLink_Runtime)
         NavSystemMode NowSelectedMode = NavSystemMode::Undefined;
 
     // パス描画のアクター
-    UPROPERTY(EditAnywhere, Category = TwinLink_Path)
+    UPROPERTY(EditAnywhere, Category = TwinLink_Runtime)
         TArray<AUTwinLinkNavSystemPathDrawer*> PathDrawers;
 
     // パス探索のアクター
-    UPROPERTY(EditAnywhere, Category = TwinLink_Path)
+    UPROPERTY(EditAnywhere, Category = TwinLink_Runtime)
         ATwinLinkNavSystemPathFinder* NowPathFinder = nullptr;
 
     // パス検索情報
@@ -192,7 +228,7 @@ private:
 
     // パス探索のアクター
     UPROPERTY(EditAnywhere, Category = TwinLink_Test)
-        FVector2D DebugHudPosition = FVector2D::Zero();
+        bool DebugDrawInfo = false;
 
     //    UTwinLinkFacilityInfo DebugStartBuilding;
     UPROPERTY(EditAnywhere, Category = TwinLink_Test)
