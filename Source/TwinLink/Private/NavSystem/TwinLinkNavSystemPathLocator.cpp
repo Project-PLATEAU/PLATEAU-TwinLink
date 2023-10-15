@@ -4,6 +4,9 @@
 #include "NavSystem/TwinLinkNavSystemPathLocator.h"
 
 #include "NavigationSystem.h"
+#include "TwinLinkMathEx.h"
+#include "TwinLinkWorldViewer.h"
+#include "NavSystem/TwinLinkNavSystem.h"
 
 // Sets default values
 ATwinLinkNavSystemPathLocator::ATwinLinkNavSystemPathLocator() {
@@ -16,6 +19,16 @@ void ATwinLinkNavSystemPathLocator::BeginPlay() {
 
 void ATwinLinkNavSystemPathLocator::Tick(float DeltaSeconds) {
     Super::Tick(DeltaSeconds);
+    if(auto WorldViewer = ATwinLinkNavSystem::GetWorldViewer(GetWorld()))
+    {
+        auto CameraLocation = WorldViewer->GetNowCameraLocationOrZero();
+        auto ActorLocation = GetActorLocation();
+        CameraLocation.Z = ActorLocation.Z = 0;
+        auto Rotation = TwinLinkMathEx::CreateLookAtMatrix(ActorLocation, CameraLocation).ToQuat();
+        // #NOTE : メッシュの作り的に90度回転させないと正面を向かない
+        Rotation *= FQuat::MakeFromRotationVector(FVector(0.f, 0.f, FMath::DegreesToRadians(90)));
+        SetActorRotation(Rotation);
+    }
 }
 
 NavSystemPathLocatorState ATwinLinkNavSystemPathLocator::GetNowState() const {
