@@ -76,6 +76,8 @@ FTwinLinkCityObjectGroupModel TwinLinkPLATEAUInstancedCityModelIterator::operato
     Ret.MeshType = FTwinLinkFindCityModelMeshType::Undefined;
     if (Ret.CityObjectGroup.IsValid())
         Ret.MeshType = FTwinLinkPlateauCityModelEx::ParseMeshType(Ret.CityObjectGroup->GetName());
+
+    
     return Ret;;
 }
 

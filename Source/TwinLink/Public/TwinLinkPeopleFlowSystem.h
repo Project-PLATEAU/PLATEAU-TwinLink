@@ -15,8 +15,8 @@ struct FTwinLinkPeopleFlowApiRequest {
     GENERATED_BODY();
 public:
     // 空間Idのリスト
-    UPROPERTY(EditAnywhere)
-        TArray<FString> SpatialIds;
+    // #NOTE : FTwinLinkSpatialIDがUSTRUCTじゃないのでUPROPERTYにできない
+    TArray<FTwinLinkSpatialID> SpatialIds;
     // 時刻
     UPROPERTY(EditAnywhere)
         FDateTime DateTime;
@@ -41,9 +41,8 @@ struct FTwinLinkPopulationData {
     GENERATED_BODY();
 public:
     // 対応する空間ID
-
-    UPROPERTY(EditAnywhere)
-        FString SpatialId;
+    // #NOTE : FTwinLinkSpatialIDがUSTRUCTじゃないのでUPROPERTYにできない
+    FTwinLinkSpatialID SpatialId;
 
     UPROPERTY(EditAnywhere)
         FString Type;
@@ -60,6 +59,12 @@ public:
     // リクエストが成功したかどうか
     UPROPERTY(EditAnywhere)
         bool bSuccess = false;
+
+    UPROPERTY(EditAnywhere)
+        TArray<FTwinLinkPopulationData> Populations;
+
+public:
+    static FTWinLinkPeopleFlowApiResult Error();
 };
 
 /**
@@ -81,7 +86,7 @@ private:
      */
     void OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectionSuccessfully);
 
-
+    static FTWinLinkPeopleFlowApiResult ParseResponse(const FHttpResponsePtr& Response, bool bConnectionSuccessfully);
 private:
     // 最後にリクエストした時刻
     UPROPERTY()

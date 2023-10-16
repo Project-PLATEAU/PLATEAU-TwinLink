@@ -5,6 +5,13 @@
 #include "JsonObjectConverter.h"
 #include "Interfaces/IHttpResponse.h"
 
+FTWinLinkPeopleFlowApiResult FTWinLinkPeopleFlowApiResult::Error()
+{
+    FTWinLinkPeopleFlowApiResult Ret;
+    Ret.bSuccess = false;         
+    return Ret;
+}
+
 void UTwinLinkPeopleFlowSystem::Request(const FTwinLinkPeopleFlowApiRequest& Req) {
     // https://dev.classmethod.jp/articles/unrealengine5-http-api-call/
     const FString Url = "http://localhost:3000/population";
@@ -22,7 +29,7 @@ void UTwinLinkPeopleFlowSystem::Request(const FTwinLinkPeopleFlowApiRequest& Req
     // リクエストのjsonフォーマットはない為, 
     TArray<FString> SpatialIds;
     for (auto& Id : Req.SpatialIds)
-        SpatialIds.Add(Id);
+        SpatialIds.Add(Id.StringZFXY());
     const auto Ids = FString::Join(SpatialIds, TEXT(","));
     const auto Time = Req.DateTime.ToFormattedString(TEXT("yyyy-MM-ddThh:mm:ss"));
     const auto Query = FString::Printf(TEXT("id=\"%s\"&time=\"%s\""), *Ids, *Time);
@@ -33,8 +40,16 @@ void UTwinLinkPeopleFlowSystem::Request(const FTwinLinkPeopleFlowApiRequest& Req
 
 void UTwinLinkPeopleFlowSystem::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response,
     bool bConnectionSuccessfully) {
+    auto Result = ParseResponse(Response, bConnectionSuccessfully);
+    OnReceivedPeopleFlowResponse.Broadcast(Result);
+    UE_LOG(LogTemp, Display, TEXT("Response %s"), *Response->GetContentAsString());
+}
+
+FTWinLinkPeopleFlowApiResult UTwinLinkPeopleFlowSystem::ParseResponse(const FHttpResponsePtr& Response,
+    bool bConnectionSuccessfully)
+{
     if (!bConnectionSuccessfully)
-        return;
+        return FTWinLinkPeopleFlowApiResult::Error();
 
     // JSONオブジェクト格納用変数初期化
     TSharedPtr<FJsonObject> ResponseObj = MakeShareable(new FJsonObject());
@@ -43,18 +58,17 @@ void UTwinLinkPeopleFlowSystem::OnResponseReceived(FHttpRequestPtr Request, FHtt
 
     // 文字列からJSONオブジェクトへデシリアライズ
     if (!FJsonSerializer::Deserialize(Reader, ResponseObj))
-        return;
+        return FTWinLinkPeopleFlowApiResult::Error();
 
-    // UEでログ出力（APIから受け取った文字列そのまま）
-    auto Datas = ResponseObj->GetArrayField(TEXT("data"));
-    for(auto& Data : Datas)
-    {
+    FTWinLinkPeopleFlowApiResult Ret;
+    Ret.bSuccess = true;
+    // UEでログ出力（APIから受け取った文字列そのまま
+    for (const auto& Data : ResponseObj->GetArrayField(TEXT("data"))) {
         auto& Json = Data->AsObject();
         FTwinLinkPopulationData D;
-        D.SpatialId = Json->GetStringField(TEXT("id"));
+        D.SpatialId = FTwinLinkSpatialID::ParseZFXY(Json->GetStringField(TEXT("id")));
         D.Type = Json->GetStringField(TEXT("type"));
-        for(auto& V : Json->GetArrayField(TEXT("values")))
-        {
+        for (auto& V : Json->GetArrayField(TEXT("values"))) {
             auto& JsonV = V->AsObject();
             FTwinLinkPopulationValue Val;
             FDateTime::Parse(JsonV->GetStringField("timestamp"), Val.TimeStamp);
@@ -62,6 +76,7 @@ void UTwinLinkPeopleFlowSystem::OnResponseReceived(FHttpRequestPtr Request, FHtt
             Val.PeopleFlow = JsonV->GetIntegerField(TEXT("peopleFlow"));
             D.Values.Add(Val);
         }
+        Ret.Populations.Add(D);
     }
-    UE_LOG(LogTemp, Display, TEXT("Response %s"), *Response->GetContentAsString());
+    return Ret;
 }

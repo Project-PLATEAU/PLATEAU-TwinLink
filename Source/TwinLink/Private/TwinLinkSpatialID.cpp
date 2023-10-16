@@ -1,6 +1,9 @@
 // Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #include "TwinLinkSpatialID.h"
+
+#include <algorithm>
+
 #include "TwinLinkCommon.h"
 
 #include "PLATEAUInstancedCityModel.h"
@@ -127,6 +130,24 @@ FTwinLinkSpatialID FTwinLinkSpatialID::Create(int InZ, int InF, int InX, int InY
 FTwinLinkSpatialID FTwinLinkSpatialID::Create(FPLATEAUGeoReference& GeoReference, const FVector& Position, int ZoomLevel, bool bIsUsingAltitude) {
     const auto GeoCoordinate = UPLATEAUGeoReferenceBlueprintLibrary::Unproject(GeoReference, Position);
     return Create(GeoCoordinate.Latitude, GeoCoordinate.Longitude, (double)ZoomLevel, GeoCoordinate.Height, bIsUsingAltitude);
+}
+
+FTwinLinkSpatialID FTwinLinkSpatialID::ParseZFXY(const FString& Str)
+{
+    // 数が合わない場合は失敗
+    TArray<FString> Out;
+    Str.ParseIntoArray(Out, TEXT("/"));
+    if (Out.Num() != 4)
+        return FTwinLinkSpatialID();
+
+    // 数字じゃないものがあればパース失敗
+    if(std::any_of(Out.begin(), Out.end(), [](const FString& s){ return s.IsNumeric() == false;}))
+        return FTwinLinkSpatialID();
+    const auto Z = FCString::Atoi(*Out[0]);
+    const auto F = FCString::Atoi(*Out[1]);
+    const auto X = FCString::Atoi(*Out[2]);
+    const auto Y = FCString::Atoi(*Out[3]);
+    return Create(Z, F, X, Y, true);
 }
 
 FBox FTwinLinkSpatialID::GetSpatialIDArea(FPLATEAUGeoReference& GeoReference) const {

@@ -13,9 +13,7 @@ struct TWINLINK_API FTwinLinkSpatialID
 public:
 	~FTwinLinkSpatialID();
 
-private:
     FTwinLinkSpatialID();
-
 public:
     /**
      * @brief 正当性のチェック
@@ -55,6 +53,10 @@ public:
     */
     static FTwinLinkSpatialID Create(class FPLATEAUGeoReference& GeoReference, const FVector& Position, int ZoomLevel, bool bIsUsingAltitude = false);
 
+    /*
+     * @brief Z/F/X/Yの形式の文字列からパースする
+     */
+    static FTwinLinkSpatialID ParseZFXY(const FString& Str);
 public:
     /**
      * @brief 高度が有効な値か
