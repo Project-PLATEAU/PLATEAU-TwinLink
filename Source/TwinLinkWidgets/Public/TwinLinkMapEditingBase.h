@@ -1,9 +1,10 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "TwinLinkTabContentBase.h"
+#include "TwinLinkFloorViewPanel.h"
 #include "TwinLinkMapEditingBase.generated.h"
 
 /**
@@ -24,6 +25,10 @@ public:
      * @brief デストラクト
     */
     virtual void NativeDestruct() override;
+
+    /**  階層選択ウィジェット  **/
+    UPROPERTY(meta = (BindWidget))
+        TObjectPtr<UTwinLinkFloorViewPanel> Floor;
 
 protected:
     /**
