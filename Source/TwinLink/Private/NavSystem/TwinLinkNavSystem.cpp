@@ -121,9 +121,6 @@ void ATwinLinkNavSystem::DebugDraw() {
     if (!NavSys)
         return;
 
-    // 道路モデルのAABB表示
-    DrawDebugBox(GetWorld(), DemCollisionAabb.GetCenter(), DemCollisionAabb.GetExtent(), FColor::Red);
-
     if (DebugCallPathFinding) {
         DebugCallPathFinding = false;
         if (NowPathFinder) {

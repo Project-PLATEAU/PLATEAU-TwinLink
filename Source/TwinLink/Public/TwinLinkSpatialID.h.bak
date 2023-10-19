@@ -3,9 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "PLATEAUGeometry.h"
-struct FPLATEAUGeoReference;
-struct FPLATEAUGeoCoordinate;
+
 /**
  * 空間IDを示す構造体
  * 空間ID関係の補助関数も実装
@@ -17,11 +15,6 @@ public:
 
     FTwinLinkSpatialID();
 public:
-    // 最小ズームレベル
-    static constexpr int MIN_ZOOM_LEVEL = 1;
-
-    // 最大ズームレベル
-    static constexpr int MAX_ZOOM_LEVEL = 25;
     /**
      * @brief 正当性のチェック
      * @param InZ ズームレベル
@@ -42,16 +35,6 @@ public:
     */
     static FTwinLinkSpatialID Create(double Lat, double Lng, double Zoom, double Alt = 0, bool bIsUsingAltitude = false);
 
-    /*
-     * @brief : 緯度/経度/高度/ズームレベルから空間IDの座標系に変換する
-     */
-    static FVector ToVoxelSpace(const FPLATEAUGeoCoordinate& GeoCoordinate, int Zoom);
-
-    /*
-     * @brief : ワールド座標 -> 空間ID座標に変換
-     */
-    static FVector WorldToVoxelSpace(const FVector& World, FPLATEAUGeoReference& GeoReference, int Zoom = MAX_ZOOM_LEVEL);
-
     /**
      * @brief 空間IDを設定する
      * @param InZ ズームレベル
@@ -69,11 +52,6 @@ public:
      * @param ZoomLevel
     */
     static FTwinLinkSpatialID Create(class FPLATEAUGeoReference& GeoReference, const FVector& Position, int ZoomLevel, bool bIsUsingAltitude = false);
-
-    /*
-     *@brief : ワールドBoxを内包する最小の空間IDを設定する. 最大まで大きくしても無理な場合はfalse
-     */
-    static bool TryGetBoudingSpatialId(FPLATEAUGeoReference& GeoReference, const FBox& WorldBox, bool bIsUsingAltitude, FTwinLinkSpatialID& Out);
 
     /*
      * @brief Z/F/X/Yの形式の文字列からパースする
@@ -111,10 +89,10 @@ public:
     /**
      * @brief 空間IDの範囲を取得する
      *  高度の情報は含めていないので注意(必ず0)
-     * 
+     *
      * @param GeoReference
      *  memo APLATEAUInstancedCityModelから取得できる
-     * 
+     *
      * @return UE上のワールド座標
     */
     FBox GetSpatialIDArea(FPLATEAUGeoReference& GeoReference) const;
@@ -124,32 +102,6 @@ public:
      */
     FString StringZFXY() const;
 
-    /*
-     * @brief : 位置をなるべくキープした状態でズームだけ変更した空間IDを返す
-     *        : 引き -> 寄りの場合は位置をキープできる
-     *        : 寄り -> 引きの場合は小数点部分は切り捨て
-     */
-    FTwinLinkSpatialID ZoomChanged(int Zoom) const;
-
-    /*
-     * @brief : 緯度経度高度に変換
-     */
-    void ToGeoCoordinate(FPLATEAUGeoCoordinate& Out) const;
-
-    /*
-     * @brief : ボクセルの北西位置を返す(北半球前提). 自分自身と同じ
-     */
-    FTwinLinkSpatialID NorthWest() const;
-
-    /*
-     * @brief : ボクセルの南東位置を返す(北半球前提). Create(x+1, Y+1)と同じ
-     */
-    FTwinLinkSpatialID SouthEast() const;
-
-    /*
-     * @brief : return FVector(X,Y,F)と同義. Zoomは無視される
-     */
-    FVector ToVector() const;
 private:
     /** 高度が正当な値か **/
     bool bIsValidAltitude;
@@ -161,5 +113,4 @@ private:
     int X;
     /** 南北方向インデックス **/
     int Y;
-
 };

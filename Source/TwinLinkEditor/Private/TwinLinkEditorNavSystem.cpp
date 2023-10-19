@@ -10,6 +10,7 @@
 #include "PLATEAUInstancedCityModel.h"
 #include "NavigationSystem.h"
 #include "PLATEAUCityModelLoader.h"
+#include "TwinLink.h"
 #include "TwinLinkPLATEAUCityModelEx.h"
 #include "TwinLink/Public/NavSystem/TwinLinkNavSystem.h"
 namespace {
@@ -389,7 +390,6 @@ void UTwinLinkEditorNavSystem::MakeNavMesh(UEditorActorSubsystem* Editor, UWorld
     if (!Param->NavSystemBp) {
         return;
     }
-
 
     // 既存のNavSystemは破壊して作り直す
     {

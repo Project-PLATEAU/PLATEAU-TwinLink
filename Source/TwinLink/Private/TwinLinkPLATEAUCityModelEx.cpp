@@ -3,6 +3,7 @@
 #include "Components/SceneComponent.h" 
 #include "FTwinLinkEnumT.h"
 #include "TwinLinkActorEx.h"
+#include "TwinLinkPLATEAUGeoReferenceEx.h"
 
 bool TwinLinkPLATEAUCityModelFindRequest::IsTargetMeshType(FTwinLinkFindCityModelMeshType MeshType) const {
     if (FTwinLinkEnumEx::IsValid(MeshType) == false)
@@ -71,13 +72,13 @@ bool TwinLinkPLATEAUInstancedCityModelIterator::operator!=(const TwinLinkPLATEAU
 
 FTwinLinkCityObjectGroupModel TwinLinkPLATEAUInstancedCityModelIterator::operator*() const {
     FTwinLinkCityObjectGroupModel Ret;
-    FTwinLinkPlateauCityModelEx::TryParseLodLevel(TwinLinkActorEx::GetChild(Target.Get(), { ChildIndex, LodIndex })->GetName(), Ret.LodLevel);
+    FTwinLinkPLATEAUCityModelEx::TryParseLodLevel(TwinLinkActorEx::GetChild(Target.Get(), { ChildIndex, LodIndex })->GetName(), Ret.LodLevel);
     Ret.CityObjectGroup = Cast<UPLATEAUCityObjectGroup>(TwinLinkActorEx::GetChild(Target.Get(), { ChildIndex, LodIndex, CityObjectGroupIndex }));
     Ret.MeshType = FTwinLinkFindCityModelMeshType::Undefined;
     if (Ret.CityObjectGroup.IsValid())
-        Ret.MeshType = FTwinLinkPlateauCityModelEx::ParseMeshType(Ret.CityObjectGroup->GetName());
+        Ret.MeshType = FTwinLinkPLATEAUCityModelEx::ParseMeshType(Ret.CityObjectGroup->GetName());
 
-    
+
     return Ret;;
 }
 
@@ -140,7 +141,7 @@ TwinLinkPLATEAUInstancedCityModelIterator TwinLinkPLATEAUInstancedCityModelScann
     return TwinLinkPLATEAUInstancedCityModelIterator(Target, Target->GetRootComponent()->GetAttachChildren().Num(), 0, 0);
 }
 
-const char* FTwinLinkPlateauCityModelEx::GetComponentNamePrefix(FTwinLinkFindCityModelMeshType Type) {
+const char* FTwinLinkPLATEAUCityModelEx::GetComponentNamePrefix(FTwinLinkFindCityModelMeshType Type) {
     switch (Type) {
     case FTwinLinkFindCityModelMeshType::Bldg:
         return "bldg_";
@@ -155,7 +156,7 @@ const char* FTwinLinkPlateauCityModelEx::GetComponentNamePrefix(FTwinLinkFindCit
     return "__invalid__";
 }
 
-FTwinLinkFindCityModelMeshType FTwinLinkPlateauCityModelEx::ParseMeshType(const FString& MeshTypeName) {
+FTwinLinkFindCityModelMeshType FTwinLinkPLATEAUCityModelEx::ParseMeshType(const FString& MeshTypeName) {
     for (auto I = 0; I < static_cast<int>(FTwinLinkFindCityModelMeshType::Max); ++I) {
         const auto Type = static_cast<FTwinLinkFindCityModelMeshType>(I);
         if (MeshTypeName.StartsWith(GetComponentNamePrefix(Type)))
@@ -164,7 +165,7 @@ FTwinLinkFindCityModelMeshType FTwinLinkPlateauCityModelEx::ParseMeshType(const 
     return FTwinLinkFindCityModelMeshType::Undefined;
 }
 
-bool FTwinLinkPlateauCityModelEx::TryParseLodLevel(const FString& LodName, int& OutLodLevel) {
+bool FTwinLinkPLATEAUCityModelEx::TryParseLodLevel(const FString& LodName, int& OutLodLevel) {
     OutLodLevel = -1;
 
     // LODで始まっているかチェックする
@@ -191,7 +192,7 @@ bool FTwinLinkPlateauCityModelEx::TryParseLodLevel(const FString& LodName, int& 
     return true;
 }
 
-bool FTwinLinkPlateauCityModelEx::TryGetMinMaxLodLevel(const USceneComponent* MeshRootComponent, int& OutMinLodLevel,
+bool FTwinLinkPLATEAUCityModelEx::TryGetMinMaxLodLevel(const USceneComponent* MeshRootComponent, int& OutMinLodLevel,
     int& OutMaxLodLevel) {
     if (!MeshRootComponent)
         return false;
@@ -210,4 +211,12 @@ bool FTwinLinkPlateauCityModelEx::TryGetMinMaxLodLevel(const USceneComponent* Me
     }
     // とりあえずどっちかだけ見ればよい
     return OutMinLodLevel > 0;
+}
+
+FBox FTwinLinkPLATEAUCityModelEx::GetSpatialBox(APLATEAUInstancedCityModel* Self,
+    const UPLATEAUCityObjectGroup* CityModel, int Zoom) {
+    auto Box = FTwinLinkPLATEAUGeoReferenceEx::GetSpatialBox(Self->GeoReference, CityModel, FTwinLinkSpatialID::MAX_ZOOM_LEVEL);
+    auto Length = Box.Max - Box.Min;
+
+    return Box;
 }

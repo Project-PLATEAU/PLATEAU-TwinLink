@@ -201,6 +201,7 @@ private:
     // key : UPLATEAUCityObjectGroup::GetName()
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
         TMap<FString, FTwinLinkNavSystemBuildingInfo> BuildingMap;
+
 private:
     // -----------------------
     // ランタイム系
