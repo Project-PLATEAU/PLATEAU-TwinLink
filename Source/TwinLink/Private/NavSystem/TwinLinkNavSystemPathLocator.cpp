@@ -21,10 +21,10 @@ void ATwinLinkNavSystemPathLocator::Tick(float DeltaSeconds) {
     Super::Tick(DeltaSeconds);
     if(auto WorldViewer = ATwinLinkNavSystem::GetWorldViewer(GetWorld()))
     {
-        auto CameraLocation = WorldViewer->GetNowCameraLocationOrZero();
-        auto ActorLocation = GetActorLocation();
-        CameraLocation.Z = ActorLocation.Z = 0;
-        auto Rotation = TwinLinkMathEx::CreateLookAtMatrix(ActorLocation, CameraLocation).ToQuat();
+        const auto Forward = WorldViewer->GetNowCameraRotationOrDefault().RotateVector(FVector::ForwardVector);
+        const auto ActorLocation = GetActorLocation();
+        //CameraLocation.Z = ActorLocation.Z = 0;
+        auto Rotation = TwinLinkMathEx::CreateLookAtMatrix(ActorLocation, ActorLocation - Forward).ToQuat();
         // #NOTE : メッシュの作り的に90度回転させないと正面を向かない
         Rotation *= FQuat::MakeFromRotationVector(FVector(0.f, 0.f, FMath::DegreesToRadians(90)));
         SetActorRotation(Rotation);
