@@ -44,25 +44,21 @@ public:
      */
     static FBox2D ZY(const FBox& V);
 
-    struct VecI
-    {
-        int64 X;
-        int64 Y;
-        int64 Z;
-    };
-
-    template<class T, class F>
-    static auto Cast(const UE::Math::TVector<T>& V, F&& Func) {
-        return VecI{ Func(V.X),  Func(V.Y), Func(V.Z) };
+    template<class F, class... Args>
+    static auto Cast(F&& Func, Args&&... args) {
+        return std::make_tuple(Func(std::forward<Args>(args))...);
     }
 
-    static VecI FloorToInt64(const FVector& V) {
-        return Cast(V, [](double X) { return FMath::FloorToInt64(X); });
+    template<class... Args>
+    static auto FloorToInt64(Args... args) {
+        return Cast([](auto X) { return FMath::FloorToInt64(X); }, std::forward<Args>(args)...);
     }
 
-    static VecI CeilToInt64(const FVector& V) {
-        return Cast(V, [](double X) { return FMath::CeilToInt64(X); });
+    template<class... Args>
+    static auto CeilToInt64(Args... args) {
+        return Cast([](auto X){ return FMath::CeilToInt64(X); }, std::forward<Args>(args)...);
     }
+
     /*
      * @bref : (Θ, φ, r)の極座標系を直交座標系(x,y,z)に変換する(角度はRadian)
      */
@@ -94,20 +90,19 @@ public:
      * @brief: 最上位ビットの位置を求める
      */
     static int Nlz(uint64 x) {
-        for(auto i = 63; i >= 0; --i)
-        {
+        for (auto i = 63; i >= 0; --i) {
             if ((x >> i) != 0)
                 return i + 1;
         }
         return 0;
-      /*  uint64 y;
-        int n = 64;
-        y = x >> 32; if (y != 0) { n = n - 32; x = y; }
-        y = x >> 16; if (y != 0) { n = n - 16; x = y; }
-        y = x >> 8; if (y != 0) { n = n - 8; x = y; }
-        y = x >> 4; if (y != 0) { n = n - 4; x = y; }
-        y = x >> 2; if (y != 0) { n = n - 2; x = y; }
-        y = x >> 1; if (y != 0) { return n - 2; }
-        return n - x;*/
+        /*  uint64 y;
+          int n = 64;
+          y = x >> 32; if (y != 0) { n = n - 32; x = y; }
+          y = x >> 16; if (y != 0) { n = n - 16; x = y; }
+          y = x >> 8; if (y != 0) { n = n - 8; x = y; }
+          y = x >> 4; if (y != 0) { n = n - 4; x = y; }
+          y = x >> 2; if (y != 0) { n = n - 2; x = y; }
+          y = x >> 1; if (y != 0) { return n - 2; }
+          return n - x;*/
     }
 };

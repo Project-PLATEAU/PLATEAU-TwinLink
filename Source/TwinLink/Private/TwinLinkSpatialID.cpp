@@ -167,17 +167,17 @@ bool FTwinLinkSpatialID::TryGetBoudingSpatialId(FPLATEAUGeoReference& GeoReferen
 {
     const auto Min = WorldToVoxelSpace(WorldBox.Min, GeoReference, MAX_ZOOM_LEVEL);
     const auto Max = WorldToVoxelSpace(WorldBox.Max, GeoReference, MAX_ZOOM_LEVEL);
-    const auto MinI = TwinLinkMathEx::FloorToInt64(Min);
-    const auto MaxI = TwinLinkMathEx::FloorToInt64(Max);
+    const auto [MinX, MinY, MinZ] = TwinLinkMathEx::FloorToInt64(Min.X, Min.Y, Min.Z);
+    const auto [MaxX, MaxY, MaxZ] = TwinLinkMathEx::FloorToInt64(Max.X, Max.Y, Max.Z);
     // Nlzは0の時は64を返すので、その時は0にする
-    const auto X = TwinLinkMathEx::Nlz(MaxI.X ^ MinI.X) % 64;
-    const auto Y = TwinLinkMathEx::Nlz(MaxI.Y ^ MinI.Y) % 64;
-    const auto Z = TwinLinkMathEx::Nlz(bIsUsingAltitude ? (MaxI.Z ^ MinI.Z) : 0u) % 64;
+    const auto X = TwinLinkMathEx::Nlz(MinX ^ MaxX) % 64;
+    const auto Y = TwinLinkMathEx::Nlz(MinY ^ MaxY) % 64;
+    const auto Z = TwinLinkMathEx::Nlz(bIsUsingAltitude ? (MinZ ^ MaxZ) : 0u) % 64;
 
     const auto Zoom = MAX_ZOOM_LEVEL - FMath::Max3(X, Y, Z);
     if (Zoom < 0)
         return false;
-    Out = Create(MAX_ZOOM_LEVEL, MinI.Z, MinI.X, MinI.Y,  bIsUsingAltitude).ZoomChanged(Zoom);
+    Out = Create(MAX_ZOOM_LEVEL, MinZ, MinX, MinY,  bIsUsingAltitude).ZoomChanged(Zoom);
     return true;
 }
 

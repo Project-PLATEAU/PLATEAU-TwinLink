@@ -9,8 +9,12 @@
 class APlayerController;
 class USceneComponent;
 
+/*
+ * @brief: アウトライナーで編集したいので仮で用意.
+ *       　 デバッグ以外では使わない
+ */
 USTRUCT()
-struct FTwinLinkZXY {
+struct FTwinLinkDebugSpatialId {
     GENERATED_BODY()
 public:
     /** ズームレベル **/
@@ -46,7 +50,7 @@ public:
     int X;
     int Y;
     int Zoom;
-
+    //#TODO : X,Y合わせて58ビットに収まる前提
     int64 AsInt64() const;
 };
 USTRUCT(BlueprintType)
