@@ -172,7 +172,7 @@ private:
     UPROPERTY(EditAnywhere)
         bool DebugShowSpaceDebug;
     UPROPERTY(EditAnywhere)
-        FTwinLinkZXY DebugShowSpaceId;
+        FTwinLinkDebugSpatialId DebugShowSpaceId;
 
     UPROPERTY(EditAnywhere)
         FString DebugShowCompName;
