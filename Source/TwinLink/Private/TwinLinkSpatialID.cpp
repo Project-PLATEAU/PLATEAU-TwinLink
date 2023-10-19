@@ -169,10 +169,10 @@ bool FTwinLinkSpatialID::TryGetBoudingSpatialId(FPLATEAUGeoReference& GeoReferen
     const auto Max = WorldToVoxelSpace(WorldBox.Max, GeoReference, MAX_ZOOM_LEVEL);
     const auto [MinX, MinY, MinZ] = TwinLinkMathEx::FloorToInt64(Min.X, Min.Y, Min.Z);
     const auto [MaxX, MaxY, MaxZ] = TwinLinkMathEx::FloorToInt64(Max.X, Max.Y, Max.Z);
-    // Nlzは0の時は64を返すので、その時は0にする
-    const auto X = TwinLinkMathEx::Nlz(MinX ^ MaxX) % 64;
-    const auto Y = TwinLinkMathEx::Nlz(MinY ^ MaxY) % 64;
-    const auto Z = TwinLinkMathEx::Nlz(bIsUsingAltitude ? (MinZ ^ MaxZ) : 0u) % 64;
+ 
+    const auto X = 64 - TwinLinkMathEx::Nlz(MinX ^ MaxX);
+    const auto Y = 64 - TwinLinkMathEx::Nlz(MinY ^ MaxY);
+    const auto Z = 64 - TwinLinkMathEx::Nlz(bIsUsingAltitude ? (MinZ ^ MaxZ) : 0u);
 
     const auto Zoom = MAX_ZOOM_LEVEL - FMath::Max3(X, Y, Z);
     if (Zoom < 0)

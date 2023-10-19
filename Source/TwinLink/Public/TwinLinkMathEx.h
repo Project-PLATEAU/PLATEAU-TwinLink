@@ -85,24 +85,27 @@ public:
      * @brief : A,Bのボックスの重なった部分ボックスを返す
      */
     static FBox GetIntersectBox(const FBox& A, const FBox& B);
+    /*
+     * @brief : A,Bのボックスの重なった部分(XY)ボックスを返す
+     */
+    static FBox2D GetIntersectBoxXY(const FBox& A, const FBox& B);
 
+    /*
+     * @brief : return (Max.X - Min.X) * (Max.Y - Min.Y);
+     */
+    static double GetAreaXY(const FBox& A);
     /*
      * @brief: 最上位ビットの位置を求める
      */
     static int Nlz(uint64 x) {
-        for (auto i = 63; i >= 0; --i) {
-            if ((x >> i) != 0)
-                return i + 1;
-        }
-        return 0;
-        /*  uint64 y;
-          int n = 64;
-          y = x >> 32; if (y != 0) { n = n - 32; x = y; }
-          y = x >> 16; if (y != 0) { n = n - 16; x = y; }
-          y = x >> 8; if (y != 0) { n = n - 8; x = y; }
-          y = x >> 4; if (y != 0) { n = n - 4; x = y; }
-          y = x >> 2; if (y != 0) { n = n - 2; x = y; }
-          y = x >> 1; if (y != 0) { return n - 2; }
-          return n - x;*/
+        uint64 y;
+        int n = 64;
+        y = x >> 32; if (y != 0) { n = n - 32; x = y; }
+        y = x >> 16; if (y != 0) { n = n - 16; x = y; }
+        y = x >> 8; if (y != 0) { n = n - 8; x = y; }
+        y = x >> 4; if (y != 0) { n = n - 4; x = y; }
+        y = x >> 2; if (y != 0) { n = n - 2; x = y; }
+        y = x >> 1; if (y != 0) { return n - 2; }
+        return n - x;
     }
 };

@@ -75,45 +75,10 @@ UCLASS()
 class TWINLINK_API ATwinLinkCityObjectTree : public AActor {
     GENERATED_BODY()
 public:
-    struct Node {
-        FVector GetPosition() const;
-        FVector GetExtent() const;
-        TWeakObjectPtr<UPLATEAUCityObjectGroup> CityObjectGroup;
-        // ボクセル空間におけるバウンディングボックス
-        FBox BoundingBox;
-
-        TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>> CityObjects;
-    };
-
-    // TOctree2に渡すためのセマンティッククラス
-    struct Semantics {
-        enum { MaxElementsPerLeaf = 16 };
-        enum { MinInclusiveElementsPerNode = 7 };
-        enum { MaxNodeDepth = FTwinLinkSpatialID::MAX_ZOOM_LEVEL };
-
-        typedef TInlineAllocator<MaxElementsPerLeaf> ElementAllocator;
-
-        /*
-         * @brief : Nodeからバウンディングボックスを取得する
-         */
-        FORCEINLINE static FBoxCenterAndExtent GetBoundingBox(const Node& N) {
-            return FBoxCenterAndExtent(N.GetPosition(), N.GetExtent());
-        }
-
-        /**
-         * @brief: Nodeの==を定義
-         */
-        FORCEINLINE static bool AreElementsEqual(const Node& A, const Node& B) {
-            return A.CityObjectGroup == B.CityObjectGroup;
-        }
-
-        FORCEINLINE static void SetElementId(const Node& Element, FOctreeElementId2 Id) {
-        }
-    };
-
+    /*
+     * @brief : 初期化. 指定した都市モデルに含まれる建物を登録する
+     */
     void Init(APLATEAUInstancedCityModel* CityModel);
-
-    void Add(TWeakObjectPtr<UPLATEAUCityObjectGroup> CityObject);
 
     TWeakObjectPtr<APLATEAUInstancedCityModel> GetInstancedCityModel() const {
         return InstancedCityModel;
@@ -127,24 +92,52 @@ public:
         return RangeVoxelSpace;
     }
 
-public:
     ATwinLinkCityObjectTree();
+
     virtual void Tick(float DeltaSeconds) override;
 
+    /*
+     * 指定した空間IDに含まれる建物情報を取得(ただしVisibleのもののみ)
+     */
     TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>> GetCityObjectGroups(const FTwinLinkSpatialID& SpatialId) const;
-private:
-    void DebugDraw(float DeltaSeconds);
 
+private:
     static int64 ToKey(const FTwinLinkSpatialID& SpId);
 
+    /*
+     * @brief : 4分木を検索. 無ければ作成して返す
+     */
     FTwinLinkCityObjectQuadTree* GetOrCreateTree(const FTwinLinkSpatialID& SpId);
 
+    /*
+     * @brief : 4分木を検索
+     */
+    const FTwinLinkCityObjectQuadTree* GetTree(const FTwinLinkSpatialID& SpId) const;
+    /*
+     * @brief : 子空間を探索する
+     */
     void FindChild(FTwinLinkCityObjectQuadTree::KeyType Key, const FBox& WorldBox, TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>>& Out) const;
+
+    /*
+     * @brief: 建物を空間テーブルに登録
+     */
+    void Add(TWeakObjectPtr<UPLATEAUCityObjectGroup> CityObject);
+
+    /*
+     * @brief : 空間IDに属しているかの判定
+     */
+    static bool IsTarget(TWeakObjectPtr<UPLATEAUCityObjectGroup> CityObject, int Zoom, const FBox& SpatialWorldBox);
+
+
+    // デバッグ用
     /*
      * @brief : デバッグ確認用. 全探索してとってくる
      */
     TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>> DebugGetCityObjectGroups(const FTwinLinkSpatialID& SpatialId) const;
 
+    void DebugDraw(float DeltaSeconds);
+private:
+    // 空間テーブル
     UPROPERTY(VisibleAnywhere)
         TMap<uint64, FTwinLinkCityObjectQuadTree> QuadTreeMap;
 
@@ -163,6 +156,9 @@ private:
     UPROPERTY(VisibleAnywhere)
         FBox RangeVoxelSpace;
 
+private:
+
+    // 以下デバッグ用
     UPROPERTY(EditAnywhere)
         bool DebugShowSpace;
 

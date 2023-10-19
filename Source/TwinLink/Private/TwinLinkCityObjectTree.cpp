@@ -16,14 +16,6 @@ FTwinLinkCityObjectQuadTree::KeyType FTwinLinkCityObjectQuadTree::ToKey(const FT
     return KeyType{ SpId.GetX(), SpId.GetY(), SpId.GetZ() };
 }
 
-FVector ATwinLinkCityObjectTree::Node::GetPosition() const {
-    return BoundingBox.GetCenter();
-}
-
-FVector ATwinLinkCityObjectTree::Node::GetExtent() const {
-    return BoundingBox.GetExtent();
-}
-
 void ATwinLinkCityObjectTree::Init(APLATEAUInstancedCityModel* CityModel) {
     if (!CityModel)
         return;
@@ -85,26 +77,22 @@ TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>> ATwinLinkCityObjectTree::GetCity
     const FTwinLinkSpatialID& SpatialId) const {
 
     TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>> Ret;
-    const auto Box = SpatialId.GetSpatialIDArea(InstancedCityModel->GeoReference);
-    if (RangeWorld.IsInsideXY(Box) == false)
+    const auto SpacialWorldBox = SpatialId.GetSpatialIDArea(InstancedCityModel->GeoReference);
+    // 領域の範囲外は無視する
+    if (RangeWorld.IsInsideXY(SpacialWorldBox) == false)
         return Ret;
 
-    auto Key = FTwinLinkCityObjectQuadTree::ToKey(SpatialId);
-    if (QuadTreeMap.Contains(Key.AsInt64())) {
-        FindChild(Key, Box, Ret);
-    }
+    const auto Key = FTwinLinkCityObjectQuadTree::ToKey(SpatialId);
+    FindChild(Key, SpacialWorldBox, Ret);
 
     for (auto Zoom = SpatialId.GetZ() - 1; Zoom >= FTwinLinkSpatialID::MIN_ZOOM_LEVEL; --Zoom) {
         auto Id = SpatialId.ZoomChanged(Zoom);
-        auto ParentKey = FTwinLinkCityObjectQuadTree::ToKey(Id);
-        if (QuadTreeMap.Contains(ParentKey.AsInt64()) == false)
+        const auto ParentTree = GetTree(Id);
+        if (!ParentTree)
             continue;
-        for (auto& N : QuadTreeMap[ParentKey.AsInt64()].BinaryTree.Nodes) {
-            if (FBox Bb; FTwinLinkPLATEAUCityObjectGroupEx::TryBoundingBox(N.Get(), Bb)) {
-                if (Bb.IntersectXY(Box)) {
-                    Ret.Add(N);
-                }
-            }
+        for (auto& N : ParentTree->BinaryTree.Nodes) {
+            if (IsTarget(N, Zoom, SpacialWorldBox))
+                Ret.Add(N);
         }
     }
     return Ret;
@@ -199,17 +187,26 @@ FTwinLinkCityObjectQuadTree* ATwinLinkCityObjectTree::GetOrCreateTree(const FTwi
     return &Tree;
 }
 
-void ATwinLinkCityObjectTree::FindChild(FTwinLinkCityObjectQuadTree::KeyType Key, const FBox& WorldBox,
-    TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>>& Out) const {
+const FTwinLinkCityObjectQuadTree* ATwinLinkCityObjectTree::GetTree(const FTwinLinkSpatialID& SpId) const
+{
+    auto Key = FTwinLinkCityObjectQuadTree::ToKey(SpId);
+    auto Id = Key.AsInt64();
+    if (QuadTreeMap.Contains(Id) == false)
+        return nullptr;
+    return &QuadTreeMap[Id];
+}
+
+void ATwinLinkCityObjectTree::FindChild(FTwinLinkCityObjectQuadTree::KeyType Key, const FBox& SpacialWorldBox,
+                                        TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>>& Out) const {
     if (QuadTreeMap.Contains(Key.AsInt64()) == false)
         return;
     auto& Tree = QuadTreeMap[Key.AsInt64()];
     for (auto& N : Tree.BinaryTree.Nodes) {
-        if (FBox Bb; FTwinLinkPLATEAUCityObjectGroupEx::TryBoundingBox(N.Get(), Bb)) {
-            if (Bb.IntersectXY(WorldBox)) {
-                Out.Add(N);
-            }
+        if(IsTarget(N, Key.Zoom, SpacialWorldBox))
+        {
+            Out.Add(N);
         }
+       
     }
 
     if (Key.Zoom >= FTwinLinkSpatialID::MAX_ZOOM_LEVEL)
@@ -218,8 +215,25 @@ void ATwinLinkCityObjectTree::FindChild(FTwinLinkCityObjectQuadTree::KeyType Key
     int Dy[] = { 0, 0, 1, 1 };
     for (auto I = 0; I < 4; ++I) {
         auto K = FTwinLinkSpatialID::Create(Key.Zoom, 0, Key.X + Dx[I], Key.Y + Dy[I]).ZoomChanged(Key.Zoom + 1);
-        FindChild(FTwinLinkCityObjectQuadTree::ToKey(K), WorldBox, Out);
+        FindChild(FTwinLinkCityObjectQuadTree::ToKey(K), SpacialWorldBox, Out);
     }
+}
+
+bool ATwinLinkCityObjectTree::IsTarget(TWeakObjectPtr<UPLATEAUCityObjectGroup> CityObject, int Zoom,
+    const FBox& SpatialWorldBox)
+{
+    if (CityObject.IsValid() == false)
+        return false;
+    if (CityObject->GetVisibleFlag() == false)
+        return false;
+    if (FBox Bb; FTwinLinkPLATEAUCityObjectGroupEx::TryBoundingBox(CityObject.Get(), Bb)) {
+        constexpr float AREA_RATE = 0.8f;
+        const auto IntersectArea = TwinLinkMathEx::GetIntersectBoxXY(Bb, SpatialWorldBox).GetArea();
+        const auto BbArea = TwinLinkMathEx::GetAreaXY(Bb);
+        const auto SpatialArea = TwinLinkMathEx::GetAreaXY(SpatialWorldBox);
+        return IntersectArea > BbArea * AREA_RATE || IntersectArea > SpatialArea * AREA_RATE;
+    }
+    return false;
 }
 
 TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>> ATwinLinkCityObjectTree::DebugGetCityObjectGroups(

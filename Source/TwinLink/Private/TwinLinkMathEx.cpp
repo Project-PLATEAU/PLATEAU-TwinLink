@@ -84,3 +84,17 @@ FBox TwinLinkMathEx::GetIntersectBox(const FBox& A, const FBox& B) {
 
     return FBox(Min, Max);
 }
+
+FBox2D TwinLinkMathEx::GetIntersectBoxXY(const FBox& A, const FBox& B) {
+    const auto Min = XY(FVector::Max(A.Min, B.Min));
+    const auto Max = XY(FVector::Min(A.Max, B.Max));
+    // Min が Max より大きい場合、重なる部分は存在しない
+    if (Min.X > Max.X || Min.Y > Max.Y)
+        return FBox2D(FVector2D::ZeroVector, FVector2D::ZeroVector);
+
+    return FBox2D(Min, Max);
+}
+
+double TwinLinkMathEx::GetAreaXY(const FBox& A) {
+    return (A.Max.X - A.Min.X) * (A.Max.Y - A.Min.Y);
+}
