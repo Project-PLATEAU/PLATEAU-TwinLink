@@ -218,6 +218,9 @@ void UTwinLinkColorAdjustmentEdit::OnClickedRegist() {
 void UTwinLinkColorAdjustmentEdit::OnRefrectMaterial() {
     auto ColorAdjustmentSystem = TwinLinkSubSystemHelper::GetInstance<UTwinLinkColorAdjustmentSystem>();
     check(ColorAdjustmentSystem.IsValid());
+    if (ColorAdjustmentSystem.Get()->Materials.IsEmpty()) {
+        return;
+    }
     auto Parameter = ColorAdjustmentSystem.Get()->MaterialParameter[MaterialIndex];
     auto Refrect = ColorAdjustmentSystem.Get()->Materials[MaterialIndex];
 
