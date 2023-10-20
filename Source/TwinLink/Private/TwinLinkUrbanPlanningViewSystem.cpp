@@ -36,7 +36,7 @@ void UTwinLinkUrbanPlanningViewSystem::TwinLinkShowUrbanPlanning() {
         const auto Obj = CityObjects[i]->GetAllRootCityObjects()[0];
         const auto AttributeRate = Obj.Attributes.AttributeMap.Find("urf:floorAreaRate");
         const auto Rate = AttributeRate != nullptr ? FCString::Atoi(*AttributeRate->StringValue) * 100 : 50;
-        const auto AttributUsage = Obj.Attributes.AttributeMap.Find("luse:function");
+        const auto AttributUsage = Obj.Attributes.AttributeMap.Find("urf:function");
         const auto Usage = AttributUsage != nullptr ? AttributUsage->StringValue : TEXT("UNKOWN");//UsageKeys[0];
 
         AddMaterials(Usage);

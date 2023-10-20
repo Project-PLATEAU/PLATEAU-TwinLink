@@ -10,6 +10,8 @@ enum class FTwinLinkFindCityModelMeshType : uint8 {
     Dem UMETA(DisplayName = "Dem(道路モデル)"),
     // 道(ナビメッシュ)
     Tran UMETA(DisplayName = "Tran(道路ナビメッシュ)"),
+    // 道(ナビメッシュ)
+    Urf UMETA(DisplayName = "Urf(都市計画決定情報)"),
     // 要素数
     Max UMETA(DisplayName = "Max(要素数を表す予約語)"),
     // 不正値
@@ -24,6 +26,8 @@ enum class FTwinLinkFindCityModelMeshTypeMask : uint8 {
     MDem = (1 << static_cast<uint8>(FTwinLinkFindCityModelMeshType::Dem)) UMETA(DisplayName = "Dem(道路モデル)"),
     // 道(ナビメッシュ)
     MTran = (1 << static_cast<uint8>(FTwinLinkFindCityModelMeshType::Tran)) UMETA(DisplayName = "Tran(道路ナビメッシュ)"),
+    // 都市計画決定情報
+    MUrf = (1 << static_cast<uint8>(FTwinLinkFindCityModelMeshType::Urf)) UMETA(DisplayName = "Urf(都市計画決定情報)"),
 
     // 空マスク
     Empty = 0 UMETA(DisplayName = "Empty(空)"),
@@ -130,7 +134,7 @@ public:
     /*
      * @brief: Typeに応じたコンポーネントの名前のプリフィックスを返す. 不正値の場合は__invalid__が返る
      */
-    static const char* GetComponentNamePrefix(FTwinLinkFindCityModelMeshType Type);
+    static const TArray<char*> GetComponentNamePrefixes(FTwinLinkFindCityModelMeshType Type);
 
     /*
      * @brief : コンポーネント名からメッシュタイプを取得する

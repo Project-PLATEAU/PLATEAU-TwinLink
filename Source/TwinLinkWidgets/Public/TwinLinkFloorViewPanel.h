@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -7,6 +7,8 @@
 #include "PLATEAUInstancedCityModel.h"
 #include "Containers/SortedMap.h"
 #include "TwinLinkFloorViewPanel.generated.h"
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnChangeFloorDelegate, UPLATEAUCityObjectGroup*, Value);
 
 /**
  *　階層表示パネルウィジェット
@@ -39,8 +41,13 @@ public:
      * （ただし現状は同じ階層を選択しても呼ばれる）
     */
     UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
-    void OnChangedFloorView();
+        void OnChangedFloorView();
 
+    /**
+     * @brief 階層変更時イベントディスパッチャー
+    */
+    UPROPERTY(BlueprintAssignable, Category = "TwinLink")
+        FOnChangeFloorDelegate OnChangeFloorDelegate;
 public:
     /** 階層表示パネル要素追加先パネルウィジェット **/
     UPROPERTY(meta = (BindWidget))
