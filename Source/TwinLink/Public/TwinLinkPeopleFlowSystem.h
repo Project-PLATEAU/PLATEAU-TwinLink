@@ -3,33 +3,76 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "TwinLinkSpatialID.h"
 #include "TwinLinkSubSystemBase.h"
 #include "Interfaces/IHttpRequest.h"
 #include "TwinLinkPeopleFlowSystem.generated.h"
 
+struct FPLATEAUGeoReference;
+
 USTRUCT(BlueprintType)
-struct FTwinLinkPeopleFlowApiRequest
-{
+struct FTwinLinkPeopleFlowApiRequest {
     GENERATED_BODY();
 public:
+    // 空間Idのリスト
+    // #NOTE : FTwinLinkSpatialIDがUSTRUCTじゃないのでUPROPERTYにできない
+    TArray<FTwinLinkSpatialID> SpatialIds;
+    // 時刻
+    UPROPERTY(EditAnywhere)
+        FDateTime DateTime;
+};
+USTRUCT(BlueprintType)
+struct FTwinLinkPopulationValue {
+    GENERATED_BODY();
+public:
+    // タイムスタンプ
+    UPROPERTY(EditAnywhere)
+        FDateTime TimeStamp;
+    // 人流度
+    UPROPERTY(EditAnywhere)
+        FString Unit;
+    // 人流度
+    UPROPERTY(EditAnywhere)
+        int PeopleFlow;
 };
 
 USTRUCT(BlueprintType)
-struct FTWinLinkPeopleFlowApiResult
-{
+struct FTwinLinkPopulationData {
+    GENERATED_BODY();
+public:
+    // 対応する空間ID
+    // #NOTE : FTwinLinkSpatialIDがUSTRUCTじゃないのでUPROPERTYにできない
+    FTwinLinkSpatialID SpatialId;
+
+    UPROPERTY(EditAnywhere)
+        FString Type;
+
+    UPROPERTY(EditAnywhere)
+        TArray<FTwinLinkPopulationValue> Values;
+};
+
+
+USTRUCT(BlueprintType)
+struct FTWinLinkPeopleFlowApiResult {
     GENERATED_BODY();
 public:
     // リクエストが成功したかどうか
-    bool bSuccess = false;
+    UPROPERTY(EditAnywhere)
+        bool bSuccess = false;
+
+    UPROPERTY(EditAnywhere)
+        TArray<FTwinLinkPopulationData> Populations;
+
+public:
+    static FTWinLinkPeopleFlowApiResult Error();
 };
 
 /**
  * 人流データのヒートマップを扱うクラス
  */
 UCLASS()
-class TWINLINK_API UTwinLinkPeopleFlowSystem : public UTwinLinkSubSystemBase
-{
-	GENERATED_BODY()
+class TWINLINK_API UTwinLinkPeopleFlowSystem : public UTwinLinkSubSystemBase {
+    GENERATED_BODY()
 public:
     UDELEGATE(BlueprintAuthorityOnly)
         DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnReceivedPeopleFlowResponseDelegate, const FTWinLinkPeopleFlowApiResult&, Result);
@@ -43,7 +86,7 @@ private:
      */
     void OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectionSuccessfully);
 
-
+    static FTWinLinkPeopleFlowApiResult ParseResponse(const FHttpResponsePtr& Response, bool bConnectionSuccessfully);
 private:
     // 最後にリクエストした時刻
     UPROPERTY()

@@ -129,7 +129,7 @@ private:
     TWeakObjectPtr<APLATEAUInstancedCityModel> Target;
 };
 
-class TWINLINK_API FTwinLinkPlateauCityModelEx {
+class TWINLINK_API FTwinLinkPLATEAUCityModelEx {
 public:
     /*
      * @brief: Typeに応じたコンポーネントの名前のプリフィックスを返す. 不正値の場合は__invalid__が返る
@@ -147,6 +147,11 @@ public:
     // 直下の子コンポーネントの名前を見て最大LODと最小LODをとってくる
     static bool TryGetMinMaxLodLevel(const USceneComponent* MeshRootComponent, int& OutMinLodLevel, int& OutMaxLodLevel);
 
+    /*
+     * @brief Selfを基準とした
+     */
+    static FBox GetSpatialBox(APLATEAUInstancedCityModel* Self, const UPLATEAUCityObjectGroup* CityModel, int Zoom);
+
     template<class F>
     static void ForeachModels(const APLATEAUInstancedCityModel* Self
         , const TwinLinkPLATEAUCityModelFindRequest& Request
@@ -160,9 +165,7 @@ public:
 
         for (auto& Child : Root->GetAttachChildren()) {
             // RootComponentの直下のコンポーネントの名前は任意なので判断できない
-
-
-           // LODレベルを取ってくる
+            // LODレベルを取ってくる
             int MaxLodLevel = -1;
             int MinLodLevel;
             if (TryGetMinMaxLodLevel(Child, MinLodLevel, MaxLodLevel) == false)

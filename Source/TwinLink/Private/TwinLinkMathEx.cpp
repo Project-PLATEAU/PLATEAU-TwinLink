@@ -22,6 +22,18 @@ FVector2D TwinLinkMathEx::ZY(const FVector& V) {
     return FVector2D(V.Z, V.Y);
 }
 
+FBox2D TwinLinkMathEx::XZ(const FBox& V) {
+    return FBox2D(XZ(V.Min), XZ(V.Max));
+}
+
+FBox2D TwinLinkMathEx::YZ(const FBox& V) {
+    return FBox2D(YZ(V.Min), YZ(V.Max));
+}
+
+FBox2D TwinLinkMathEx::ZY(const FBox& V) {
+    return FBox2D(ZY(V.Min), ZY(V.Max));;
+}
+
 FVector TwinLinkMathEx::PolarRadian2Cartesian(const FVector& V) {
     double ThetaSi, ThetaCo, PhiSi, PhiCo;
     FMath::SinCos(&ThetaSi, &ThetaCo, V.X);
@@ -61,4 +73,28 @@ bool TwinLinkMathEx::RayRayIntersection(const FVector2D& AOrigin, const FVector2
 bool TwinLinkMathEx::RayRayIntersectionSafe(const FVector2D& AOrigin, const FVector2D& ADir, const FVector2D& BOrigin,
     const FVector2D& BDir, FVector2D& Out) {
     return RayRayIntersection(AOrigin, ADir.GetSafeNormal(), BOrigin, BDir.GetSafeNormal(), Out);
+}
+
+FBox TwinLinkMathEx::GetIntersectBox(const FBox& A, const FBox& B) {
+    const auto Min = FVector::Max(A.Min, B.Min);
+    const auto Max = FVector::Min(A.Max, B.Max);
+    // Min が Max より大きい場合、重なる部分は存在しない
+    if (Min.X > Max.X || Min.Y > Max.Y || Min.Z > Max.Z)
+        return FBox(FVector::ZeroVector, FVector::ZeroVector);
+
+    return FBox(Min, Max);
+}
+
+FBox2D TwinLinkMathEx::GetIntersectBoxXY(const FBox& A, const FBox& B) {
+    const auto Min = XY(FVector::Max(A.Min, B.Min));
+    const auto Max = XY(FVector::Min(A.Max, B.Max));
+    // Min が Max より大きい場合、重なる部分は存在しない
+    if (Min.X > Max.X || Min.Y > Max.Y)
+        return FBox2D(FVector2D::ZeroVector, FVector2D::ZeroVector);
+
+    return FBox2D(Min, Max);
+}
+
+double TwinLinkMathEx::GetAreaXY(const FBox& A) {
+    return (A.Max.X - A.Min.X) * (A.Max.Y - A.Min.Y);
 }
