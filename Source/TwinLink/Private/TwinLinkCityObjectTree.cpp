@@ -48,7 +48,7 @@ void ATwinLinkCityObjectTree::Add(TWeakObjectPtr<UPLATEAUCityObjectGroup> CityOb
     auto& GeoRef = InstancedCityModel->GeoReference;
     if (FBox Bb; FTwinLinkPLATEAUCityObjectGroupEx::TryBoundingBox(CityObject.Get(), Bb)) {
         FTwinLinkSpatialID SpId;
-        const auto Success = FTwinLinkSpatialID::TryGetBoudingSpatialId(GeoRef, Bb, false, SpId);
+        const auto Success = FTwinLinkSpatialID::TryGetBoundingSpatialId(GeoRef, Bb, false, SpId);
         const int64 Id = Success ? ToKey(SpId) : 0;
 
         if (Success) {
@@ -122,7 +122,7 @@ void ATwinLinkCityObjectTree::DebugDraw(float DeltaSeconds) {
                 DrawDebugBox(GetWorld(), Bb.GetCenter(), Bb.GetExtent(), FColor::Blue);
 
                 FTwinLinkSpatialID SpId;
-                FTwinLinkSpatialID::TryGetBoudingSpatialId(GeoRef, Bb, false, SpId);
+                FTwinLinkSpatialID::TryGetBoundingSpatialId(GeoRef, Bb, false, SpId);
                 auto SBb = SpId.GetSpatialIDArea(InstancedCityModel->GeoReference);
                 SBb.Min.Z = RangeWorld.Min.Z;
                 SBb.Max.Z = RangeWorld.Max.Z;

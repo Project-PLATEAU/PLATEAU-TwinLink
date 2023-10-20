@@ -73,7 +73,7 @@ public:
     /*
      *@brief : ワールドBoxを内包する最小の空間IDを設定する. 最大まで大きくしても無理な場合はfalse
      */
-    static bool TryGetBoudingSpatialId(FPLATEAUGeoReference& GeoReference, const FBox& WorldBox, bool bIsUsingAltitude, FTwinLinkSpatialID& Out);
+    static bool TryGetBoundingSpatialId(FPLATEAUGeoReference& GeoReference, const FBox& WorldBox, bool bIsUsingAltitude, FTwinLinkSpatialID& Out);
 
     /*
      * @brief Z/F/X/Yの形式の文字列からパースする

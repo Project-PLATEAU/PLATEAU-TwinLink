@@ -162,7 +162,7 @@ FTwinLinkSpatialID FTwinLinkSpatialID::Create(FPLATEAUGeoReference& GeoReference
     return Create(GeoCoordinate.Latitude, GeoCoordinate.Longitude, (double)ZoomLevel, GeoCoordinate.Height, bIsUsingAltitude);
 }
 
-bool FTwinLinkSpatialID::TryGetBoudingSpatialId(FPLATEAUGeoReference& GeoReference, const FBox& WorldBox,
+bool FTwinLinkSpatialID::TryGetBoundingSpatialId(FPLATEAUGeoReference& GeoReference, const FBox& WorldBox,
     bool bIsUsingAltitude, FTwinLinkSpatialID& Out)
 {
     const auto Min = WorldToVoxelSpace(WorldBox.Min, GeoReference, MAX_ZOOM_LEVEL);
