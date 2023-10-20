@@ -2,6 +2,8 @@
 
 
 #include "TwinLinkWorldViewer.h"
+
+#include "PLATEAUCityObjectGroup.h"
 #include "Kismet/GameplayStatics.h"
 #include "TwinLinkCommon.h"
 #include "TwinLinkMathEx.h"
@@ -40,7 +42,7 @@ void ATwinLinkWorldViewer::BeginPlay() {
 
     TWeakObjectPtr<UCapsuleComponent> _CapsuleComponent = GetComponentByClass<UCapsuleComponent>();
     _CapsuleComponent.Get()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    
+
 }
 
 // Called every frame
@@ -142,32 +144,7 @@ void ATwinLinkWorldViewer::Click() {
     GetLocalViewingPlayerController()->GetHitResultUnderCursorByChannel(
         UEngineTypes::ConvertToTraceType(ECC_Visibility), true, HitResult);
 
-    // bldg_:建物, tran_:道路, urf_:都市設備
-
-    const TArray<FString> Filter{
-        TEXT("bldg_")
-    };
-
-    if (HitResult.Component.IsValid()) {
-        // 想定されるプレフィックスが付与されているかチェックする
-        const auto MaxPrefixCnt = 6;    // テキトウな値 利用されるプレフィックスの最大文字数+_
-        const auto ProbablyPrefix = HitResult.Component->GetName().Left(MaxPrefixCnt);
-        auto isContains = false;
-        for (const auto F : Filter) {
-            isContains = ProbablyPrefix.Contains(F, ESearchCase::CaseSensitive);
-            if (isContains)
-                break;
-        }
-
-        // イベントを通知する
-        if (isContains) {
-            if (EvOnClickedFacility.IsBound()) {
-                EvOnClickedFacility.Broadcast(HitResult);
-                bIsSelectingFacility = true;
-            }
-        }
-    }
-    else {
+    if (!HitResult.Component.IsValid()) {
         // 選択されていた地物がキャンセルされた時に通知する
         if (bIsSelectingFacility) {
             if (EvOnCanceledClickFacility.IsBound()) {
@@ -175,22 +152,62 @@ void ATwinLinkWorldViewer::Click() {
             }
             UE_TWINLINK_LOG(LogTemp, Log, TEXT("Canceled click facility"));
             bIsSelectingFacility = false;
+
+            return;
         }
+        return;
+    }
+
+    // bldg_:建物, tran_:道路, urf_:都市設備
+
+    const TArray<FString> Filter{
+        TEXT("bldg_")
+    };
+
+    // 想定されるプレフィックスが付与されているかチェックする
+    auto bContainPrefix = false;
+
+    constexpr auto MaxPrefixCnt = 6;    // テキトウな値 利用されるプレフィックスの最大文字数+_
+    if (const auto ComponentName = HitResult.Component->GetName(); ComponentName.Len() >= MaxPrefixCnt) {
+        const auto ProbablyPrefix = ComponentName.Left(MaxPrefixCnt);
+        for (const auto F : Filter) {
+            bContainPrefix = ProbablyPrefix.Contains(F, ESearchCase::CaseSensitive);
+            if (bContainPrefix)
+                break;
+        }
+    }
+
+    if (!bContainPrefix) {
+        // 名前で該当しない場合属性情報からチェックする（地物によっては処理重い場合あり）
+        const auto CityObjectGroup = Cast<UPLATEAUCityObjectGroup>(HitResult.Component);
+        if (CityObjectGroup == nullptr)
+            return;
+
+        const auto& CityObjects = CityObjectGroup->GetAllRootCityObjects();
+        if (CityObjects.IsEmpty())
+            return;
+
+        if (CityObjects[0].Type != EPLATEAUCityObjectsType::COT_Building)
+            return;
+    }
+
+    // イベントを通知する
+    if (EvOnClickedFacility.IsBound()) {
+        EvOnClickedFacility.Broadcast(HitResult);
+        bIsSelectingFacility = true;
     }
 }
 
-bool ATwinLinkWorldViewer::MoveInfo::Update(float DeltaSec, FVector& OutLocation, FRotator& OutRotation)
-{
+bool ATwinLinkWorldViewer::MoveInfo::Update(float DeltaSec, FVector& OutLocation, FRotator& OutRotation) {
     PassSec = FMath::Max(0.f, PassSec) + DeltaSec;
-    if(PassSec >= MoveSec || MoveSec <= 0.f)
-    {
+    if (PassSec >= MoveSec || MoveSec <= 0.f) {
         OutLocation = To.Location;
         OutRotation = To.Rotation;
         return true;
     }
 
     auto T = FMath::InterpEaseInOut(0.f, 1.f, PassSec / MoveSec, 1.f);
-    
+
     OutLocation = FMath::Lerp(From.Location, To.Location, T);
     OutRotation = FMath::Lerp(From.Rotation, To.Rotation, T);
     return false;

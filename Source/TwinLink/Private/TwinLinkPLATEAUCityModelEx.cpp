@@ -138,26 +138,30 @@ TwinLinkPLATEAUInstancedCityModelIterator TwinLinkPLATEAUInstancedCityModelScann
     return TwinLinkPLATEAUInstancedCityModelIterator(Target, Target->GetRootComponent()->GetAttachChildren().Num(), 0, 0);
 }
 
-const char* FTwinLinkPlateauCityModelEx::GetComponentNamePrefix(FTwinLinkFindCityModelMeshType Type) {
+const TArray<char*> FTwinLinkPlateauCityModelEx::GetComponentNamePrefixes(FTwinLinkFindCityModelMeshType Type) {
     switch (Type) {
     case FTwinLinkFindCityModelMeshType::Bldg:
-        return "bldg_";
+        return { "bldg_", "BLD_" };
     case FTwinLinkFindCityModelMeshType::Dem:
-        return "dem_";
+        return { "dem_", "DEM_" };
     case FTwinLinkFindCityModelMeshType::Tran:
-        return "tran_";
+        return { "tran_", "LND_" };
+    case FTwinLinkFindCityModelMeshType::Urf:
+        return { "urf_" };
     case FTwinLinkFindCityModelMeshType::Max:
     case FTwinLinkFindCityModelMeshType::Undefined:
     default:;
     }
-    return "__invalid__";
+    return { "__invalid__" };
 }
 
 FTwinLinkFindCityModelMeshType FTwinLinkPlateauCityModelEx::ParseMeshType(const FString& MeshTypeName) {
     for (auto I = 0; I < static_cast<int>(FTwinLinkFindCityModelMeshType::Max); ++I) {
         const auto Type = static_cast<FTwinLinkFindCityModelMeshType>(I);
-        if (MeshTypeName.StartsWith(GetComponentNamePrefix(Type)))
-            return Type;
+        for (const auto& Prefix : GetComponentNamePrefixes(Type)) {
+            if (MeshTypeName.StartsWith(Prefix))
+                return Type;
+        }
     }
     return FTwinLinkFindCityModelMeshType::Undefined;
 }

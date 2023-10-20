@@ -253,7 +253,6 @@ void ATwinLinkNavSystemPathFinderAnyLocation::Tick(float DeltaTime) {
                 NowSelectedPathLocatorActor = nullptr;
                 for (auto& HitResult : HitResults) {
 
-                    UKismetSystemLibrary::PrintString(this, HitResult.GetActor()->GetActorLabel(), true, true, FColor::Cyan, 10.0f, TEXT("None"));
                     if (HitResult.IsValidBlockingHit())
                         BlockHitResult = &HitResult;
                     // Start/Destが重なっていた場合最初にヒットしたほうを選択する
@@ -297,7 +296,6 @@ void ATwinLinkNavSystemPathFinderAnyLocation::Tick(float DeltaTime) {
                 TArray<FHitResult> HitResults;
                 if (GetWorld()->LineTraceMultiByChannel(HitResults, Ray->Min, Ray->Max, ECollisionChannel::ECC_WorldStatic)) {
                     for (auto& HitResult : HitResults) {
-                        UKismetSystemLibrary::PrintString(this, HitResult.GetActor()->GetActorLabel(), true, true, FColor::Cyan, 1.0f, TEXT("None"));
                         if (HitResult.IsValidBlockingHit() == false)
                             continue;
 
