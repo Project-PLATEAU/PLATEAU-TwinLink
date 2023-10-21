@@ -17,7 +17,7 @@ class TWINLINK_API UTwinLinkNavSystemEx : public UBlueprintFunctionLibrary {
     GENERATED_BODY()
 public:
     /*
-     * @brief : パス検索可能になったときに呼ばれるイベント
+     * @brief : 有効な建物情報かどうか
      */
     UFUNCTION(BlueprintCallable)
         static bool IsValidBuilding(const FTwinLinkNavSystemBuildingInfo& Info);

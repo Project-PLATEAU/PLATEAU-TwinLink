@@ -4,16 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "PLATEAUGeometry.h"
+#include "TwinLinkSpatialID.generated.h"
 struct FPLATEAUGeoReference;
 struct FPLATEAUGeoCoordinate;
 /**
  * 空間IDを示す構造体
  * 空間ID関係の補助関数も実装
  */
-struct TWINLINK_API FTwinLinkSpatialID
-{
+USTRUCT(BlueprintType)
+struct TWINLINK_API FTwinLinkSpatialID {
+    GENERATED_BODY();
 public:
-	~FTwinLinkSpatialID();
+    ~FTwinLinkSpatialID();
 
     FTwinLinkSpatialID();
 public:
@@ -111,10 +113,10 @@ public:
     /**
      * @brief 空間IDの範囲を取得する
      *  高度の情報は含めていないので注意(必ず0)
-     * 
+     *
      * @param GeoReference
      *  memo APLATEAUInstancedCityModelから取得できる
-     * 
+     *
      * @return UE上のワールド座標
     */
     FBox GetSpatialIDArea(FPLATEAUGeoReference& GeoReference) const;
@@ -150,6 +152,17 @@ public:
      * @brief : return FVector(X,Y,F)と同義. Zoomは無視される
      */
     FVector ToVector() const;
+
+    bool operator==(const FTwinLinkSpatialID& Other) const {
+        return X == Other.X
+        && Y == Other.Y
+        && Z == Other.Z
+        && F == Other.F
+        && bIsValidAltitude == Other.bIsValidAltitude;
+    }
+    bool operator!=(const FTwinLinkSpatialID& Other) const {
+        return !((*this) == Other);
+    }
 private:
     /** 高度が正当な値か **/
     bool bIsValidAltitude;
@@ -161,5 +174,4 @@ private:
     int X;
     /** 南北方向インデックス **/
     int Y;
-
 };

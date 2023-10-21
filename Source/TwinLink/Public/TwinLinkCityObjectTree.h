@@ -75,6 +75,8 @@ UCLASS()
 class TWINLINK_API ATwinLinkCityObjectTree : public AActor {
     GENERATED_BODY()
 public:
+    static ATwinLinkCityObjectTree* Instance(const UWorld* World);
+
     /*
      * @brief : 初期化. 指定した都市モデルに含まれる建物を登録する
      */
@@ -84,10 +86,14 @@ public:
         return InstancedCityModel;
     }
 
+    FPLATEAUGeoReference* GetGeoReference() const;
+
+    // 都市モデル全体のバウンディングボックス
     FBox GetRangeWorld() const {
         return RangeWorld;
     }
 
+    // GetRangeWorldをMAX_ZOOM_LEVELの空間IDに変換したもの
     FBox GetRangeVoxelSpace() const {
         return RangeVoxelSpace;
     }
@@ -101,6 +107,10 @@ public:
      */
     TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>> GetCityObjectGroups(const FTwinLinkSpatialID& SpatialId) const;
 
+    /*
+     * 指定したワールド座標とズームレベルで計算される空間IDに含まれる建物情報を取得(ただしVisibleのもののみ)
+     */
+    TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>> GetCityObjectGroups(const FVector& WorldPosition, int Zoom) const;
 private:
     static int64 ToKey(const FTwinLinkSpatialID& SpId);
 

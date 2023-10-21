@@ -3,6 +3,7 @@
 
 #include <chrono>
 
+#include "TwinLinkActorEx.h"
 #include "TwinLinkMathEx.h"
 #include "TwinLinkPLATEAUCityObjectGroupEx.h"
 #include "TwinLinkPLATEAUGeoReferenceEx.h"
@@ -14,6 +15,10 @@ int64 FTwinLinkCityObjectQuadTreeKeyType::AsInt64() const {
 
 FTwinLinkCityObjectQuadTree::KeyType FTwinLinkCityObjectQuadTree::ToKey(const FTwinLinkSpatialID& SpId) {
     return KeyType{ SpId.GetX(), SpId.GetY(), SpId.GetZ() };
+}
+
+ATwinLinkCityObjectTree* ATwinLinkCityObjectTree::Instance(const UWorld* World) {
+    return TwinLinkActorEx::FindFirstActorInWorld<ATwinLinkCityObjectTree>(World);
 }
 
 void ATwinLinkCityObjectTree::Init(APLATEAUInstancedCityModel* CityModel) {
@@ -40,6 +45,12 @@ void ATwinLinkCityObjectTree::Init(APLATEAUInstancedCityModel* CityModel) {
             continue;
         Add(Item.CityObjectGroup);
     }
+}
+
+FPLATEAUGeoReference* ATwinLinkCityObjectTree::GetGeoReference() const {
+    if (const auto Model = GetInstancedCityModel().Get())
+        return &Model->GeoReference;
+    return nullptr;
 }
 
 void ATwinLinkCityObjectTree::Add(TWeakObjectPtr<UPLATEAUCityObjectGroup> CityObject) {
@@ -187,8 +198,7 @@ FTwinLinkCityObjectQuadTree* ATwinLinkCityObjectTree::GetOrCreateTree(const FTwi
     return &Tree;
 }
 
-const FTwinLinkCityObjectQuadTree* ATwinLinkCityObjectTree::GetTree(const FTwinLinkSpatialID& SpId) const
-{
+const FTwinLinkCityObjectQuadTree* ATwinLinkCityObjectTree::GetTree(const FTwinLinkSpatialID& SpId) const {
     auto Key = FTwinLinkCityObjectQuadTree::ToKey(SpId);
     auto Id = Key.AsInt64();
     if (QuadTreeMap.Contains(Id) == false)
@@ -197,16 +207,15 @@ const FTwinLinkCityObjectQuadTree* ATwinLinkCityObjectTree::GetTree(const FTwinL
 }
 
 void ATwinLinkCityObjectTree::FindChild(FTwinLinkCityObjectQuadTree::KeyType Key, const FBox& SpacialWorldBox,
-                                        TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>>& Out) const {
+    TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>>& Out) const {
     if (QuadTreeMap.Contains(Key.AsInt64()) == false)
         return;
     auto& Tree = QuadTreeMap[Key.AsInt64()];
     for (auto& N : Tree.BinaryTree.Nodes) {
-        if(IsTarget(N, Key.Zoom, SpacialWorldBox))
-        {
+        if (IsTarget(N, Key.Zoom, SpacialWorldBox)) {
             Out.Add(N);
         }
-       
+
     }
 
     if (Key.Zoom >= FTwinLinkSpatialID::MAX_ZOOM_LEVEL)
@@ -220,8 +229,7 @@ void ATwinLinkCityObjectTree::FindChild(FTwinLinkCityObjectQuadTree::KeyType Key
 }
 
 bool ATwinLinkCityObjectTree::IsTarget(TWeakObjectPtr<UPLATEAUCityObjectGroup> CityObject, int Zoom,
-    const FBox& SpatialWorldBox)
-{
+    const FBox& SpatialWorldBox) {
     if (CityObject.IsValid() == false)
         return false;
     if (CityObject->GetVisibleFlag() == false)

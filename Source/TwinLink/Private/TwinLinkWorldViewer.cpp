@@ -141,8 +141,13 @@ void ATwinLinkWorldViewer::Click() {
     FHitResult HitResult;
     if (!GetLocalViewingPlayerController())
         return;
-    GetLocalViewingPlayerController()->GetHitResultUnderCursorByChannel(
+    const auto IsHit = GetLocalViewingPlayerController()->GetHitResultUnderCursorByChannel(
         UEngineTypes::ConvertToTraceType(ECC_Visibility), true, HitResult);
+
+    // 任意のオブジェクトをクリックしたときのイベントを発行
+    if (IsHit) {
+        EvOnAnyObjectClicked.Broadcast(HitResult);
+    }
 
     if (!HitResult.Component.IsValid()) {
         // 選択されていた地物がキャンセルされた時に通知する
