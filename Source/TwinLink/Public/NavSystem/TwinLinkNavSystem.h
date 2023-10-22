@@ -147,6 +147,11 @@ public:
         TArray<FTwinLinkNavSystemBuildingInfo> GetBuildingInfos();
 
     /*
+     * @brief : コンポーネントから建物情報をとってくる
+     */
+    const FTwinLinkNavSystemBuildingInfo* FindBuildingInfo(TWeakObjectPtr<UPLATEAUCityObjectGroup> CityObjectGroup) const;
+
+    /*
      * @brief : 状態初期化
      */
     UFUNCTION(BlueprintCallable)

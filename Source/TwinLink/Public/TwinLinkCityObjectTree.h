@@ -43,38 +43,77 @@ public:
     UPROPERTY(VisibleAnywhere)
         TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>> Nodes;
 };
+
+/*
+ * @brief : 4分木マップのキー. X/Y/Zoom
+ */
 USTRUCT(BlueprintType)
-struct FTwinLinkCityObjectQuadTreeKeyType {
+struct FTwinLinkCityObjectQuadTreeKey {
     GENERATED_BODY();
 public:
-    int X;
-    int Y;
-    int Zoom;
-    //#TODO : X,Y合わせて58ビットに収まる前提
-    int64 AsInt64() const;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+        int X;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+        int Y;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+        int Zoom;
+
+    // 空間IDからとってくる
+    static FTwinLinkCityObjectQuadTreeKey Create(const FTwinLinkSpatialID& SpId);
+
+    // 
+    bool operator==(const FTwinLinkCityObjectQuadTreeKey& Other) const {
+        return X == Other.X && Y == Other.Y && Zoom == Other.Zoom;
+    }
+
+    bool operator!=(const FTwinLinkCityObjectQuadTreeKey& Other) const {
+        return !(*this == Other);
+    }
+
+    bool operator<(const FTwinLinkCityObjectQuadTreeKey& Other) const {
+        // 同じズームのものは近くに配置してほしいのでまずズームで比較する
+        if (Zoom < Other.Zoom)
+            return true;
+        if (X < Other.X)
+            return true;
+        if (Y < Other.Y)
+            return true;
+        return false;
+    }
 };
+
+// TMapのキーとして使うためにGetTypeHashを定義する
+FORCEINLINE uint32 GetTypeHash(const FTwinLinkCityObjectQuadTreeKey& A) {
+    return A.X ^ A.Y ^ A.Zoom;
+}
+
 USTRUCT(BlueprintType)
 struct FTwinLinkCityObjectQuadTree {
     GENERATED_BODY();
 public:
-    using KeyType = FTwinLinkCityObjectQuadTreeKeyType;
-public:
-    static KeyType ToKey(const FTwinLinkSpatialID& SpId);
-
     UPROPERTY(VisibleAnywhere)
         FTwinLinkCityObjectBinaryTree BinaryTree;
-
-    UPROPERTY(VisibleAnywhere)
-        FTwinLinkCityObjectQuadTreeKeyType Key;
 };
 
 /*
- * @brief : APLATEAUInstancedCityModelの中にあるUPLATEAUCityObjectGroupのイテレータ
+ * @brief : APLATEAUInstancedCityModelの中にあるUPLATEAUCityObjectGroupを空間IDで保持する
  */
 UCLASS()
 class TWINLINK_API ATwinLinkCityObjectTree : public AActor {
     GENERATED_BODY()
 public:
+    struct FCityObjectFindInfo {
+        // 
+        TWeakObjectPtr<UPLATEAUCityObjectGroup> CityObjectGroup;
+        FTwinLinkSpatialID SpatialId;
+
+        FCityObjectFindInfo() {}
+        FCityObjectFindInfo(TWeakObjectPtr<UPLATEAUCityObjectGroup> CityObject, FTwinLinkSpatialID SpId)
+            : CityObjectGroup(CityObject)
+            , SpatialId(SpId) {
+        }
+    };
+
     static ATwinLinkCityObjectTree* Instance(const UWorld* World);
 
     /*
@@ -105,14 +144,16 @@ public:
     /*
      * 指定した空間IDに含まれる建物情報を取得(ただしVisibleのもののみ)
      */
-    TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>> GetCityObjectGroups(const FTwinLinkSpatialID& SpatialId) const;
+    TArray<FCityObjectFindInfo> GetCityObjectGroups(const FTwinLinkSpatialID& SpatialId) const;
 
     /*
      * 指定したワールド座標とズームレベルで計算される空間IDに含まれる建物情報を取得(ただしVisibleのもののみ)
      */
-    TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>> GetCityObjectGroups(const FVector& WorldPosition, int Zoom) const;
+    TArray<FCityObjectFindInfo> GetCityObjectGroups(const FVector& WorldPosition, int Zoom) const;
 private:
-    static int64 ToKey(const FTwinLinkSpatialID& SpId);
+    using KeyType = FTwinLinkCityObjectQuadTreeKey;
+
+    static auto ToKey(const FTwinLinkSpatialID& SpId) -> KeyType;
 
     /*
      * @brief : 4分木を検索. 無ければ作成して返す
@@ -123,10 +164,16 @@ private:
      * @brief : 4分木を検索
      */
     const FTwinLinkCityObjectQuadTree* GetTree(const FTwinLinkSpatialID& SpId) const;
+
+    /*
+     * @brief : 4分木を検索
+     */
+    const FTwinLinkCityObjectQuadTree* GetTree(const FTwinLinkCityObjectQuadTreeKey& Key) const;
+
     /*
      * @brief : 子空間を探索する
      */
-    void FindChild(FTwinLinkCityObjectQuadTree::KeyType Key, const FBox& WorldBox, TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>>& Out) const;
+    void FindChild(const FTwinLinkSpatialID& SpId, const FBox& WorldBox, TArray<FCityObjectFindInfo>& Out) const;
 
     /*
      * @brief: 建物を空間テーブルに登録
@@ -145,11 +192,14 @@ private:
      */
     TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>> DebugGetCityObjectGroups(const FTwinLinkSpatialID& SpatialId) const;
 
+    /*
+     * @brief : デバッグ描画
+     */
     void DebugDraw(float DeltaSeconds);
 private:
     // 空間テーブル
     UPROPERTY(VisibleAnywhere)
-        TMap<uint64, FTwinLinkCityObjectQuadTree> QuadTreeMap;
+        TMap<FTwinLinkCityObjectQuadTreeKey, FTwinLinkCityObjectQuadTree> QuadTreeMap;
 
     // 範囲外用
     UPROPERTY(VisibleAnywhere)

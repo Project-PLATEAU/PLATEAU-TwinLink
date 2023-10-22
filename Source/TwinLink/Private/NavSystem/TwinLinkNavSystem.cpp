@@ -418,6 +418,17 @@ TArray<FTwinLinkNavSystemBuildingInfo> ATwinLinkNavSystem::GetBuildingInfos() {
     return Ret;
 }
 
+const FTwinLinkNavSystemBuildingInfo* ATwinLinkNavSystem::FindBuildingInfo(
+    TWeakObjectPtr<UPLATEAUCityObjectGroup> CityObjectGroup) const {
+    if (CityObjectGroup.IsValid() == false)
+        return nullptr;
+
+    const auto Key = CityObjectGroup->GetName();
+    if (!BuildingMap.Contains(Key))
+        return nullptr;
+    return &BuildingMap[Key];
+}
+
 void ATwinLinkNavSystem::OnFacilityClick(FHitResult Info) const {
     const auto CityObject = Cast<UPLATEAUCityObjectGroup>(Info.Component);
     if (!CityObject) {

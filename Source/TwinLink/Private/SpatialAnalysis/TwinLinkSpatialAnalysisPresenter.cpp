@@ -22,8 +22,34 @@ void ATwinLinkSpatialAnalysisPresenter::BeginPlay() {
 void ATwinLinkSpatialAnalysisPresenter::Tick(float DeltaTime) {
     Super::Tick(DeltaTime);
     DrawUpdate(DeltaTime);
-
+#ifdef WITH_EDITOR
     DebugNowSelectedId = GetNowSpatialId().value_or(FTwinLinkSpatialID());
+#endif
+}
+
+void ATwinLinkSpatialAnalysisPresenter::CheckSpatialIdChanged(const std::optional<FTwinLinkSpatialID>& Before) const {
+    const auto Tree = GetTree();
+    if (!Tree)
+        return;
+    const auto After = GetNowSpatialId();
+    if (After.has_value() == false)
+        return;
+    if (!Before.has_value() || *Before != *After) {
+        const auto Buildings = Tree->GetCityObjectGroups(*After);
+        FTwinLinkSpatialAnalysisUiInfo Info;
+        Info.SpatialId = *After;
+        Info.BuildingCount = Buildings.Num();
+        if (const auto NavSystem = ATwinLinkNavSystem::GetInstance(GetWorld())) {
+            for (auto& B : Buildings) {
+                if (const auto BuildingInfo = NavSystem->FindBuildingInfo(B.CityObjectGroup)) {
+                    if (BuildingInfo->FacilityInfo.IsValid())
+                        Info.FacilityInfos.Add(BuildingInfo->FacilityInfo.Get());
+                }
+            }
+        }
+
+        OnSpatialIdChanged.Broadcast(*Before, Info);
+    }
 }
 
 bool ATwinLinkSpatialAnalysisPresenter::IsValidSpatialId() const {
@@ -37,26 +63,26 @@ bool ATwinLinkSpatialAnalysisPresenter::IsValidSpatialId() const {
 }
 
 void ATwinLinkSpatialAnalysisPresenter::SetZoom(int Value) {
+    const auto Before = GetNowSpatialId();
     this->Zoom = Value;
+    CheckSpatialIdChanged(Before);
 }
 
 const ATwinLinkCityObjectTree* ATwinLinkSpatialAnalysisPresenter::GetTree() const {
     return CacheTree.Get();
 }
 
-void ATwinLinkSpatialAnalysisPresenter::OnClicked(const FHitResult& Info) {
+void ATwinLinkSpatialAnalysisPresenter::OnClicked(const FHitResult& HitResult) {
     if (const auto Tree = GetTree()) {
-        if (Tree->GetRangeWorld().IsInsideXY(Info.Location) == false)
+        if (Tree->GetRangeWorld().IsInsideXY(HitResult.Location) == false)
             return;
         const auto Before = GetNowSpatialId();
-        NowHitResult = Info;
-        const auto After = GetNowSpatialId();
-        if (!Before.has_value() || *Before != *After)
-            OnSpatialIdChanged.Broadcast(*Before, *After);
+        NowHitResult = HitResult;
+        CheckSpatialIdChanged(Before);
     }
 }
 
-void ATwinLinkSpatialAnalysisPresenter::DrawUpdate(float DeltaTime) {
+void ATwinLinkSpatialAnalysisPresenter::DrawUpdate(float DeltaTime) const {
     if (IsValidSpatialId() == false)
         return;
 
