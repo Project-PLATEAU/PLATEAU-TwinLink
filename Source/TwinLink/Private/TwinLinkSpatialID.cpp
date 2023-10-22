@@ -163,22 +163,30 @@ FTwinLinkSpatialID FTwinLinkSpatialID::Create(FPLATEAUGeoReference& GeoReference
 }
 
 bool FTwinLinkSpatialID::TryGetBoundingSpatialId(FPLATEAUGeoReference& GeoReference, const FBox& WorldBox,
-    bool bIsUsingAltitude, FTwinLinkSpatialID& Out)
-{
+    bool bIsUsingAltitude, FTwinLinkSpatialID& Out) {
+    auto Ret = GetBoundingSpatialId(GeoReference, WorldBox, bIsUsingAltitude);
+    if (Ret.has_value() == false)
+        return false;
+    Out = *Ret;
+    return true;
+}
+
+std::optional<FTwinLinkSpatialID> FTwinLinkSpatialID::GetBoundingSpatialId(FPLATEAUGeoReference& GeoReference,
+    const FBox& WorldBox, bool bIsUsingAltitude) {
     const auto Min = WorldToVoxelSpace(WorldBox.Min, GeoReference, MAX_ZOOM_LEVEL);
     const auto Max = WorldToVoxelSpace(WorldBox.Max, GeoReference, MAX_ZOOM_LEVEL);
     const auto [MinX, MinY, MinZ] = TwinLinkMathEx::FloorToInt64(Min.X, Min.Y, Min.Z);
     const auto [MaxX, MaxY, MaxZ] = TwinLinkMathEx::FloorToInt64(Max.X, Max.Y, Max.Z);
- 
+
     const auto X = 64 - TwinLinkMathEx::Nlz(MinX ^ MaxX);
     const auto Y = 64 - TwinLinkMathEx::Nlz(MinY ^ MaxY);
     const auto Z = 64 - TwinLinkMathEx::Nlz(bIsUsingAltitude ? (MinZ ^ MaxZ) : 0u);
 
     const auto Zoom = MAX_ZOOM_LEVEL - FMath::Max3(X, Y, Z);
     if (Zoom < 0)
-        return false;
-    Out = Create(MAX_ZOOM_LEVEL, MinZ, MinX, MinY,  bIsUsingAltitude).ZoomChanged(Zoom);
-    return true;
+        return std::nullopt;
+
+    return Create(MAX_ZOOM_LEVEL, MinZ, MinX, MinY, bIsUsingAltitude).ZoomChanged(Zoom);
 }
 
 FTwinLinkSpatialID FTwinLinkSpatialID::ParseZFXY(const FString& Str) {
@@ -227,13 +235,25 @@ FString FTwinLinkSpatialID::StringZFXY() const {
 }
 
 FTwinLinkSpatialID FTwinLinkSpatialID::ZoomChanged(int Zoom) const {
-    FPLATEAUGeoCoordinate Geo;
-    ToGeoCoordinate(Geo);
-    return Create(Geo.Latitude, Geo.Longitude, (double)Zoom, Geo.Height, bIsValidAltitude);
+    if (Z == Zoom)
+        return *this;
+
+    const auto DZoom = Zoom - Z;
+    if (DZoom == 0)
+        return *this;
+
+    // 一応高さは不正値かどうかのチェックをしておく
+    const auto _F = bIsValidAltitude ? F : 0;
+    const auto Bit = FMath::Abs(DZoom);
+    if (DZoom < 0) {
+        return Create(Zoom, _F >> Bit, X >> Bit, Y >> Bit, bIsValidAltitude);
+    }
+    else {
+        return Create(Zoom, _F << Bit, X << Bit, Y << Bit, bIsValidAltitude);
+    }
 }
 
-void FTwinLinkSpatialID::ToGeoCoordinate(FPLATEAUGeoCoordinate& Out) const
-{
+void FTwinLinkSpatialID::ToGeoCoordinate(FPLATEAUGeoCoordinate& Out) const {
     const auto NW = CalcLngLat(X, Y, Z);
     const auto NWAlt = bIsValidAltitude ? CalcAlt(Z, F) : 0.0;
     Out.Latitude = NW.Lat;
