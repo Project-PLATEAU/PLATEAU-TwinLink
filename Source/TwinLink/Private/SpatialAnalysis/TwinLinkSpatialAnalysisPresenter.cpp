@@ -2,6 +2,7 @@
 #include "SpatialAnalysis/TwinLinkSpatialAnalysisPresenter.h"
 
 #include "TwinLinkCityObjectTree.h"
+#include "TwinLinkPLATEAUCityObjectGroupEx.h"
 #include "TwinLinkWorldViewer.h"
 #include "NavSystem/TwinLinkNavSystem.h"
 
@@ -24,6 +25,7 @@ void ATwinLinkSpatialAnalysisPresenter::Tick(float DeltaTime) {
     DrawUpdate(DeltaTime);
 #ifdef WITH_EDITOR
     DebugNowSelectedId = GetNowSpatialId().value_or(FTwinLinkSpatialID());
+    DebugDrawUpdate(DeltaTime);
 #endif
 }
 
@@ -35,7 +37,7 @@ void ATwinLinkSpatialAnalysisPresenter::CheckSpatialIdChanged(const std::optiona
     if (After.has_value() == false)
         return;
     if (!Before.has_value() || *Before != *After) {
-        const auto Buildings = Tree->GetCityObjectGroups(*After);
+        const auto Buildings = Tree->FindCityObjectGroups(*After);
         FTwinLinkSpatialAnalysisUiInfo Info;
         Info.SpatialId = *After;
         Info.BuildingCount = Buildings.Num();
@@ -103,6 +105,23 @@ void ATwinLinkSpatialAnalysisPresenter::DrawUpdate(float DeltaTime) const {
     Max.Z = RangeWorld.Max.Z;
     Bb = FBox(Min, Max);
     DrawDebugBox(GetWorld(), Bb.GetCenter(), Bb.GetExtent(), FColor::Red);
+}
+
+void ATwinLinkSpatialAnalysisPresenter::DebugDrawUpdate(float DeltaTime) const {
+#ifdef WITH_EDITOR
+    if (!DebugShowSpace)
+        return;
+    if (IsValidSpatialId() == false)
+        return;
+    const auto Tree = GetTree();
+    if (!Tree)
+        return;
+    const auto Buildings = Tree->FindCityObjectGroups(*GetNowSpatialId());
+    for (auto CityObject : Buildings) {
+        if (FBox Bb; FTwinLinkPLATEAUCityObjectGroupEx::TryBoundingBox(CityObject.CityObjectGroup.Get(), Bb))
+            DrawDebugBox(GetWorld(), Bb.GetCenter(), Bb.GetExtent(), FColor::Green);
+    }
+#endif
 }
 
 bool ATwinLinkSpatialAnalysisPresenter::TryGetNowSpatialId(FTwinLinkSpatialID& Out) const {

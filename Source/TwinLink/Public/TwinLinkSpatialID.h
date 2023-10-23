@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <optional>
+
 #include "CoreMinimal.h"
 #include "PLATEAUGeometry.h"
 #include "TwinLinkSpatialID.generated.h"
@@ -76,6 +78,11 @@ public:
      *@brief : ワールドBoxを内包する最小の空間IDを設定する. 最大まで大きくしても無理な場合はfalse
      */
     static bool TryGetBoundingSpatialId(FPLATEAUGeoReference& GeoReference, const FBox& WorldBox, bool bIsUsingAltitude, FTwinLinkSpatialID& Out);
+
+    /*
+     * @brief : ワールドBoxを内包する最小の空間IDを設定する. 最大まで大きくしても無理な場合はnullopt
+     */
+    static std::optional<FTwinLinkSpatialID> GetBoundingSpatialId(FPLATEAUGeoReference& GeoReference, const FBox& WorldBox, bool bIsUsingAltitude);
 
     /*
      * @brief Z/F/X/Yの形式の文字列からパースする
@@ -155,23 +162,28 @@ public:
 
     bool operator==(const FTwinLinkSpatialID& Other) const {
         return X == Other.X
-        && Y == Other.Y
-        && Z == Other.Z
-        && F == Other.F
-        && bIsValidAltitude == Other.bIsValidAltitude;
+            && Y == Other.Y
+            && Z == Other.Z
+            && F == Other.F
+            && bIsValidAltitude == Other.bIsValidAltitude;
     }
     bool operator!=(const FTwinLinkSpatialID& Other) const {
         return !((*this) == Other);
     }
 private:
     /** 高度が正当な値か **/
-    bool bIsValidAltitude;
+    UPROPERTY(VisibleAnywhere)
+        bool bIsValidAltitude;
     /** ズームレベル **/
-    int Z;
+    UPROPERTY(VisibleAnywhere)
+        int Z;
     /** 鉛直方向インデックス **/
-    int F;
+    UPROPERTY(VisibleAnywhere)
+        int F;
     /** 東西方向インデックス **/
-    int X;
+    UPROPERTY(VisibleAnywhere)
+        int X;
     /** 南北方向インデックス **/
-    int Y;
+    UPROPERTY(VisibleAnywhere)
+        int Y;
 };

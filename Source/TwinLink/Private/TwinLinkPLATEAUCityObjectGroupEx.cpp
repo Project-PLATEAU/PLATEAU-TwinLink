@@ -1,12 +1,19 @@
 #include "TwinLinkPLATEAUCityObjectGroupEx.h"
 
 bool FTwinLinkPLATEAUCityObjectGroupEx::TryBoundingBox(const UPLATEAUCityObjectGroup* Self, FBox& Out) {
-    if (!Self)
+    auto Ret = GetBoundingBox(Self);
+    if (Ret.has_value() == false)
         return false;
+    Out = *Ret;
+    return true;
+}
+
+std::optional<FBox> FTwinLinkPLATEAUCityObjectGroupEx::GetBoundingBox(const UPLATEAUCityObjectGroup* Self) {
+    if (!Self)
+        return std::nullopt;
 
     const auto StaMesh = Self->GetStaticMesh();
     if (!StaMesh)
-        return false;
-    Out = StaMesh->GetBoundingBox();
-    return true;
+        return std::nullopt;
+    return StaMesh->GetBoundingBox();
 }

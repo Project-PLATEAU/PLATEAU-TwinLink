@@ -45,6 +45,9 @@ private:
 
     //　描画処理
     void DrawUpdate(float DeltaTime) const;
+
+    // デバッグ描画
+    void DebugDrawUpdate(float DeltaTime) const;
 public:
     UPROPERTY(BlueprintAssignable)
         FOnSpatialIdChangedDelegate OnSpatialIdChanged;
@@ -73,4 +76,8 @@ private:
     // 現在選択中の空間ID
     UPROPERTY(VisibleAnywhere)
         FTwinLinkSpatialID DebugNowSelectedId;
+
+    // デバッグ表示
+    UPROPERTY(EditAnywhere)
+        bool DebugShowSpace;
 };

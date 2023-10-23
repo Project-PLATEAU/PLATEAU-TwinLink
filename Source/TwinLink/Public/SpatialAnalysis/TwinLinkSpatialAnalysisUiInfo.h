@@ -2,6 +2,7 @@
 
 #pragma once
 #include "TwinLinkFacilityInfo.h"
+#include "TwinLinkSpatialID.h"
 #include "TwinLinkSpatialAnalysisUiInfo.generated.h"
 
 USTRUCT(BlueprintType)

@@ -8,4 +8,6 @@ public:
      * @brief : BoundingBox取得
      */
     static bool TryBoundingBox(const UPLATEAUCityObjectGroup* Self, FBox& Out);
+
+    static std::optional<FBox> GetBoundingBox(const UPLATEAUCityObjectGroup* Self);
 };
