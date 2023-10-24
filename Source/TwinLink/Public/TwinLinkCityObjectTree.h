@@ -202,6 +202,12 @@ public:
      */
     TArray<FCityObjectFindInfo> FindCityObjectGroups(const FTwinLinkSpatialID& SpatialId) const;
 
+    /*
+     * @brief : この領域の最小ズーム/最大ズームを返す
+     */
+    UFUNCTION(BlueprintPure)
+        void GetZoomRange(int& MinZoom, int& MaxZoom) const;
+
 private:
     using KeyType = FTwinLinkCityObjectQuadTreeKey;
 

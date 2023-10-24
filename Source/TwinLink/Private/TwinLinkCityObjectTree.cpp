@@ -54,17 +54,17 @@ ATwinLinkCityObjectTree* ATwinLinkCityObjectTree::Instance(const UWorld* World) 
     return TwinLinkActorEx::FindFirstActorInWorld<ATwinLinkCityObjectTree>(World);
 }
 
-void ATwinLinkCityObjectTree::Init(APLATEAUInstancedCityModel* CityModel) {
-    if (!CityModel)
+void ATwinLinkCityObjectTree::Init(APLATEAUInstancedCityModel* BaseCityModel) {
+    if (!BaseCityModel)
         return;
 
-    auto& GeoRef = CityModel->GeoReference;
-    InstancedCityModel = CityModel;
+    InstancedCityModel = BaseCityModel;
     FVector Center;
     FVector Extent;
     InstancedCityModel->GetActorBounds(false, Center, Extent, true);
     RangeWorld = FBox(Center - Extent, Center + Extent);
 
+    auto& GeoRef = BaseCityModel->GeoReference;
     RangeVoxelSpace = FBox(
         FTwinLinkSpatialID::WorldToVoxelSpace(RangeWorld.Min, GeoRef, MAX_ZOOM_LEVEL),
         FTwinLinkSpatialID::WorldToVoxelSpace(RangeWorld.Max, GeoRef, MAX_ZOOM_LEVEL)
@@ -76,30 +76,47 @@ void ATwinLinkCityObjectTree::Init(APLATEAUInstancedCityModel* CityModel) {
         OffsetKey = EntireSpaceKey.ZoomChanged(MAX_ZOOM_LEVEL);
     }
 
+
     using ArrayType = TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>>;
     TMap<FTwinLinkCityObjectQuadTreeKey, ArrayType> Map;
-    for (auto Item : TwinLinkPLATEAUInstancedCityModelScanner(InstancedCityModel)) {
-        if (Item.MeshType != FTwinLinkFindCityModelMeshType::Bldg)
-            continue;
 
-        if (FBox Bb; FTwinLinkPLATEAUCityObjectGroupEx::TryBoundingBox(Item.CityObjectGroup.Get(), Bb)) {
-            auto SpId2 = FTwinLinkSpatialID::GetBoundingSpatialId(GeoRef, Bb, false);
-            if (SpId2.has_value() == false)
+    auto Visit = [&](APLATEAUInstancedCityModel* CityModel) {
+        for (auto Item : TwinLinkPLATEAUInstancedCityModelScanner(CityModel)) {
+            if (Item.MeshType != FTwinLinkFindCityModelMeshType::Bldg)
                 continue;
 
-            auto Key = ToKey(*SpId2);
-            if (Map.Contains(Key) == false) {
-                Map.Add(Key, ArrayType());
-            }
+            if (FBox Bb; FTwinLinkPLATEAUCityObjectGroupEx::TryBoundingBox(Item.CityObjectGroup.Get(), Bb)) {
+                auto SpId2 = FTwinLinkSpatialID::GetBoundingSpatialId(GeoRef, Bb, false);
+                if (SpId2.has_value() == false)
+                    continue;
 
-            auto& Arr = Map[Key];
-            Arr.Add(Item.CityObjectGroup);
+                auto Key = ToKey(*SpId2);
+                if (Map.Contains(Key) == false) {
+                    Map.Add(Key, ArrayType());
+                }
+
+                auto& Arr = Map[Key];
+                Arr.Add(Item.CityObjectGroup);
+            }
+        }
+    };
+    
+
+    // 管理対象建物も入れるために、配置されている全InstancedCityModelをとってくる
+    {
+        TArray<AActor*> AllCityModel;
+        UGameplayStatics::GetAllActorsOfClass(GetWorld(), APLATEAUInstancedCityModel::StaticClass(), AllCityModel);
+        for(auto Actor : AllCityModel)
+        {
+            const auto Model = Cast<APLATEAUInstancedCityModel>(Actor);
+            if (!Model)
+                continue;
+            Visit(Model);
         }
     }
-
     TreeMap.Reset();
 
-    for (auto& Item : Map) {
+    for (const auto& Item : Map) {
         TreeMap.Add(FTwinLinkCityObjectQuadTreeKeyMap{ Item.Key, Item.Value, 0 });
     }
 
@@ -247,8 +264,8 @@ void ATwinLinkCityObjectTree::DebugDraw(float DeltaSeconds) {
 
                     auto DebugKey = DebugFindKey(F.CityObjectGroup);
                     auto Extent = Bb->GetExtent();
-                    Extent.Z *= 100;               
-                     
+                    Extent.Z *= 100;
+
                     DrawDebugBox(GetWorld(), Bb->GetCenter(), Extent, FColor::Purple);
                     auto Msg = FString::Printf(TEXT("%s:Sp[%s-%s][%s-%s][%s]"), *(F.CityObjectGroup->GetName()), *SpKey.StringZXY(), *PId.StringZXY(), *Id.StringZXY(), *CId.StringZXY(), *DebugKey->StringZXY());
                     UKismetSystemLibrary::PrintString(this, Msg, true, false, FLinearColor::Red, 0.f);
@@ -335,10 +352,15 @@ TArray<ATwinLinkCityObjectTree::FCityObjectFindInfo> ATwinLinkCityObjectTree::Fi
             }
         }
         // 見つかっていない場合もあるのでParentIndex-1しなくてよい
-        //SearchMax = ParentIndex;
+        SearchMax = ParentIndex;
     }
 
     return Ret;
+}
+
+void ATwinLinkCityObjectTree::GetZoomRange(int& MinZoom, int& MaxZoom) const {
+    MinZoom = EntireSpaceKey.Zoom;
+    MaxZoom = MAX_ZOOM_LEVEL;
 }
 
 ATwinLinkCityObjectTree::KeyType ATwinLinkCityObjectTree::ToKey(const FTwinLinkSpatialID& SpId) const {
@@ -376,7 +398,7 @@ bool ATwinLinkCityObjectTree::IsTarget(TWeakObjectPtr<UPLATEAUCityObjectGroup> C
 #else
         return Bb.IntersectXY(SpatialWorldBox);
 #endif
-    }
+}
 
     return false;
 }
