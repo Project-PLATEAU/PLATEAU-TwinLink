@@ -134,7 +134,7 @@ public:
     /*
      * @brief: Typeに応じたコンポーネントの名前のプリフィックスを返す. 不正値の場合は__invalid__が返る
      */
-    static const TArray<char*> GetComponentNamePrefixes(FTwinLinkFindCityModelMeshType Type);
+    static TArray<const char*> GetComponentNamePrefixes(FTwinLinkFindCityModelMeshType Type);
 
     /*
      * @brief : コンポーネント名からメッシュタイプを取得する

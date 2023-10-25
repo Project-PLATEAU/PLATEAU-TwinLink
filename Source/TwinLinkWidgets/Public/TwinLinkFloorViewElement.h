@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "TwinLinkWidgetBase.h"
+#include "Components/Button.h"
+#include "Components/TextBlock.h"
 #include "TwinLinkFloorViewElement.generated.h"
 
 class UTwinLinkFloorViewPanel;
@@ -22,7 +24,13 @@ public:
      * @param Parent
     */
     void ElementSetup(const FString& Label, TObjectPtr<UTwinLinkFloorViewPanel> Parent);
-
+public:
+    /** ボタンウィジェット **/
+    UPROPERTY(meta = (BindWidget))
+        TObjectPtr<UButton> ListButton;
+    /** 表示テキストウィジェット **/
+    UPROPERTY(meta = (BindWidget))
+        TObjectPtr<UTextBlock> FacilityInfoListText;
 private:
     /**
      * @brief デリゲート

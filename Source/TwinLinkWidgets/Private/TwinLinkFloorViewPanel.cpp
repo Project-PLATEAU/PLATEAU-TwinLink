@@ -60,6 +60,9 @@ void UTwinLinkFloorViewPanel::SetupTwinLinkFloorView() {
     if (SortFloorKeys.Num() > FloorKeys.Num()) {
         FloorKeys.Insert("Exterior", 0);
     }
+    
+    //ResetChild
+    FloorViewScrollBox->ClearChildren();
 
     //AddChild
     for (const auto& FloorKey : FloorKeys) {

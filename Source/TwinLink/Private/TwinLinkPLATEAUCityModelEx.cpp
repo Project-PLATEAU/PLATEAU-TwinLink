@@ -141,7 +141,7 @@ TwinLinkPLATEAUInstancedCityModelIterator TwinLinkPLATEAUInstancedCityModelScann
     return TwinLinkPLATEAUInstancedCityModelIterator(Target, Target->GetRootComponent()->GetAttachChildren().Num(), 0, 0);
 }
 
-const TArray<char*> FTwinLinkPLATEAUCityModelEx::GetComponentNamePrefixes(FTwinLinkFindCityModelMeshType Type) {
+TArray<const char*> FTwinLinkPLATEAUCityModelEx::GetComponentNamePrefixes(FTwinLinkFindCityModelMeshType Type) {
     switch (Type) {
     case FTwinLinkFindCityModelMeshType::Bldg:
         return { "bldg_", "BLD_" };
