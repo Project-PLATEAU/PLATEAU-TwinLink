@@ -231,7 +231,7 @@ FBox FTwinLinkSpatialID::GetSpatialIDArea(FPLATEAUGeoReference& GeoReference) co
 }
 
 FString FTwinLinkSpatialID::StringZFXY() const {
-    return FString::Printf(TEXT("%d/%d/%d/%d"), Z, F, X, Y);
+    return FString::Printf(TEXT("/%d/%d/%d/%d"), Z, F, X, Y);
 }
 
 FTwinLinkSpatialID FTwinLinkSpatialID::ZoomChanged(int Zoom) const {

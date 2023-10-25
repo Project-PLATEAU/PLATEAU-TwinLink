@@ -100,14 +100,13 @@ void ATwinLinkCityObjectTree::Init(APLATEAUInstancedCityModel* BaseCityModel) {
             }
         }
     };
-    
+
 
     // 管理対象建物も入れるために、配置されている全InstancedCityModelをとってくる
     {
         TArray<AActor*> AllCityModel;
         UGameplayStatics::GetAllActorsOfClass(GetWorld(), APLATEAUInstancedCityModel::StaticClass(), AllCityModel);
-        for(auto Actor : AllCityModel)
-        {
+        for (auto Actor : AllCityModel) {
             const auto Model = Cast<APLATEAUInstancedCityModel>(Actor);
             if (!Model)
                 continue;
@@ -196,25 +195,27 @@ void ATwinLinkCityObjectTree::DebugDraw(float DeltaSeconds) {
         Box.Max.Z = RangeWorld.Max.Z;
         DrawDebugBox(GetWorld(), Box.GetCenter(), Box.GetExtent(), FColor::Red);
 
-        const auto Scanner = TwinLinkPLATEAUInstancedCityModelScanner(InstancedCityModel);
-        for (auto Item : Scanner) {
-            if (DebugShowCompName.IsEmpty() == false && Item.CityObjectGroup->GetName().StartsWith(DebugShowCompName)) {
-                FBox Bb;
-                FTwinLinkPLATEAUCityObjectGroupEx::TryBoundingBox(Item.CityObjectGroup.Get(), Bb);
+        for (auto& Trr : TreeMap) {
+            for (auto Item : Trr.Nodes) {
+                if (DebugShowCompName.IsEmpty() == false && Item->GetName().StartsWith(DebugShowCompName)) {
+                    FBox Bb;
+                    FTwinLinkPLATEAUCityObjectGroupEx::TryBoundingBox(Item.Get(), Bb);
 
-                DrawDebugBox(GetWorld(), Bb.GetCenter(), Bb.GetExtent(), FColor::Blue);
+                    DrawDebugBox(GetWorld(), Bb.GetCenter(), Bb.GetExtent(), FColor::Blue);
 
-                FTwinLinkSpatialID SpId;
-                FTwinLinkSpatialID::TryGetBoundingSpatialId(GeoRef, Bb, false, SpId);
-                auto SBb = SpId.GetSpatialIDArea(InstancedCityModel->GeoReference);
-                SBb.Min.Z = RangeWorld.Min.Z;
-                SBb.Max.Z = RangeWorld.Max.Z;
-                DrawDebugBox(GetWorld(), SBb.GetCenter(), SBb.GetExtent(), FColor::Red);
-                auto P = Bb.GetCenter();
-                P.Z = Bb.Max.Z;
-                UKismetSystemLibrary::DrawDebugString(this, P, FString::Printf(TEXT("%d: %d, %d"), SpId.GetZ(), SpId.GetX(), SpId.GetY()));
+                    FTwinLinkSpatialID SpId;
+                    FTwinLinkSpatialID::TryGetBoundingSpatialId(GeoRef, Bb, false, SpId);
+                    auto SBb = SpId.GetSpatialIDArea(InstancedCityModel->GeoReference);
+                    SBb.Min.Z = RangeWorld.Min.Z;
+                    SBb.Max.Z = RangeWorld.Max.Z;
+                    //DrawDebugBox(GetWorld(), SBb.GetCenter(), SBb.GetExtent(), FColor::Red);
+                    auto P = Bb.GetCenter();
+                    P.Z = Bb.Max.Z;
+                    UKismetSystemLibrary::DrawDebugString(this, P, FString::Printf(TEXT("%d: %d, %d"), SpId.GetZ(), SpId.GetX(), SpId.GetY()));
+                }
             }
         }
+
 
         // 8分木探索表示
         TArray<FCityObjectFindInfo> TreeFindResult;
@@ -410,19 +411,20 @@ TArray<ATwinLinkCityObjectTree::FCityObjectFindInfo> ATwinLinkCityObjectTree::De
 
     if (RangeWorld.IntersectXY(Box) == false)
         return Ret;
-    const auto Scanner = TwinLinkPLATEAUInstancedCityModelScanner(InstancedCityModel);
-    for (const auto Item : Scanner) {
-        if (Item.MeshType != FTwinLinkFindCityModelMeshType::Bldg)
-            continue;
-        if (FBox Bb; FTwinLinkPLATEAUCityObjectGroupEx::TryBoundingBox(Item.CityObjectGroup.Get(), Bb)) {
-            if (Item.CityObjectGroup.IsValid() == false)
-                continue;
-            if (Item.CityObjectGroup->GetVisibleFlag() == false)
-                continue;
-            if (Bb.IntersectXY(Box)) {
-                Ret.Add(FCityObjectFindInfo(Item.CityObjectGroup));
+
+    for (auto& Tree : TreeMap) {
+        for (const auto Item : Tree.Nodes) {
+            if (FBox Bb; FTwinLinkPLATEAUCityObjectGroupEx::TryBoundingBox(Item.Get(), Bb)) {
+                if (Item.IsValid() == false)
+                    continue;
+                if (Item->GetVisibleFlag() == false)
+                    continue;
+                if (Bb.IntersectXY(Box)) {
+                    Ret.Add(FCityObjectFindInfo(Item));
+                }
             }
         }
+
     }
     return Ret;
 }

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "TwinLinkPopulationData.h"
 #include "TwinLinkSpatialID.h"
 #include "TwinLinkSubSystemBase.h"
 #include "Interfaces/IHttpRequest.h"
@@ -15,52 +16,22 @@ struct FTwinLinkPeopleFlowApiRequest {
     GENERATED_BODY();
 public:
     // 空間Idのリスト
-    // #NOTE : FTwinLinkSpatialIDがUSTRUCTじゃないのでUPROPERTYにできない
-    TArray<FTwinLinkSpatialID> SpatialIds;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Base")
+        TArray<FTwinLinkSpatialID> SpatialIds;
     // 時刻
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Base")
         FDateTime DateTime;
 };
-USTRUCT(BlueprintType)
-struct FTwinLinkPopulationValue {
-    GENERATED_BODY();
-public:
-    // タイムスタンプ
-    UPROPERTY(EditAnywhere)
-        FDateTime TimeStamp;
-    // 人流度
-    UPROPERTY(EditAnywhere)
-        FString Unit;
-    // 人流度
-    UPROPERTY(EditAnywhere)
-        int PeopleFlow;
-};
-
-USTRUCT(BlueprintType)
-struct FTwinLinkPopulationData {
-    GENERATED_BODY();
-public:
-    // 対応する空間ID
-    // #NOTE : FTwinLinkSpatialIDがUSTRUCTじゃないのでUPROPERTYにできない
-    FTwinLinkSpatialID SpatialId;
-
-    UPROPERTY(EditAnywhere)
-        FString Type;
-
-    UPROPERTY(EditAnywhere)
-        TArray<FTwinLinkPopulationValue> Values;
-};
-
 
 USTRUCT(BlueprintType)
 struct FTWinLinkPeopleFlowApiResult {
     GENERATED_BODY();
 public:
     // リクエストが成功したかどうか
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Base")
         bool bSuccess = false;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Base")
         TArray<FTwinLinkPopulationData> Populations;
 
 public:

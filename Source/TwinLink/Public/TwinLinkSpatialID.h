@@ -160,6 +160,16 @@ public:
      */
     FVector ToVector() const;
 
+    /*
+     * @brief: 高さ情報の除いて一致するかチェックする
+     */
+    bool EqualZXY(const FTwinLinkSpatialID& Other) const
+    {
+        return X == Other.X
+            && Y == Other.Y
+            && Z == Other.Z;
+    }
+
     bool operator==(const FTwinLinkSpatialID& Other) const {
         return X == Other.X
             && Y == Other.Y

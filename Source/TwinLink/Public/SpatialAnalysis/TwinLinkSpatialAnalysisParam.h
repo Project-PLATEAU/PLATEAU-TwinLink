@@ -15,11 +15,18 @@ class TWINLINK_API UTwinLinkSpatialAnalysisParam : public UPrimaryDataAsset {
     GENERATED_BODY()
 public:
     UFUNCTION(BlueprintPure)
-        TSubclassOf<ATwinLinkSpatialAnalysisPresenter> GetPresenerBp() const
-    {
+        TSubclassOf<ATwinLinkSpatialAnalysisPresenter> GetPresenerBp() const {
         return PresenterBp;
+    }
+
+    UFUNCTION(BlueprintPure)
+        int GetPeopleFlowRequestIntervalSeconds() const {
+        return PeopleFlowRequestIntervalSeconds;
     }
 
     UPROPERTY(EditAnywhere, meta = (Comment = "アクターのBP"), Category = "Base")
         TSubclassOf<ATwinLinkSpatialAnalysisPresenter> PresenterBp;
+
+    UPROPERTY(EditAnywhere, meta = (Comment = "人流データ更新間隔"), Category = "Base")
+        int PeopleFlowRequestIntervalSeconds = 60;
 };

@@ -18,10 +18,21 @@ void ATwinLinkSpatialAnalysisPresenter::BeginPlay() {
     if (const auto WorldViewer = ATwinLinkNavSystem::GetWorldViewer(GetWorld()))
         WorldViewer->EvOnAnyObjectClicked.AddUObject(this, &ATwinLinkSpatialAnalysisPresenter::OnClicked);
     SetZoom(FTwinLinkSpatialID::MAX_ZOOM_LEVEL);
+
+    if (auto PeopleFlow = ATwinLinkNavSystem::GetPeopleFlowSystem(GetWorld())) {
+        PeopleFlow->OnReceivedPeopleFlowResponse.AddDynamic(this, &ATwinLinkSpatialAnalysisPresenter::OnReceivedPeopleFlowResponse);
+    }
+
 }
 
 void ATwinLinkSpatialAnalysisPresenter::Tick(float DeltaTime) {
     Super::Tick(DeltaTime);
+    auto Diff = FDateTime::Now() - LastPeopleFlowRequestedTime;
+    if( Diff.GetTotalMinutes() > 1.f)
+    {
+       
+    }
+
     DrawUpdate(DeltaTime);
 #ifdef WITH_EDITOR
     DebugNowSelectedId = GetNowSpatialId().value_or(FTwinLinkSpatialID());
@@ -124,12 +135,41 @@ void ATwinLinkSpatialAnalysisPresenter::DebugDrawUpdate(float DeltaTime) const {
 #endif
 }
 
+void ATwinLinkSpatialAnalysisPresenter::OnReceivedPeopleFlowResponse(const FTWinLinkPeopleFlowApiResult& Result) {
+    if (!Result.bSuccess)
+        return;
+    const auto NowSpacialId = GetNowSpatialId();
+    if (NowSpacialId.has_value() == false)
+        return;
+    for (auto& P : Result.Populations) {
+        if (P.SpatialId.EqualZXY(*NowSpacialId)) {
+            OnChangePeopleFlow.Broadcast(P);
+            break;
+        }
+    }
+}
+
 bool ATwinLinkSpatialAnalysisPresenter::TryGetNowSpatialId(FTwinLinkSpatialID& Out) const {
     auto Ret = GetNowSpatialId();
     if (Ret.has_value() == false)
         return false;
     Out = *Ret;
     return true;
+}
+
+bool ATwinLinkSpatialAnalysisPresenter::RequestPeopleFlow(FDateTime DateTime)
+{
+    const auto SpacialId = GetNowSpatialId();
+    if (SpacialId.has_value() == false)
+        return false;
+    if (const auto PeopleFlow = ATwinLinkNavSystem::GetPeopleFlowSystem(GetWorld())) {
+        FTwinLinkPeopleFlowApiRequest Req;
+        Req.SpatialIds.Add(*SpacialId);
+        Req.DateTime = DateTime;
+        PeopleFlow->Request(Req);
+        return true;
+    }
+    return false;
 }
 
 std::optional<FTwinLinkSpatialID> ATwinLinkSpatialAnalysisPresenter::GetNowSpatialId() const {
