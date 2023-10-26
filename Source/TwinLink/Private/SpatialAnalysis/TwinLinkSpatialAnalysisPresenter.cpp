@@ -27,12 +27,6 @@ void ATwinLinkSpatialAnalysisPresenter::BeginPlay() {
 
 void ATwinLinkSpatialAnalysisPresenter::Tick(float DeltaTime) {
     Super::Tick(DeltaTime);
-    auto Diff = FDateTime::Now() - LastPeopleFlowRequestedTime;
-    if( Diff.GetTotalMinutes() > 1.f)
-    {
-       
-    }
-
     DrawUpdate(DeltaTime);
 #ifdef WITH_EDITOR
     DebugNowSelectedId = GetNowSpatialId().value_or(FTwinLinkSpatialID());
@@ -157,8 +151,7 @@ bool ATwinLinkSpatialAnalysisPresenter::TryGetNowSpatialId(FTwinLinkSpatialID& O
     return true;
 }
 
-bool ATwinLinkSpatialAnalysisPresenter::RequestPeopleFlow(FDateTime DateTime)
-{
+bool ATwinLinkSpatialAnalysisPresenter::RequestPeopleFlow(FDateTime DateTime) {
     const auto SpacialId = GetNowSpatialId();
     if (SpacialId.has_value() == false)
         return false;

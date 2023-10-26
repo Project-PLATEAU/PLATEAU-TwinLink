@@ -399,7 +399,7 @@ bool ATwinLinkCityObjectTree::IsTarget(TWeakObjectPtr<UPLATEAUCityObjectGroup> C
 #else
         return Bb.IntersectXY(SpatialWorldBox);
 #endif
-}
+    }
 
     return false;
 }
