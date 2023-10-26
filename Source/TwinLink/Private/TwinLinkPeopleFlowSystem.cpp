@@ -32,7 +32,7 @@ void UTwinLinkPeopleFlowSystem::Request(const FTwinLinkPeopleFlowApiRequest& Req
         SpatialIds.Add(Id.StringZFXY());
     const auto Ids = FString::Join(SpatialIds, TEXT(","));
     const auto Time = Req.DateTime.ToFormattedString(TEXT("yyyy-MM-ddThh:mm:ss"));
-    const auto Query = FString::Printf(TEXT("id=\"%s\"&time=\"%s\""), *Ids, *Time);
+    const auto Query = FString::Printf(TEXT("spatialId=\"%s\"&time=\"%s\""), *Ids, *Time);
     Request->SetURL(FString::Printf(TEXT("%s?%s"), *Url, *Query));
     Request->SetVerb(Verb);
     Request->ProcessRequest();

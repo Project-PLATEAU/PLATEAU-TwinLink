@@ -10,8 +10,10 @@
 #include "PLATEAUInstancedCityModel.h"
 #include "NavigationSystem.h"
 #include "PLATEAUCityModelLoader.h"
+#include "StaticMeshAttributes.h"
 #include "TwinLink.h"
 #include "TwinLinkPLATEAUCityModelEx.h"
+#include "TwinLinkPLATEAUCityObjectGroupEx.h"
 #include "TwinLink/Public/NavSystem/TwinLinkNavSystem.h"
 namespace {
     /*
@@ -117,93 +119,43 @@ namespace {
     std::optional<ApplyNavMeshAffectResult> ApplyNavMeshAffect(const ApplyNavMeshAffectRequest& Request) {
         if (!Request.Actor)
             return std::nullopt;
+
         ApplyNavMeshAffectResult Result;
-        // 道モデルのナビメッシュを作成する
-        auto ApplyTran = [&Result](USceneComponent* Self) {
-            Self->SetCanEverAffectNavigation(false);
-            for (auto Lod : Self->GetAttachChildren()) {
-                FString LodName;
-                Lod->GetName(LodName);
-                if (LodName.StartsWith("LOD1")) {
-                    TArray<USceneComponent*> ChildComponents;
-                    Lod->GetChildrenComponents(true, ChildComponents);
-                    for (const auto Child : ChildComponents) {
-                        const auto StaMeshComp = Cast<UStaticMeshComponent>(Child);
-                        if (!StaMeshComp)
-                            continue;
-                        StaMeshComp->SetCanEverAffectNavigation(true);
-                        const auto StaMesh = StaMeshComp->GetStaticMesh();
-                        if (!StaMesh)
-                            continue;
-                        auto Bounds = StaMesh->GetBounds();
-                        auto Bb = Bounds.GetBox();
-                        auto Center = Bb.GetCenter();
-                        // 最低1mは用意する(tranが平面ポリゴンでbbのzが0になることがあるので
-                        auto Extent = FVector::Max(Bb.GetExtent(), FVector::One() * 100);
-                        Bb = FBox(Center - Extent, Center + Extent);
-                        ExpandFBox(Result.NavVolumeAabb, Bb);
-                    }
-                }
-                // それ以外はオフにする
-                else {
-                    SetCanEverAffectNavigationRecursively(Lod, false);
+        const auto Scanner = TwinLinkPLATEAUInstancedCityModelScanner(Request.Actor);
+        for (auto Item : Scanner) {
+            // https://synesthesias.atlassian.net/browse/KUKANIDBIM-43
+            // ナビメッシュの対象になっているのはLOD1の道メッシュのみ
+            if (Item.MeshType == FTwinLinkFindCityModelMeshType::Tran && Item.LodLevel == 1) {
+                Item.CityObjectGroup->SetCanEverAffectNavigation(true);
+                FBox Bb;
+                if(FTwinLinkPLATEAUCityObjectGroupEx::TryBoundingBox(Item.CityObjectGroup.Get(),Bb))
+                {
+                    // 最低1mは用意する(tranが平面ポリゴンでbbのzが0になることがあるので
+                    auto Center = Bb.GetCenter();
+                    auto Extent = FVector::Max(Bb.GetExtent(), FVector::One() * 100);
+                    ExpandFBox(Result.NavVolumeAabb, FBox(Center - Extent, Center + Extent));
                 }
             }
-        };
-
-        auto ApplyDem = [&Result, &Request](USceneComponent* Self) {
-            TArray<USceneComponent*> ChildComponents;
-            Self->GetChildrenComponents(true, ChildComponents);
-            for (const auto Child : ChildComponents) {
-                const auto StaMeshComp = Cast<UStaticMeshComponent>(Child);
-                if (!StaMeshComp)
-                    continue;
-                StaMeshComp->SetCollisionResponseToChannel(Request.DemCollisionChannel, ECR_Block);
-                const auto StaMesh = StaMeshComp->GetStaticMesh();
-                if (!StaMesh)
-                    continue;
-                auto Bounds = StaMesh->GetBounds();
-                auto Bb = Bounds.GetBox();
-                auto Center = Bb.GetCenter();
-                // 最低1mは用意する(tranが平面ポリゴンでbbのzが0になることがあるので
-                auto Extent = FVector::Max(Bb.GetExtent(), FVector::One() * 100);
-                Bb = FBox(Center - Extent, Center + Extent);
-                ExpandFBox(Result.DemAabb, Bb);
+            else {
+                // すべて無効にする
+                Item.CityObjectGroup->SetCanEverAffectNavigation(false);
             }
-        };
-        const auto RootComp = Request.Actor->GetRootComponent();
-        ::ForeachDescendant(RootComp, 1,
-            [&Result, &Request, &ApplyTran, &ApplyDem](USceneComponent* Self) mutable {
-                FString MeshName;
-                Self->GetName(MeshName);
-                // tranという名前は道メッシュ
-                if (MeshName.Contains("tran")) {
-                    // tran以下は以下のようにLODごとに階層分けされている
-                   // https://synesthesias.atlassian.net/browse/KUKANIDBIM-43
-                   // ナビメッシュの対象になっているのはLOD1のみ
-                   // LOD1 xxxx
-                   //    - xxxx_tran_yyy
-                   //    - xxxx_tran_zzz 
-                   // 自分自身もオフにしておく
-                    ApplyTran(Self);
-                }
-                else {
-                    // すべて無効にする
-                    SetCanEverAffectNavigationRecursively(Self, false);
-                }
 
-                // 道路自体のメッシュモデル
-                if (MeshName.Contains("dem")) {
-                    ApplyDem(Self);
+            // 道モデルに対してコリジョンフラグの設定を行う
+            if (Item.MeshType == FTwinLinkFindCityModelMeshType::Dem) {
+                Item.CityObjectGroup->SetCollisionResponseToChannel(Request.DemCollisionChannel, ECR_Block);
+                FBox Bb;
+                if (FTwinLinkPLATEAUCityObjectGroupEx::TryBoundingBox(Item.CityObjectGroup.Get(), Bb)) {
+                    // 最低1mは用意する(tranが平面ポリゴンでbbのzが0になることがあるので
+                    auto Center = Bb.GetCenter();
+                    auto Extent = FVector::Max(Bb.GetExtent(), FVector::One() * 100);
+                    ExpandFBox(Result.DemAabb, FBox(Center - Extent, Center + Extent));
                 }
-                else {
-                    ForeachChildComponents(Self, [&Request](USceneComponent* Child) {
-                        if (const auto StaMeshComp = Cast<UStaticMeshComponent>(Child)) {
-                            StaMeshComp->SetCollisionResponseToChannel(Request.DemCollisionChannel, ECR_Ignore);
-                        }
-                        });
-                }
-            });
+            }
+            else {
+                Item.CityObjectGroup->SetCollisionResponseToChannel(Request.DemCollisionChannel, ECR_Ignore);
+            }
+        }
         return Result;
     }
 

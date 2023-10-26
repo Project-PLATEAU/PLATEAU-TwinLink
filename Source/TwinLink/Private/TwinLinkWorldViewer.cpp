@@ -7,9 +7,11 @@
 #include "Kismet/GameplayStatics.h"
 #include "TwinLinkCommon.h"
 #include "TwinLinkMathEx.h"
+#include "TwinLinkPlayerController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 #include "Components/CapsuleComponent.h"
+#include "NavSystem/TwinLinkNavSystem.h"
 
 // Sets default values
 ATwinLinkWorldViewer::ATwinLinkWorldViewer() {
@@ -61,6 +63,18 @@ void ATwinLinkWorldViewer::Tick(float DeltaTime) {
         if (TargetTransform->Update(DeltaTime, NextLocation, NextRotation))
             TargetTransform = std::nullopt;
         SetLocationImpl(NextLocation, NextRotation);
+    }
+
+    // 遠くのものでもちゃんとヒットするように領域のAabbを貫くような長さをPlayerControllerに設定する
+    if (const auto NavSystem = ATwinLinkNavSystem::GetInstance(GetWorld())) {
+        const auto PlayerController = GetLocalViewingPlayerController();
+        const auto MousePos = ATwinLinkPlayerController::GetMousePosition(PlayerController);
+        if (MousePos.has_value()) {
+            const auto Line = ATwinLinkPlayerController::ScreenToWorldRayThroughBoundingBox(PlayerController, *MousePos, NavSystem->GetFieldAabb());
+            if (Line.has_value()) {
+                PlayerController->HitResultTraceDistance = (Line->Max - Line->Min).Length();
+            }
+        }
     }
 }
 
@@ -141,8 +155,13 @@ void ATwinLinkWorldViewer::Click() {
     FHitResult HitResult;
     if (!GetLocalViewingPlayerController())
         return;
-    GetLocalViewingPlayerController()->GetHitResultUnderCursorByChannel(
+    const auto IsHit = GetLocalViewingPlayerController()->GetHitResultUnderCursorByChannel(
         UEngineTypes::ConvertToTraceType(ECC_Visibility), true, HitResult);
+
+    // 任意のオブジェクトをクリックしたときのイベントを発行
+    if (IsHit) {
+        EvOnAnyObjectClicked.Broadcast(HitResult);
+    }
 
     if (!HitResult.Component.IsValid()) {
         // 選択されていた地物がキャンセルされた時に通知する

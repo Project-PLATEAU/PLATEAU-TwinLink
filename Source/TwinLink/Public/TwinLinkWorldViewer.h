@@ -12,6 +12,8 @@
 DECLARE_EVENT_OneParam(ATwinLinkWorldViewer, FDelClickViewPort, FHitResult, HitResult);
 DECLARE_EVENT_OneParam(ATwinLinkWorldViewer, FDelCanceledClickFacility);
 
+// 任意のオブジェクトをクリックしたときのイベント
+DECLARE_EVENT_OneParam(ATwinLinkWorldViewer, FOnAnyObjectClicked, const FHitResult&);
 /**
  * @brief 視点操作機能を提供するカメラを搭載したキャラクタークラス
 */
@@ -73,6 +75,8 @@ public:
     FDelClickViewPort EvOnClickedFacility;
     FDelCanceledClickFacility EvOnCanceledClickFacility;
 
+    // 任意のオブジェクトをクリックしたときの処理
+    FOnAnyObjectClicked EvOnAnyObjectClicked;
 private:
     // BluePrint側から呼び出す処理
     UFUNCTION(BlueprintCallable, Category = "Movement")

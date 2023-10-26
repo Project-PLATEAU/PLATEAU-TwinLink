@@ -56,7 +56,7 @@ public:
 
     template<class... Args>
     static auto CeilToInt64(Args... args) {
-        return Cast([](auto X){ return FMath::CeilToInt64(X); }, std::forward<Args>(args)...);
+        return Cast([](auto X) { return FMath::CeilToInt64(X); }, std::forward<Args>(args)...);
     }
 
     /*
@@ -107,5 +107,75 @@ public:
         y = x >> 2; if (y != 0) { n = n - 2; x = y; }
         y = x >> 1; if (y != 0) { return n - 2; }
         return n - x;
+    }
+
+    /*
+     * @brief : Nのビットを一つ飛ばしにする(1111 -> 01010101)に変換
+     */
+    static uint64 AlternateBits(uint32 N) {
+        uint64 X = N;
+        X = (X | (X << 16)) & 0x0000ffff0000ffff;
+        X = (X | (X << 8)) & 0x00ff00ff00ff00ff;
+        X = (X | (X << 4)) & 0x0f0f0f0f0f0f0f0f;
+        X = (X | (X << 2)) & 0x3333333333333333;
+        return (X | (X << 1)) & 0x5555555555555555;
+    }
+
+    // nの偶数番目のビットのみ取り出して(最下位ビットは0番で偶数とする)詰めなおす
+    // 例) 010101 => 111
+    static uint32 ExtractEvenBits(uint64 N) {
+        N = N & 0x5555555555555555;
+        N = (N | (N >> 1)) & 0x3333333333333333;
+        N = (N | (N >> 2)) & 0x0f0f0f0f0f0f0f0f;
+        N = (N | (N >> 4)) & 0x00ff00ff00ff00ff;
+        N = (N | (N >> 8)) & 0x0000ffff0000ffff;
+        return static_cast<uint32>((N | (N >> 16)) & 0x00000000ffffffff);
+    }
+
+    // MortonNo -> X,Yを取り出す
+    static void MortonNo2Cell(uint64 MortonNo, uint32& X, uint32& Y) {
+        X = ExtractEvenBits(MortonNo);
+        Y = ExtractEvenBits(MortonNo >> 1);
+    }
+
+    // (X, Y) -> MotionNoに変換する
+    static uint64 Cell2MotionNo(uint32 X, uint32 Y) {
+        return AlternateBits(X) | AlternateBits(Y) << 1;
+    }
+
+
+    /*
+     * @brief : 二分探索. Predicate(Arr[i]) == false, Predicate(Arr[i+1]) == trueとなるiを返す
+     *        : Arrは必ず[false, false, false, ....., true, true, true]とfalse, trueが分かれていないといけない(index若いほうがfalse)
+     *        : レイ) LowerBound([0, 1, 2, 3, 3, 4, 5], [](auto x){ return x > 3;}) =>  4が返る
+     *        : Arrがすべてfalseの場合 => Arr.Num() - 1
+     *        : Arrがすべてtrueの場合  => -1
+     *        : Arrが空の場合 => 0
+     */
+    template<class T, class F>
+    static int LowerBound(const TArray<T>& Arr, F&& Predicate, int Min = -1, int Max = -1) {
+        if (Arr.Num() == 0)
+            return 0;
+        if (Predicate(Arr[0]) == true)
+            return -1;
+        if (Predicate(Arr[Arr.Num() - 1]) == false)
+            return Arr.Num() - 1;
+
+        if(Min < 0)
+            Min = 0;
+        if(Max < 0)
+            Max = Arr.Num() - 1;
+        while (Min <= Max) {
+            auto N = (Min + Max) / 2;
+            if (Predicate(Arr[N])) {
+                // 左側を探す
+                Max = N - 1;
+            }
+            else {
+                // 右側を探す
+                Min = N + 1;
+            }
+        }
+        return FMath::Clamp(Min - 1, -1, Arr.Num() - 1);
     }
 };

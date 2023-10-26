@@ -14,6 +14,7 @@
 #include "TwinLinkActorEx.h"
 #include "TwinLinkFacilityInfoSystem.h"
 #include "TwinLinkMathEx.h"
+#include "TwinLinkPlayerController.h"
 #include "TwinLinkWorldViewer.h"
 #include "Camera/CameraComponent.h"
 #include "NavSystem/TwinLinkNavSystem.h"
@@ -32,16 +33,14 @@ namespace {
     // マウスカーソル位置におけるDemCollisionを包括するような線分を取得
     // Min/Maxが始点/終点を表す
     std::optional<FBox> GetMouseCursorWorldVector(const APlayerController* PlayerController, const FVector2D& MousePos, const FBox& RangeAabb) {
-        if (!PlayerController)
+
+        auto Line = ATwinLinkPlayerController::ScreenToWorldRayThroughBoundingBox(PlayerController, MousePos, RangeAabb);
+        if (Line.has_value() == false)
             return std::nullopt;
-        FVector WorldPosition, WorldDirection;
-        if (UGameplayStatics::DeprojectScreenToWorld(PlayerController, MousePos, WorldPosition, WorldDirection)) {
-            // 始点->道モデルのAABBの中心点までの距離 + Boxの対角線の長さがあれば道モデルとの
-            const auto ToAabbVec = RangeAabb.GetCenter() - WorldPosition;
-            const auto Length = ToAabbVec.Length() + (RangeAabb.Max - RangeAabb.Min).Length();
-            return FBox(WorldPosition + WorldDirection * 100, WorldPosition + WorldDirection * Length);
-        }
-        return std::nullopt;
+
+        const auto Dir = (Line->Max - Line->Min).GetSafeNormal();
+        Line->Min += Dir * 100;
+        return Line;
     }
 
     bool CreateFindPathRequest(const UObject* Self, const FVector& Start, const FVector& End, FPathFindingQuery& OutRequest) {

@@ -10,6 +10,7 @@
 #include "TwinLinkFacilityInfo.h"
 #include "TwinLinkFacilityInfoSystem.h"
 #include "TwinLinkPLATEAUCityModelEx.h"
+#include "TwinLinkPLATEAUCityObjectGroupEx.h"
 #include "TwinLinkWorldViewer.h"
 #include "Camera/CameraComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -203,6 +204,8 @@ void ATwinLinkNavSystem::BeginPlay() {
     // #TODO : FacilityInfoSystem::FindFacilityを使った方がよさそうだが毎回全検索しているので自前でキャッシュ作るようにする
     TArray<AActor*> AllActors;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), APLATEAUInstancedCityModel::StaticClass(), AllActors);
+
+    std::optional<FBox> Fields = std::nullopt;
     for (const auto Actor : AllActors) {
         const auto InstanceCityModel = Cast<APLATEAUInstancedCityModel>(Actor);
         if (!InstanceCityModel)
@@ -211,8 +214,22 @@ void ATwinLinkNavSystem::BeginPlay() {
             if (MeshType == FTwinLinkFindCityModelMeshType::Bldg) {
                 BuildingMap.Add(CityObjectGroup->GetName(), FTwinLinkNavSystemBuildingInfo(CityObjectGroup));
             }
+
+            if(MeshType != FTwinLinkFindCityModelMeshType::Tran)
+            {
+                const auto Bb = FTwinLinkPLATEAUCityObjectGroupEx::GetBoundingBox(CityObjectGroup.Get());
+                if(Bb.has_value())
+                {
+                    if (Fields.has_value() == false)
+                        Fields = *Bb;
+                    else
+                        Fields = *Fields + *Bb;
+                }
+            }
         }
     }
+    // 
+    FieldBb = Fields.value_or(FBox(FVector::Zero(), FVector::Zero()));
 
     // FacilityInfoを設定する
     if (const auto FacilitySystem = GetFacilityInfoSystem(GetWorld())) {
@@ -416,6 +433,17 @@ TArray<FTwinLinkNavSystemBuildingInfo> ATwinLinkNavSystem::GetBuildingInfos() {
         }
     }
     return Ret;
+}
+
+const FTwinLinkNavSystemBuildingInfo* ATwinLinkNavSystem::FindBuildingInfo(
+    TWeakObjectPtr<UPLATEAUCityObjectGroup> CityObjectGroup) const {
+    if (CityObjectGroup.IsValid() == false)
+        return nullptr;
+
+    const auto Key = CityObjectGroup->GetName();
+    if (!BuildingMap.Contains(Key))
+        return nullptr;
+    return &BuildingMap[Key];
 }
 
 void ATwinLinkNavSystem::OnFacilityClick(FHitResult Info) const {
