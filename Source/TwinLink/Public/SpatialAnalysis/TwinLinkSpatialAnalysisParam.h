@@ -23,10 +23,17 @@ public:
         int GetPeopleFlowRequestIntervalSeconds() const {
         return PeopleFlowRequestIntervalSeconds;
     }
+    UFUNCTION(BlueprintPure)
+        int GetDefaultZoom() const {
+        return DefaultZoom;
+    }
 
     UPROPERTY(EditAnywhere, meta = (Comment = "アクターのBP"), Category = "Base")
         TSubclassOf<ATwinLinkSpatialAnalysisPresenter> PresenterBp;
 
     UPROPERTY(EditAnywhere, meta = (Comment = "人流データ更新間隔"), Category = "Base")
         int PeopleFlowRequestIntervalSeconds = 60;
+
+    UPROPERTY(EditAnywhere, meta = (Comment = "初期ズームレベル"), Category = "Base")
+        int DefaultZoom = 18;
 };
