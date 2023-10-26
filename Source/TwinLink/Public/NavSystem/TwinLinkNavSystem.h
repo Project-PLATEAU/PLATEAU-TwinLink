@@ -72,10 +72,23 @@ public:
         return DemCollisionAabb;
     }
 
-    void SetDemCollisionAabb(const FBox& val) {
-        DemCollisionAabb = val;
+    void SetDemCollisionAabb(const FBox& Val) {
+        DemCollisionAabb = Val;
     }
 
+    /*
+     * @brief : ナビメッシュの道情報を除いた都市モデルのAabb
+     */
+    const FBox& GetFieldAabb() const {
+        return FieldBb;
+    }
+
+    /*
+     * @brief : ナビメッシュの道情報を除いた都市モデルのAabb
+     */
+    void SetFieldAab(const FBox& Val) {
+        FieldBb = Val;
+    }
     /*
      * @brief : 検索されたパスの高さチェックの間隔
      */
@@ -201,6 +214,10 @@ private:
     // 道路メッシュのAabb
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
         FBox DemCollisionAabb;
+
+    // 建物領域(ナビメッシュ用の道モデルを除いた)Bb
+    UPROPERTY(VisibleAnywhere, Category = TwinLink_Editor)
+        FBox FieldBb;
 
     // 建物情報のマップキャッシュ
     // key : UPLATEAUCityObjectGroup::GetName()
