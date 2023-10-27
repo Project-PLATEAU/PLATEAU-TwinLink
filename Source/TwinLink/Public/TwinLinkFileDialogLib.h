@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -95,6 +95,8 @@ public:
 
     // OpenDirectoryDialog
     //https://docs.unrealengine.com/5.2/en-US/API/Developer/DesktopPlatform/IDesktopPlatform/OpenDirectoryDialog/
+    UFUNCTION(BlueprintCallable, Category = "TwinLink OpenFileDialog", meta = (ExpandEnumAsExecs = "OutputPin"))
+    static void OpenDirectoryDialog(EDialogResult& OutputPin, FString& OutFolderName, const FString& DialogTitle, const FString& DefaultPath);
 
     /**
      * @brief ファイルタイプを表現する文字列を取得する
