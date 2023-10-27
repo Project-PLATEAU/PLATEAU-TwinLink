@@ -4,51 +4,58 @@
 
 #include "CoreMinimal.h"
 #include "Components/SceneComponent.h"
+#include "TwinLinkPeopleFlowSystem.h"
 #include "TwinLinkPeopleFlowVisualizerBase.generated.h"
 
 class FPLATEAUGeoReference;
 class APLATEAUInstancedCityModel;
-
-struct TestSpatialData {
-    int X;
-    int Y;
-    int Z;
-    int F;
-    int TimeStamp;
-    int Unit;
-    int PeopleFlow;
-};
+class UTexture;
 
 /**
  * @brief 人流データの可視化機能を提供するコンポーネント
- * 仮でテスト処理も実装中
 */
-UCLASS(Abstract, Blueprintable, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class TWINLINK_API UTwinLinkPeopleFlowVisualizerBase : public USceneComponent
-{
-	GENERATED_BODY()
-
-public:	
-	// Sets default values for this component's properties
-	UTwinLinkPeopleFlowVisualizerBase();
+UCLASS(Abstract, Blueprintable, ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
+class TWINLINK_API UTwinLinkPeopleFlowVisualizerBase : public USceneComponent {
+    GENERATED_BODY()
+public:
+    // Sets default values for this component's properties
+    UTwinLinkPeopleFlowVisualizerBase();
 
 protected:
-	// Called when the game starts
-	virtual void BeginPlay() override;
+    // Called when the game starts
+    virtual void BeginPlay() override;
 
-public:	
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+public:
+    // Called every frame
+    virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
-    void TestFunc();
+    void SetThresholdForSubdivision(double Distance);
 
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
-    FVector TestFuncProjectSpatialID(APLATEAUInstancedCityModel* CityModel);
+    void RequestChangeActiveState(bool bIsActiveHeatmap);
 
+    /**
+     * @brief 都市モデルの設定
+     * @param CityModel
+    */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
-    void TestFuncSpatialID(APLATEAUInstancedCityModel* CityModel);
+    void InitVisualizer(APLATEAUInstancedCityModel* InCityModel, int InBaseZoomLevel = 19, int InMaxZoomLevel = 19);
+
+    /**
+     * @brief 最大値と最小値を自動で計算する
+     * かなり負荷が高い。数フレーム掛かる可能性がある。
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+    void SetMaximumAndMinimumAutomatically();
+
+    /**
+     * @brief 表示する時間帯を指定する
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+    void SetVisualizeTime(const FDateTime& Time);
+
 
     /**
      * @brief 空間IDを元に情報を要求する
@@ -60,9 +67,9 @@ public:
 
     /**
      * @brief サンプル用のヒートマップ用のテクスチャを作成
-     * @return 
+     * @return
     */
-    UFUNCTION(BlueprintCallable, Category="TwinLink")
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
     UTexture* CreateSampleHeatmapTexture();
 
     /**
@@ -71,15 +78,14 @@ public:
      * @param Height 高さ
      * @param HeatLevels 0-1のヒートマップの強度が格納された配列
      *  assert(HeatLevels.Num() == Width*Height)
-     * @return 
+     * @return
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
     UTexture* CreateHeatmapTexture(int Width, int Height, const TArray<float>& HeatLevels);
 
     /**
-     *  未テスト ←動作を確認したらこの行を消す
-     * 
      * @brief ヒートマップ用のテクスチャを作成
+     * 量は同一面積での値にすること
      * @param Width 幅
      * @param Height 高さ
      * @param MinAmount 量の最小値
@@ -88,24 +94,198 @@ public:
      *  assert(HeatLevels.Num() == Width*Height)
      * @return
     */
-    UFUNCTION(BlueprintCallable, Category = "TwinLink")
-    UTexture* CreateHeatmapTextureByAmount(int Width, int Height, 
-        int MinAmount, int MaxAmount, const TArray<int>& Amounts);
+    UTexture* CreateHeatmapTextureByAmount(int Width, int Height,
+        double MinAmount, double MaxAmount, const TArray<double>& Amounts);
+
+    /**
+     * @brief ヒートマップのデカールを更新する
+     * @param Center 中心地点
+     * @param Scale デカールのサイズ
+     * @param HeatmapTexture
+     * @param HeatmapResolution ヒートマップの解像度
+    */
+    UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
+    void UpdateDecalInstance(
+        FVector Center, FVector Scale, UTexture* HeatmapTexture, int HeatmapResolution);
+
+    /**
+     * @brief 有効、無効の状態を切り替える
+     * @param bIsActiveState
+    */
+    UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
+    void ChangeActiveState(bool bIsActiveState);
 
 private:
     /**
+     * @brief CityModel関係のメンバー変数をまとめた構造体
+    */
+    struct FCityModelHelper {
+        FCityModelHelper()
+            : CityModel(nullptr) 
+        {}
+
+        void Init(APLATEAUInstancedCityModel* InCityModel);
+        bool IsValid() { return CityModel != nullptr; }
+
+        // 以下 直接変更は禁止
+        
+        // CityModel関係
+        APLATEAUInstancedCityModel* CityModel;
+        FPLATEAUGeoReference* GeoReference;
+
+        // 地形
+        FVector DemCenter;
+        FVector DemExtent;
+        double Altitude;
+
+        // 街
+        FVector CityCenter;
+        FVector CityExtent;
+    };
+
+    /**
+     * @brief 空間IDとボクセル周りのメンバー変数をまとめた構造体
+    */
+    struct FVoxelHelper {
+        FVoxelHelper()
+        {}
+
+        // 以下 直接変更は禁止
+
+        void Init(
+            FPLATEAUGeoReference* GeoReference, 
+            int InBaseZoomLevel, int InMaxZoomLevel,
+            const FVector& Center,
+            const FVector& Extent,
+            double Altitude);
+
+        /** 最大ズームレベルでの最小空間IDのX**/
+        int SpatialIDXMin;
+        /** 最大ズームレベルでの最小空間IDのY**/
+        int SpatialIDYMin;
+
+        /** 最小ボクセルの面積 **/
+        double MinmumVoxelArea;
+
+        /** サンプリング用の空間IDのボクセル 中心座標 ベースレベル **/
+        FBox SamplingVoxelOnBaseLevel;
+
+        /** サンプリング用の空間IDのボクセル 中心座標 最大ズームレベル **/
+        FBox SamplingVoxelOnMaxLevel;
+
+    };
+
+    /**
+     * @brief データ処理で扱う最低限のサイズの構造体
+     * memo リクエストしたデータをそのまま扱うとページング出来るサイズを超えたため
+    */
+    struct PrimPopulationData {
+        int X;
+        int Y;
+        int PeopleFlow;
+    };
+
+    struct FCache {
+        // プリミティブデータ用　サーバーから情報を受け取って適切な形に変換した結果を格納する配列
+        TArray<PrimPopulationData> PrimDataAry;
+
+        // ズーム値と紐づく座標群を保持した配列　視野内の空間IDを取ってくるところで使用
+        TMap<int, TArray<FVector>> LocationsWithZoomMap;
+
+        // リクエストする空間IDの配列
+        TArray<FTwinLinkSpatialID> RequestSpatialIDs;
+
+        // 密度を格納した配列　ヒートマップ作成に使う
+        TArray<double> PopulationDensityArray;
+
+        // ヒートレベル用
+        TArray<float> HeatLevels;
+
+        // ヒートマップのテクスチャ
+        UPROPERTY()
+        TObjectPtr<UTexture> HeatmapTexture;
+    };
+
+public:
+    /**
      * @brief 人流データの更新を行う
+     * コールバック用
+     * @param DataArray
+    */
+    UFUNCTION(Category = "TwinLink")
+    void OnUpdatePeopleFlow(const FTWinLinkPeopleFlowApiResult& DataArray);
+    /**
+     * @brief 最大値と最長値を自動で計算する
+     * コールバック用
      * @param DataArray 
     */
-    void UpdatePeopleFlow(const TArray<TestSpatialData>& DataArray);
+    UFUNCTION(Category = "TwinLink")
+    void OnSetMaximumAndMinimumAutomatically(const FTWinLinkPeopleFlowApiResult& DataArray);
+    
+private:
+    /**
+     * @brief アクティブ状態を更新する
+     * 非アクティブだとデカールが非表示になったりヒートマップの更新が行われない
+    */
+    void UpdateActiveState();
+
+    /**
+     * @brief 必要な空間IDを取得する
+     * @param GeoReference
+     * @param AreaCenter 
+     * @param AreaExtent 
+     * @param Altitude 
+     * @param ThresholdForSubdivision 
+     * @return 
+    */
+    TArray<FTwinLinkSpatialID> ExtractRequestSpatialIDs(
+        FPLATEAUGeoReference* const GeoReference,
+        const FVector& AreaCenter, const FVector& AreaExtent, double Altitude,
+        double InThresholdForSubdivision);
 
 private:
-    /** 人流データの最小値 **/
-    int PeopleFlowMinAmount;
-    /** 人流データの最大値 **/
-    int PeopleFlowMaxAmount;
-    /** ヒートマップの幅 **/
+    /** 都市モデルデータ関係の補助構造体 **/
+    FCityModelHelper CityModelHelper;
+    /** 空間IDボクセル関係の補助構造体 **/
+    FVoxelHelper VoxelHelper;
+    /** 表示中の時間 **/
+    FDateTime CurrentVisualizeTime;
+
+    // 基準のズームレベル 20~24 (サーバーが負荷に耐えられないので一時的に17-19を推奨)
+    int BaseZoomLevel;        // BASE_ZOOM_LEVEL < LIMIT_MAX_ZOOM_LEVEL
+    // 最大ズームレベル　ズームレベル可変の処理に制限を掛ける際の値
+    int MaxZoomLevel;   // 1上がるごとに2倍の解像度　　2^LIMIT_MAX_ZOOM_LEVEL 倍   緯度経度によるが35だと空間IDの表現幅は大体1cm以下
+
+    /** 機能の無効、有効を切り替える要求の状態 **/
+    bool bIsRequestActiveState;
+    /** 機能が有効化どうか **/
+    bool bIsCurrentActiveState;
+
+    /** 空間情報のリクエストの待機状態 **/
+    bool bIsWaitingRequestResult;
+
+    /** ヒートマップの中心座標 **/
+    FVector HeatmapCenter;
+    /** ヒートマップの大きさ **/
+    FVector HeatmapExtent;
+    /** ヒートマップの幅(画素単位) **/
     int HeatmapWidth;
-    /** ヒートマップの高さ(奥行) **/
-    int HeatmapHeight;
+    /** ヒートマップの高さ(画素単位)(奥行) **/
+    int HeatmapDepth;
+
+    /** 人流データの密度の最大値(人/m2) **/
+    double MaxPopulationDensity;
+    /** 人流データの密度の最小値 **/
+    double MinPopulationDensity;
+
+    /** ズームレベルを引き上げるかの閾値 **/
+    double ThresholdForSubdivision;
+    
+    /** 人流データの更新デリゲート **/
+    FScriptDelegate UpdatePeopleFlowDelegate;
+    /** 最大値、最小値を自動で計算する機能のデリゲート **/
+    FScriptDelegate OnSetMaximumAndMinimumAutomaticallyDelegate;
+
+    /** キャッシュデータ **/
+    FCache Cache;
 };
