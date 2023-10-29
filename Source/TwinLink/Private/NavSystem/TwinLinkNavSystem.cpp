@@ -77,20 +77,18 @@ UTwinLinkPeopleFlowSystem* ATwinLinkNavSystem::GetPeopleFlowSystem(const UWorld*
 bool ATwinLinkNavSystem::FindNavMeshPoint(const UNavigationSystemV1* NavSys, const UStaticMeshComponent* StaticMeshComp, FVector& OutPos) {
     if (!StaticMeshComp || !NavSys)
         return false;
-    const auto StaMesh = StaticMeshComp->GetStaticMesh();
-    if (!StaMesh)
-        return false;
-    const auto Bounds = StaMesh->GetBounds();
-    const auto Bb = Bounds.GetBox();
+    auto Center = StaticMeshComp->Bounds.Origin;
+    auto Extent = StaticMeshComp->Bounds.BoxExtent;
+
     // ナビメッシュの範囲内かどうか
-    auto Pos = Bb.GetCenter();
+    auto Pos = Center;
     Pos.Z = 0.f;
-    const auto Size = Bb.GetSize();
+    const auto Size = Extent * 2;
     FNavLocation OutLocation;
-    if (NavSys->ProjectPointToNavigation(Pos, OutLocation, Size + FVector::One() * 1000)) {
+    if (NavSys->ProjectPointToNavigation(Pos, OutLocation, Extent + FVector::One() * 1000)) {
         OutPos = OutLocation.Location;
         // #TODO : 適当な値
-        OutPos.Z = Bb.Min.Z;
+        OutPos.Z = Center.Z - Extent.Z;
         return true;
     }
     return false;
@@ -145,51 +143,6 @@ void ATwinLinkNavSystem::DebugDraw() {
 
 void ATwinLinkNavSystem::DebugBeginPlay() {
 #ifdef WITH_EDITOR
-    const UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
-    if (!NavSys)
-        return;
-    TArray<AActor*> AllActors;
-    UGameplayStatics::GetAllActorsOfClass(GetWorld(), APLATEAUInstancedCityModel::StaticClass(), AllActors);
-
-    for (auto Actor : AllActors) {
-        const auto RootComp = Actor->GetRootComponent();
-        if (!RootComp)
-            continue;
-        for (auto Child : RootComp->GetAttachChildren()) {
-            FString MeshName;
-            Child->GetName(MeshName);
-            // とりあえずBldg以下をすべて返す
-            if (!MeshName.Contains("bldg"))
-                continue;
-
-            for (auto Lod : Child->GetAttachChildren()) {
-                FString LodName;
-                Lod->GetName(LodName);
-                if (!LodName.StartsWith("LOD2"))
-                    continue;
-
-                TArray<USceneComponent*> ChildComponents;
-                Lod->GetChildrenComponents(true, ChildComponents);
-                for (const auto ChildComp : ChildComponents) {
-                    const auto StaMeshComp = Cast<UStaticMeshComponent>(ChildComp);
-                    if (!StaMeshComp)
-                        continue;
-                    const auto StaMesh = StaMeshComp->GetStaticMesh();
-                    if (!StaMesh)
-                        continue;
-                    FString Name;
-                    Lod->GetName(Name);
-                    FVector OutPos;
-                    if (FindNavMeshPoint(NavSys, StaMeshComp, OutPos)) {
-                        auto Elem = NewObject<UTwinLinkFacilityInfo>();
-                        Elem->Setup(MeshName, "Test", "TestID", "TestImage", "TestDesc", "TestSpot");
-                        Elem->SetEntrances(TArray<FVector>{OutPos});
-                        DebugFacilityInfos.Add(Elem);
-                    }
-                }
-            }
-        }
-    }
 #endif
 }
 
@@ -215,11 +168,9 @@ void ATwinLinkNavSystem::BeginPlay() {
                 BuildingMap.Add(CityObjectGroup->GetName(), FTwinLinkNavSystemBuildingInfo(CityObjectGroup));
             }
 
-            if(MeshType != FTwinLinkFindCityModelMeshType::Tran)
-            {
+            if (MeshType != FTwinLinkFindCityModelMeshType::Tran) {
                 const auto Bb = FTwinLinkPLATEAUCityObjectGroupEx::GetBoundingBox(CityObjectGroup.Get());
-                if(Bb.has_value())
-                {
+                if (Bb.has_value()) {
                     if (Fields.has_value() == false)
                         Fields = *Bb;
                     else
