@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
 #include "TwinLinkWorldViewer.h"
@@ -155,6 +155,11 @@ void ATwinLinkWorldViewer::Click() {
     FHitResult HitResult;
     if (!GetLocalViewingPlayerController())
         return;
+
+    if (EvOnClicked.IsBound()) {
+        EvOnClicked.Broadcast();
+    }
+
     const auto IsHit = GetLocalViewingPlayerController()->GetHitResultUnderCursorByChannel(
         UEngineTypes::ConvertToTraceType(ECC_Visibility), true, HitResult);
 

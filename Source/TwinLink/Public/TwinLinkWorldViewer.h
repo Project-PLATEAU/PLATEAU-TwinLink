@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -11,6 +11,7 @@
 // クリックイベントの取得
 DECLARE_EVENT_OneParam(ATwinLinkWorldViewer, FDelClickViewPort, FHitResult, HitResult);
 DECLARE_EVENT_OneParam(ATwinLinkWorldViewer, FDelCanceledClickFacility);
+DECLARE_EVENT_OneParam(ATwinLinkWorldViewer, FDelClicked);
 
 // 任意のオブジェクトをクリックしたときのイベント
 DECLARE_EVENT_OneParam(ATwinLinkWorldViewer, FOnAnyObjectClicked, const FHitResult&);
@@ -74,6 +75,7 @@ public:
     // クリック
     FDelClickViewPort EvOnClickedFacility;
     FDelCanceledClickFacility EvOnCanceledClickFacility;
+    FDelClicked EvOnClicked;
 
     // 任意のオブジェクトをクリックしたときの処理
     FOnAnyObjectClicked EvOnAnyObjectClicked;
