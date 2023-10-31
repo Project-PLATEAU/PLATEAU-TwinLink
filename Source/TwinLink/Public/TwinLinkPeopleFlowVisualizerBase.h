@@ -44,6 +44,13 @@ public:
     void InitVisualizer(APLATEAUInstancedCityModel* InCityModel, int InBaseZoomLevel = 19, int InMaxZoomLevel = 19);
 
     /**
+     * @brief 初期化済みか？
+     * @return 
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+    bool IsInited() const;
+
+    /**
      * @brief 最大値と最小値を自動で計算する
      * かなり負荷が高い。数フレーム掛かる可能性がある。
     */
@@ -125,7 +132,7 @@ private:
         {}
 
         void Init(APLATEAUInstancedCityModel* InCityModel);
-        bool IsValid() { return CityModel != nullptr; }
+        bool IsValid() const { return CityModel != nullptr; }
 
         // 以下 直接変更は禁止
         

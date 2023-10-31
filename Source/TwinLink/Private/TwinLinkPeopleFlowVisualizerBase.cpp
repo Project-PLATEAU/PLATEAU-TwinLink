@@ -355,6 +355,10 @@ void UTwinLinkPeopleFlowVisualizerBase::InitVisualizer(APLATEAUInstancedCityMode
     HeatmapDepth = FMath::CeilToInt(HeatmapExtent.Y / VoxelHelper.SamplingVoxelOnMaxLevel.GetExtent().Y);
 }
 
+bool UTwinLinkPeopleFlowVisualizerBase::IsInited() const {
+    return CityModelHelper.IsValid();
+}
+
 void UTwinLinkPeopleFlowVisualizerBase::SetMaximumAndMinimumAutomatically() {
     check(CityModelHelper.IsValid());
 
@@ -489,6 +493,7 @@ void UTwinLinkPeopleFlowVisualizerBase::RequestInfoFromSpatialID() {
 
     FTwinLinkPeopleFlowApiRequest Req{ RequestSpatialIDs, CurrentVisualizeTime };
     Sys->Request(Req);
+    UE_TWINLINK_LOG(LogTemp, Log, TEXT("Requset spatial info : %s"), *CurrentVisualizeTime.ToString());
 
 }
 
