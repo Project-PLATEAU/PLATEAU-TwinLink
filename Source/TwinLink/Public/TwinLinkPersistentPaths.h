@@ -57,6 +57,20 @@ public:
     */
     static FString CreateFloorInfoFilePath(const FString& SubFolderName, const FString& FileName);
 
+    /**
+     * @brief 設計情報のイメージへのパスを作成する
+     * @param FileName 
+     * @return 
+    */
+    static FString CreateBuildingDesignImagePath(const FString& FileName);
+
+    /**
+     * @brief 設計情報ファイルへのパスを作成する
+     * @param FileName 
+     * @return 
+    */
+    static FString CreateBuildingDesignFilePath(const FString& FileName);
+
 private:
     static FString GetProjSaveDir();
 };

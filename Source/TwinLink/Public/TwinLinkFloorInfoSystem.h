@@ -7,11 +7,15 @@
 
 #include "TwinLinkSystemVersionInfo.h"
 #include "TwinLinkFloorInfoCollection.h"
+#include "TwinLinkBuildingDesignInfo.h"
 
 #include "TwinLinkFloorInfoSystem.generated.h"
 
 // 施設内階層情報
 class UTwinLinkFloorInfo;
+
+// データ更新時のイベント
+DECLARE_EVENT(UTwinLinkFloorInfoSystem, FDelOnChangedBuildingDesign);
 
 /**
  * 施設内階層情報の管理システム
@@ -133,6 +137,34 @@ public:
     TArray<FString> GetCategoryDisplayNameCollection();
 
     /**
+     * @brief 設計情報を検索
+     * @param Key 
+     * @return 
+    */
+    TWeakObjectPtr<UTwinLinkBuildingDesignInfo> FindBuildingDesign(const FString& Key);
+
+    /**
+     * @brief 設計情報の追加リクエスト
+     * @param Key GetKeyBySelectedFloor()の値
+     * @param ImageFileName 
+     * @return 
+    */
+    TWeakObjectPtr<UTwinLinkBuildingDesignInfo> AddBuildingDesign(
+        const FString& Key,
+        const FString& ImageFileName);
+
+    /**
+     * @brief 設計情報の変更リクエスト
+     * @param BuidlingDesignInfo 
+     * @param ImageFileName 
+     * @return 
+    */
+    bool EditBuildingDesign(
+        const FString& Key, 
+        const TWeakObjectPtr<UTwinLinkBuildingDesignInfo>& BuidlingDesignInfo, 
+        const FString& ImageFileName);
+
+    /**
      * @brief 施設情報の編集
      * @param FloorInfo
      * @param Name
@@ -166,9 +198,16 @@ public:
     */
     TWeakObjectPtr<UTwinLinkObservableCollection> GetFloorInfoCollection(const FString& Key);
 
+public:
+    /** 設計情報が変更された時に呼び出される **/
+    FDelOnChangedBuildingDesign EvOnAddedBuildingDesignInfoInstance;
+
 private:
     /** 施設情報機能のバージョン　永続化時に組み込む **/
     const TwinLinkSystemVersionInfo VersionInfo = TwinLinkSystemVersionInfo(0, 0, 0);
+
+    /** 設計情報のマップ フロア名キーに扱う **/
+    TMap<FString, TObjectPtr<UTwinLinkBuildingDesignInfo>> BuidingDesingInfoMap;
 
     /** 施設情報の永続化時のファイル名 **/
     FString FileName;

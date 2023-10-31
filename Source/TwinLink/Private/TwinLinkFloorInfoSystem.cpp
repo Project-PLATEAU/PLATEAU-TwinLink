@@ -307,6 +307,39 @@ TArray<FString> UTwinLinkFloorInfoSystem::GetCategoryDisplayNameCollection() {
     return ValueArray;
 }
 
+TWeakObjectPtr<UTwinLinkBuildingDesignInfo> UTwinLinkFloorInfoSystem::FindBuildingDesign(const FString& Key) {
+    TObjectPtr<UTwinLinkBuildingDesignInfo>* DataPtr = BuidingDesingInfoMap.Find(Key);
+    if (DataPtr == nullptr)
+        return nullptr;
+    check(*DataPtr);
+    return *DataPtr;
+}
+
+TWeakObjectPtr<UTwinLinkBuildingDesignInfo> UTwinLinkFloorInfoSystem::AddBuildingDesign(const FString& Key, const FString& ImageFileName) {
+    const auto bIsContains = BuidingDesingInfoMap.Contains(Key);
+    check(bIsContains == false);    // 既に存在するキーで追加しようとした
+
+    TObjectPtr<UTwinLinkBuildingDesignInfo> Data = NewObject<UTwinLinkBuildingDesignInfo>();
+    Data->Setup(ImageFileName);
+
+    TWeakObjectPtr<UTwinLinkBuildingDesignInfo> Ret = BuidingDesingInfoMap.Add(Key, Data);
+
+    if (EvOnAddedBuildingDesignInfoInstance.IsBound()) {
+        EvOnAddedBuildingDesignInfoInstance.Broadcast();
+    }
+
+    return Ret;
+}
+
+bool UTwinLinkFloorInfoSystem::EditBuildingDesign(const FString& Key, const TWeakObjectPtr<UTwinLinkBuildingDesignInfo>& BuidlingDesignInfo, const FString& ImageFileName) {
+    TObjectPtr<UTwinLinkBuildingDesignInfo>* DataPtr = BuidingDesingInfoMap.Find(Key);
+    check(DataPtr != nullptr);    // 存在しないデータにアクセス使用とした
+    check(*DataPtr == BuidlingDesignInfo.Get());
+    
+    (*DataPtr)->Setup(ImageFileName);
+    return true;
+}
+
 bool UTwinLinkFloorInfoSystem::EditFloorInfo(
     const TWeakObjectPtr<UTwinLinkFloorInfo>& FloorInfo, const FString& Name, 
     const FString& Category, const FString& ImageFileName, 
