@@ -62,6 +62,7 @@ void ATwinLinkWorldViewer::Tick(float DeltaTime) {
         FRotator NextRotation;
         if (TargetTransform->Update(DeltaTime, NextLocation, NextRotation))
             TargetTransform = std::nullopt;
+
         SetLocationImpl(NextLocation, NextRotation);
     }
 
@@ -76,6 +77,20 @@ void ATwinLinkWorldViewer::Tick(float DeltaTime) {
             }
         }
     }
+
+    // 更新されたかチェック
+    const auto CurrentLocation = GetActorLocation();
+    const auto CurrentRotation = GetActorRotation();
+    if (PreLocation != CurrentLocation || PreRotation != CurrentRotation) {
+        // 更新されたことを通知する
+        if (EvOnUpdatedLocationAndRotation.IsBound()) {
+            EvOnUpdatedLocationAndRotation.Broadcast();
+        }
+
+        PreLocation = CurrentLocation;
+        PreRotation = CurrentRotation;
+    }
+
 }
 
 // Called to bind functionality to input

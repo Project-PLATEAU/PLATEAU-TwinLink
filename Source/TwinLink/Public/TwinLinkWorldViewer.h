@@ -8,6 +8,9 @@
 #include "GameFramework/Character.h"
 #include "TwinLinkWorldViewer.generated.h"
 
+// 位置、姿勢情報が更新された
+DECLARE_EVENT_OneParam(ATwinLinkWorldViewer, FDelUpdatedLocationAndRotation);
+
 // クリックイベントの取得
 DECLARE_EVENT_OneParam(ATwinLinkWorldViewer, FDelClickViewPort, FHitResult, HitResult);
 DECLARE_EVENT_OneParam(ATwinLinkWorldViewer, FDelCanceledClickFacility);
@@ -72,6 +75,9 @@ public:
 private:
     void ATwinLinkWorldViewer::SetLocationImpl(const FVector& Position, const FRotator& Rotation);
 public:
+    // 位置、姿勢が更新された
+    FDelUpdatedLocationAndRotation EvOnUpdatedLocationAndRotation;
+
     // クリック
     FDelClickViewPort EvOnClickedFacility;
     FDelCanceledClickFacility EvOnCanceledClickFacility;
@@ -144,4 +150,7 @@ private:
     };
 
     std::optional<MoveInfo> TargetTransform;
+
+    FVector PreLocation;
+    FRotator PreRotation;
 };

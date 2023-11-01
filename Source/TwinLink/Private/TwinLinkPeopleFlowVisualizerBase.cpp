@@ -15,6 +15,7 @@
 #include "TwinLinkSpatialID.h"
 #include "TwinLinkPeopleFlowSystem.h"
 
+#include "TwinLinkWorldViewer.h"
 
 
 namespace {
@@ -286,6 +287,18 @@ void UTwinLinkPeopleFlowVisualizerBase::BeginPlay() {
     UpdatePeopleFlowDelegate.BindUFunction(this, FName("OnUpdatePeopleFlow"));
     OnSetMaximumAndMinimumAutomaticallyDelegate.BindUFunction(this, FName("OnSetMaximumAndMinimumAutomatically"));
 
+
+    TWeakObjectPtr< ATwinLinkWorldViewer> WorldViewer = ATwinLinkWorldViewer::GetInstance(GetWorld());
+    if (WorldViewer.IsValid()) {
+        WorldViewer->EvOnUpdatedLocationAndRotation.AddLambda([this]() {
+            if (IsInited() == false)
+                return;
+            RequestInfoFromSpatialID();
+            });
+    }
+    else {
+        UE_TWINLINK_C_LOG(LogTemp, Log, TEXT("Faild get ATwinLinkWorldViewer."));
+    }
 }
 
 // Called every frame
