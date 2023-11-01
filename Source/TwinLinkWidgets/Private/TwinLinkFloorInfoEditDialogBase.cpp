@@ -51,10 +51,13 @@ void UTwinLinkFloorInfoEditDialogBase::RequestEdit(
     check(InfoSys.IsValid());
 
     check(FloorInfo.IsValid());
+    
+    const auto SystemCategory = InfoSys->ConvertDisplayCategoryNameToSystemCategory(InCategory);
+
 
     check(CheckAddableFloorInfo(
         InName,
-        InCategory,
+        SystemCategory,
         InImageFileName,
         InGuide,
         InSpotInfo));
@@ -63,7 +66,7 @@ void UTwinLinkFloorInfoEditDialogBase::RequestEdit(
     InfoSys->EditFloorInfo(
         FloorInfo,
         InName,
-        InCategory,
+        SystemCategory,
         InImageFileName,
         InGuide,
         InSpotInfo
