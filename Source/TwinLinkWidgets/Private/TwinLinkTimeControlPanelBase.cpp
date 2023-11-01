@@ -32,12 +32,12 @@ void UTwinLinkTimeControlPanelBase::SetSlideTimespan(float Step) {
     //// 24時間以内
     const auto HoursF = FMath::Lerp(0.0, 24.0, Step); // 小数付き
     const auto Hours = FMath::FloorToInt(HoursF);
-    const auto MinutesF = (HoursF - Hours) * 60.0;      // 小数付き
-    const auto Minutes = FMath::FloorToInt(MinutesF);
-    const auto SecondsF = (MinutesF - Minutes) * 60.0; // 小数付き
-    const auto Seconds = FMath::FloorToInt(SecondsF);
+    //const auto MinutesF = (HoursF - Hours) * 60.0;      // 小数付き
+    //const auto Minutes = FMath::FloorToInt(MinutesF);
+    //const auto SecondsF = (MinutesF - Minutes) * 60.0; // 小数付き
+    //const auto Seconds = FMath::FloorToInt(SecondsF);
 
-    SlideTimespan = FTimespan(Hours, Minutes, Seconds);
+    SlideTimespan = FTimespan(Hours, 0, 0);
     
     OnChangedSelectDateTime(GetCurrentDateTime());
 
@@ -77,8 +77,9 @@ void UTwinLinkTimeControlPanelBase::SetOffsetDateTime(const FDateTime& Offset) {
 
 FDateTime UTwinLinkTimeControlPanelBase::GetCurrentDateTime() const {
     FDateTime Ret = OffsetDateTime + SlideTimespan;
-    if (Ret >= FDateTime::Now()) {
-        Ret = FDateTime::Now();
+    const auto Now = FDateTime::Now();
+    if (Ret >= Now) {
+        Ret = FDateTime(Now.GetYear(), Now.GetMonth(), Now.GetDay(), Now.GetHour());
     }
     return Ret;
 }
