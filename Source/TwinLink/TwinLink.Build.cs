@@ -59,5 +59,18 @@ public class TwinLink : ModuleRules
 
         //using c++17
         CppStandard = CppStandardVersion.Cpp17;
+
+        AddLib();
+    }
+
+    public void AddLib()
+    {
+        bEnableExceptions = true;
+
+        PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "../ThirdParty/include"));
+        string libPath = Path.Combine(ModuleDirectory, "../ThirdParty/lib/libshape.lib");
+        PublicAdditionalLibraries.Add(libPath);
+        libPath = Path.Combine(ModuleDirectory, "../ThirdParty/lib/shp.lib");
+        PublicAdditionalLibraries.Add(libPath);
     }
 }

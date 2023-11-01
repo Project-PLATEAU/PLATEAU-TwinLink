@@ -19,6 +19,9 @@
 #include "NavSystem/TwinLinkNavSystemEx.h"
 #include "NavSystem/TwinLinkNavSystemPathFinder.h"
 
+#include "libshape/datatype.h"
+#include "libshape/shp_writer.h"
+
 namespace {
     template<class T, class F>
     void ForeachChildActor(AActor* Self, F&& Func) {
@@ -327,13 +330,36 @@ bool ATwinLinkNavSystem::GetOutputPathInfo(FTwinLinkNavSystemOutputPathInfo& Out
     return true;
 }
 
-bool ATwinLinkNavSystem::ExportOutputPathInfo() const {
+bool ATwinLinkNavSystem::ExportOutputPathInfo(const FString& Path) const {
     FTwinLinkNavSystemOutputPathInfo Out;
     if (GetOutputPathInfo(Out) == false)
         return false;
 
-    // #TODO : 出力形式が決まったら出力処理を書く
-    UKismetSystemLibrary::PrintString(GetWorld(), TEXT("Output Path"));
+    // Shape layerに変換
+    shp::Layer layer;
+    layer.type = shp::ShapeType::PolyLineZ;
+
+    layer.attribute_database.fields = { "MIN_CAR", "MIN_WALK" };
+
+    std::vector<std::string> attributes;
+    attributes.push_back(std::to_string(Out.MinutesByCar));
+    attributes.push_back(std::to_string(Out.MinutesByWalk));
+    layer.attribute_database.attributes = { attributes };
+
+    shp::Shape shape;
+    for (const auto Point : Out.Route)
+    {
+        shape.points.emplace_back(Point.longitude, Point.latitude, Point.height);
+    }
+    layer.shapes.push_back(std::move(shape));
+
+    // Shapefile書き出し
+    shp::ShpWriter::write(TCHAR_TO_UTF8(*Path), layer);
+
+    // エクスプローラーで書き出し先のフォルダを開く
+    FPlatformProcess::LaunchFileInDefaultExternalApplication(*FPaths::GetPath(Path), nullptr, ELaunchVerb::Open);
+
+
     return true;
 }
 

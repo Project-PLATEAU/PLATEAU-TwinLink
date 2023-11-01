@@ -61,6 +61,53 @@ void UTwinLinkFileDialogLib::OpenFileDialog(
     OutputPin = EDialogResult::Cancelled;
 }
 
+
+void UTwinLinkFileDialogLib::SaveFileDialog(
+    EDialogResult& OutputPin,
+    TArray<FString>& OutFilePath,
+    const FString& DialogTitle,
+    const FString& DefaultPath,
+    const FString& DefaultFile,
+    const FString& FileTypeString,
+    const bool bIsMultiSelect) {
+
+    //ウィンドウハンドルを取得
+    void* windowHandle = GetActiveWindow();
+
+    if (windowHandle) {
+        IDesktopPlatform* desktopPlatform = FDesktopPlatformModule::Get();
+        if (desktopPlatform) {
+            //ダイアログを開く
+            bool result = desktopPlatform->SaveFileDialog(
+                windowHandle,
+                DialogTitle,
+                DefaultPath,
+                DefaultFile,
+                FileTypeString,
+                (uint32)(bIsMultiSelect ? EFileDialogFlags::Type::Multiple : EFileDialogFlags::Type::None),
+                OutFilePath
+            );
+
+            if (result) {
+
+                // OpenFileDialog()はエディタビルドだと絶対パス、アプリビルドだと相対パスを返す。
+                // 統一するために変換している
+
+                //相対パスを絶対パスに変換
+                for (FString& fp : OutFilePath) {
+                    fp = FPaths::ConvertRelativePathToFull(fp);
+                }
+
+                OutputPin = EDialogResult::Successful;
+                return;
+            }
+        }
+    }
+
+    OutputPin = EDialogResult::Cancelled;
+}
+
+
 void UTwinLinkFileDialogLib::OpenDirectoryDialog(EDialogResult& OutputPin, FString& OutFolderName, const FString& DialogTitle, const FString& DefaultPath) {
     //ウィンドウハンドルを取得
     void* windowHandle = GetActiveWindow();
@@ -91,6 +138,7 @@ FString UTwinLinkFileDialogLib::GetFileTypeString(EFileType FileType) {
         { EFileType::BMP, TEXT("ビットマップ ファイル|*.bmp;*.dib") },
         { EFileType::JPEG, TEXT("JPEG|*.jpg;*.jpeg;*.jpe;*jfif") },
         { EFileType::Png, TEXT("PNG|*.png") },
+        { EFileType::Shp, TEXT("Shapefile|*.shp") },
         { EFileType::All, TEXT("All|*.*") },
     };
 
