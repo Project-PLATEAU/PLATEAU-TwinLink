@@ -69,8 +69,16 @@ void UTwinLinkBlueprintLibrary::TwinLinkSetFacilityModel(AActor* Model) {
     FTwinLinkModule::Get().SetFacilityModel(Model);
 }
 
+AActor* UTwinLinkBlueprintLibrary::TwinLinkGetFacilityModel() {
+    return FTwinLinkModule::Get().GetFacilityModel();
+}
+
 void UTwinLinkBlueprintLibrary::TwinLinkSetCityModel(AActor* Model) {
     FTwinLinkModule::Get().SetCityModel(Model);
+}
+
+AActor* UTwinLinkBlueprintLibrary::TwinLinkGetCityModel() {
+    return FTwinLinkModule::Get().GetCityModel();
 }
 
 ESlateVisibility UTwinLinkBlueprintLibrary::AsSlateVisibility(bool visibility)
