@@ -1,5 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
-
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #include "TwinLinkFileDialogLib.h"
 
@@ -10,16 +9,60 @@
 #include "Runtime/Core/Public/Windows/AllowWindowsPlatformTypes.h"
 #include <Windows.h>
 #include "Runtime/Core/Public/Windows/HideWindowsPlatformTypes.h."
-#endif 
+#endif
 
 // Unreal Engineのデスクトッププラットフォーム関係
 #include "Developer/DesktopPlatform/Public/IDesktopPlatform.h"
 #include "Developer/DesktopPlatform/Public/DesktopPlatformModule.h"
 
-// 
+//
 #include "TwinLinkCommon.h"
 
 void UTwinLinkFileDialogLib::OpenFileDialog(
+    EDialogResult& OutputPin,
+    TArray<FString>& OutFilePath,
+    const FString& DialogTitle,
+    const FString& DefaultPath,
+    const FString& DefaultFile,
+    const FString& FileTypeString,
+    const bool bIsMultiSelect) {
+    //ウィンドウハンドルを取得
+    void* windowHandle = GetActiveWindow();
+
+    if (windowHandle) {
+        IDesktopPlatform* desktopPlatform = FDesktopPlatformModule::Get();
+        if (desktopPlatform) {
+            //ダイアログを開く
+            bool result = desktopPlatform->OpenFileDialog(
+                windowHandle,
+                DialogTitle,
+                DefaultPath,
+                DefaultFile,
+                FileTypeString,
+                (uint32)(bIsMultiSelect ? EFileDialogFlags::Type::Multiple : EFileDialogFlags::Type::None),
+                OutFilePath
+            );
+
+            if (result) {
+                // OpenFileDialog()はエディタビルドだと絶対パス、アプリビルドだと相対パスを返す。
+                // 統一するために変換している
+
+                //相対パスを絶対パスに変換
+                for (FString& fp : OutFilePath) {
+                    fp = FPaths::ConvertRelativePathToFull(fp);
+                }
+
+                OutputPin = EDialogResult::Successful;
+                return;
+            }
+        }
+    }
+
+    OutputPin = EDialogResult::Cancelled;
+}
+
+
+void UTwinLinkFileDialogLib::SaveFileDialog(
     EDialogResult& OutputPin,
     TArray<FString>& OutFilePath,
     const FString& DialogTitle,
@@ -35,7 +78,7 @@ void UTwinLinkFileDialogLib::OpenFileDialog(
         IDesktopPlatform* desktopPlatform = FDesktopPlatformModule::Get();
         if (desktopPlatform) {
             //ダイアログを開く
-            bool result = desktopPlatform->OpenFileDialog(
+            bool result = desktopPlatform->SaveFileDialog(
                 windowHandle,
                 DialogTitle,
                 DefaultPath,
@@ -64,12 +107,38 @@ void UTwinLinkFileDialogLib::OpenFileDialog(
     OutputPin = EDialogResult::Cancelled;
 }
 
+
+void UTwinLinkFileDialogLib::OpenDirectoryDialog(EDialogResult& OutputPin, FString& OutFolderName, const FString& DialogTitle, const FString& DefaultPath) {
+    //ウィンドウハンドルを取得
+    void* windowHandle = GetActiveWindow();
+
+    if (windowHandle) {
+        IDesktopPlatform* desktopPlatform = FDesktopPlatformModule::Get();
+        if (desktopPlatform) {
+            //ダイアログを開く
+            bool result = desktopPlatform->OpenDirectoryDialog(windowHandle, DialogTitle, DefaultPath, OutFolderName);
+
+            if (result) {
+                // OpenFileDialog()はエディタビルドだと絶対パス、アプリビルドだと相対パスを返す。
+                // 統一するために変換している
+
+                //相対パスを絶対パスに変換
+                OutFolderName = FPaths::ConvertRelativePathToFull(OutFolderName);
+
+                OutputPin = EDialogResult::Successful;
+                return;
+            }
+        }
+    }
+}
+
 FString UTwinLinkFileDialogLib::GetFileTypeString(EFileType FileType) {
     const TMap<EFileType, FString> FileTypeStringMap{
         { EFileType::LoadableTextures, TEXT("すべてのテクスチャ|*.bmp;*.dib;*.jpg;*.jpeg;*.jpe;*jfif;*.png")},
-        { EFileType::BMP, TEXT("ビットマップ ファイル|*.bmp;*.dib")},
+        { EFileType::BMP, TEXT("ビットマップ ファイル|*.bmp;*.dib") },
         { EFileType::JPEG, TEXT("JPEG|*.jpg;*.jpeg;*.jpe;*jfif") },
         { EFileType::Png, TEXT("PNG|*.png") },
+        { EFileType::Shp, TEXT("Shapefile|*.shp") },
         { EFileType::All, TEXT("All|*.*") },
     };
 
@@ -77,7 +146,6 @@ FString UTwinLinkFileDialogLib::GetFileTypeString(EFileType FileType) {
     check(Str);
 
     return *Str;
-
 }
 
 FString UTwinLinkFileDialogLib::CombineFileTypeString2(const FString& FileTypeStr0, const FString& FileTypeStr1) {

@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -8,9 +8,13 @@
 #include "GameFramework/Character.h"
 #include "TwinLinkWorldViewer.generated.h"
 
+// 位置、姿勢情報が更新された
+DECLARE_EVENT_OneParam(ATwinLinkWorldViewer, FDelUpdatedLocationAndRotation);
+
 // クリックイベントの取得
 DECLARE_EVENT_OneParam(ATwinLinkWorldViewer, FDelClickViewPort, FHitResult, HitResult);
 DECLARE_EVENT_OneParam(ATwinLinkWorldViewer, FDelCanceledClickFacility);
+DECLARE_EVENT_OneParam(ATwinLinkWorldViewer, FDelClicked);
 
 // 任意のオブジェクトをクリックしたときのイベント
 DECLARE_EVENT_OneParam(ATwinLinkWorldViewer, FOnAnyObjectClicked, const FHitResult&);
@@ -71,9 +75,13 @@ public:
 private:
     void ATwinLinkWorldViewer::SetLocationImpl(const FVector& Position, const FRotator& Rotation);
 public:
+    // 位置、姿勢が更新された
+    FDelUpdatedLocationAndRotation EvOnUpdatedLocationAndRotation;
+
     // クリック
     FDelClickViewPort EvOnClickedFacility;
     FDelCanceledClickFacility EvOnCanceledClickFacility;
+    FDelClicked EvOnClicked;
 
     // 任意のオブジェクトをクリックしたときの処理
     FOnAnyObjectClicked EvOnAnyObjectClicked;
@@ -142,4 +150,7 @@ private:
     };
 
     std::optional<MoveInfo> TargetTransform;
+
+    FVector PreLocation;
+    FRotator PreRotation;
 };

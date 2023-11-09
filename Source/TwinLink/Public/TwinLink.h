@@ -116,12 +116,25 @@ public:
         static void TwinLinkSetFacilityModel(AActor* Model);
 
     /**
+    * @brief 管理対象建築物（LOD4）を取得
+    * @return 建築物（LOD4）のアクタ
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        static AActor* TwinLinkGetFacilityModel();
+
+    /**
     * @brief PLATEAU都市モデルを設定
     * @param 都市のアクタ
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
         static void TwinLinkSetCityModel(AActor* Model);
 
+    /**
+    * @brief PLATEAU都市モデルを取得
+    * @return 都市のアクタ
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        static AActor* TwinLinkGetCityModel();
 
     /**
     * @brief true -> Visible, false -> Hiddenを返す.

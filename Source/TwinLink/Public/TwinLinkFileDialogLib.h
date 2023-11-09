@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -49,7 +49,7 @@ enum class EFileType : uint8 {
     BMP,
     JPEG,
     Png,
-
+    Shp,
     All,
 };
 ENUM_CLASS_FLAGS(EFileType);
@@ -93,8 +93,37 @@ public:
         const bool bIsMultiSelect = false
     );
 
+    /**
+     * @brief ダイアログを開く (BluePrint用)
+     * 子のウィンドウが起動する形になるためフルスクリーンモードの場合、
+     * 起動したウィンドウが正常に表示されない。
+     *
+     * memo FileTypeはenumのビットフラグでは実装出来なかった。
+     * UENUM(BlueprintType) だとuint8しか対応していないため拡張していくと直ぐに表現域を超えてしまう。
+     *
+     * @param OutputPin
+     * @param OutFilePath 選択されたファイルの絶対パス
+     * @param DialogTitle
+     * @param DefaultPath
+     * @param DefaultFile
+     * @param FileType 表示|拡張子|表示|拡張子|...    ex Png(*.png)|*.png|Jpeg(*.jpeg;*.JPEG)|*.jpeg;*.JPEG
+     * @param bIsMultiSelect 複数選択可能か
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink OpenFileDialog", meta = (ExpandEnumAsExecs = "OutputPin"))
+    static void SaveFileDialog(
+        EDialogResult& OutputPin,
+        TArray<FString>& OutFilePath,
+        const FString& DialogTitle = TEXT("Save File Dialog"),
+        const FString& DefaultPath = TEXT(""),
+        const FString& DefaultFile = TEXT(""),
+        const FString& FileType = TEXT("All (*.*)|*.*"),
+        const bool bIsMultiSelect = false
+    );
+
     // OpenDirectoryDialog
     //https://docs.unrealengine.com/5.2/en-US/API/Developer/DesktopPlatform/IDesktopPlatform/OpenDirectoryDialog/
+    UFUNCTION(BlueprintCallable, Category = "TwinLink OpenFileDialog", meta = (ExpandEnumAsExecs = "OutputPin"))
+    static void OpenDirectoryDialog(EDialogResult& OutputPin, FString& OutFolderName, const FString& DialogTitle, const FString& DefaultPath);
 
     /**
      * @brief ファイルタイプを表現する文字列を取得する

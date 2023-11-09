@@ -52,7 +52,8 @@ public class TwinLinkEditor : ModuleRules
                 "WorkspaceMenuStructure",
                 "NavigationSystem",
                 "PLATEAURuntime",
-                "EditorScriptingUtilities"
+                "EditorScriptingUtilities",
+                "PropertyEditor"
                 // ... add private dependencies that you statically link with here ...	
             }
             );

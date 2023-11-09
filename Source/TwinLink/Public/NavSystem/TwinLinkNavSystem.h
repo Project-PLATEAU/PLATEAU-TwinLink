@@ -139,7 +139,7 @@ public:
      * @brief : 移動パスの情報出力情報取得(ファイル出力)
      */
     UFUNCTION(BlueprintCallable)
-        bool ExportOutputPathInfo() const;
+        bool ExportOutputPathInfo(const FString& Path) const;
 
     /*
      * @brief : 現在のパス検索モードアクタ

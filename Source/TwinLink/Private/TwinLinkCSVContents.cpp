@@ -1,5 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
-
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #include "TwinLinkCSVContents.h"
 
@@ -28,7 +27,7 @@ bool TwinLinkCSVContents::Standard::Parse(TArray<FString> RowElements) {
     if (bHasCompatibility == false) {
         return false;
     }
-    
+
     RowElements[1].ParseIntoArray(KeyContents, TEXT(","), true);
 
     // Headerの情報を取り除く
@@ -44,6 +43,30 @@ bool TwinLinkCSVContents::Standard::Parse(TArray<FString> RowElements) {
     return true;
 }
 
+bool TwinLinkCSVContents::Standard::ParseOmit(TArray<FString> RowElements) {
+    KeyContents.Reset();
+    MainContents.Reset();
+
+    const auto bIsEmpty = RowElements.IsEmpty();
+    ensure(bIsEmpty == false);
+    if (bIsEmpty)
+        return false;
+
+    // Headerの情報を保存する
+    RowElements[0].ParseIntoArray(KeyContents, TEXT(","), true);
+
+    // Headerの情報を取り除く
+    RowElements.RemoveAt(0);
+
+    // Bodyの情報を保存する
+    TArray<FString> TempBuffer;
+    for (const auto& Elements : RowElements) {
+        Elements.ParseIntoArray(TempBuffer, TEXT(","), false);
+        MainContents.Add(TempBuffer);
+    }
+
+    return true;
+}
 FString TwinLinkCSVContents::Standard::CreateHeaderContents(FString HeaderContents) const {
     return FString::Printf(TEXT("%s\n%s"), *(Version.ToString()), *HeaderContents);
 }
@@ -51,4 +74,3 @@ FString TwinLinkCSVContents::Standard::CreateHeaderContents(FString HeaderConten
 FString TwinLinkCSVContents::Standard::CreateBodyContents(FString BodyContents) const {
     return FString::Printf(TEXT("%s"), *BodyContents);
 }
-
