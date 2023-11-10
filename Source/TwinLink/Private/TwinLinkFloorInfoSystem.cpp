@@ -315,20 +315,19 @@ TWeakObjectPtr<UTwinLinkBuildingDesignInfo> UTwinLinkFloorInfoSystem::FindBuildi
     return *DataPtr;
 }
 
-TWeakObjectPtr<UTwinLinkBuildingDesignInfo> UTwinLinkFloorInfoSystem::AddBuildingDesign(const FString& Key, const FString& ImageFileName) {
+void UTwinLinkFloorInfoSystem::AddBuildingDesign(const FString& Key, const FString& ImageFileName) {
     const auto bIsContains = BuidingDesingInfoMap.Contains(Key);
     check(bIsContains == false);    // 既に存在するキーで追加しようとした
 
     TObjectPtr<UTwinLinkBuildingDesignInfo> Data = NewObject<UTwinLinkBuildingDesignInfo>();
     Data->Setup(ImageFileName);
 
-    TWeakObjectPtr<UTwinLinkBuildingDesignInfo> Ret = BuidingDesingInfoMap.Add(Key, Data);
+    BuidingDesingInfoMap.Add(Key, Data);
 
     if (EvOnAddedBuildingDesignInfoInstance.IsBound()) {
         EvOnAddedBuildingDesignInfoInstance.Broadcast();
     }
 
-    return Ret;
 }
 
 bool UTwinLinkFloorInfoSystem::EditBuildingDesign(const FString& Key, const TWeakObjectPtr<UTwinLinkBuildingDesignInfo>& BuidlingDesignInfo, const FString& ImageFileName) {
