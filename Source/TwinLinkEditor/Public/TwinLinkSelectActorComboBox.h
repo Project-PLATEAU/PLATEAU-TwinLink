@@ -17,6 +17,11 @@ public:
      * @brief コンストラクタ
     */
     UTwinLinkSelectActorComboBox(const FObjectInitializer& ObjectInitialize);
+    /**
+     * @brief ウィジェット生成
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        void TwinLinkSelectActorComboBoxGenerate();
 public:
     /** 選択アクタ **/
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Editor)
