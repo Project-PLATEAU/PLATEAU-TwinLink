@@ -133,7 +133,7 @@ public:
      * @UiPanelSize : スクリーンに表示するパネルサイズ(マーカーとの重なりチェックに使う
      */
     UFUNCTION(BlueprintCallable)
-        FTwinLinkNavSystemFindPathUiInfo GetDrawMoveTimeUiInfo(TwinLinkNavSystemMoveType MoveType, const FBox2D& ScreenRange) const;
+        FTwinLinkNavSystemFindPathUiInfo GetDrawMoveTimeUiInfo(TwinLinkNavSystemMoveType MoveType, const FBox2D& ScreenRange, const FVector2D& UiPanelSize) const;
 
     /*
      * @brief : 移動パスの情報出力情報取得

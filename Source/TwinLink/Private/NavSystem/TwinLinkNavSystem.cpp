@@ -351,7 +351,7 @@ const UTwinLinkNavSystemParam* ATwinLinkNavSystem::GetRuntimeParam() const {
     return RuntimeParam;
 }
 
-FTwinLinkNavSystemFindPathUiInfo ATwinLinkNavSystem::GetDrawMoveTimeUiInfo(TwinLinkNavSystemMoveType MoveType, const FBox2D& ScreenRange) const {
+FTwinLinkNavSystemFindPathUiInfo ATwinLinkNavSystem::GetDrawMoveTimeUiInfo(TwinLinkNavSystemMoveType MoveType, const FBox2D& ScreenRange, const FVector2D& UiPanelSize) const {
     if (PathFindInfo.has_value() == false || PathFindInfo->IsSuccess() == false)
         return FTwinLinkNavSystemFindPathUiInfo();
     if (TwinLinkNavSystemMoveTypeT(MoveType).IsValid() == false)
