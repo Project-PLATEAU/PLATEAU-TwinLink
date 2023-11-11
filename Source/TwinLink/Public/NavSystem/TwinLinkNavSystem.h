@@ -77,6 +77,11 @@ public:
     }
 
     /*
+     * @brief : 道コリジョンのハイトマップ作製
+     */
+    void BuildDemHeightMap();
+
+    /*
      * @brief : ナビメッシュの道情報を除いた都市モデルのAabb
      */
     const FBox& GetFieldAabb() const {
@@ -125,6 +130,7 @@ public:
 
     /*
      * @brief : 移動パスの情報取得
+     * @UiPanelSize : スクリーンに表示するパネルサイズ(マーカーとの重なりチェックに使う
      */
     UFUNCTION(BlueprintCallable)
         FTwinLinkNavSystemFindPathUiInfo GetDrawMoveTimeUiInfo(TwinLinkNavSystemMoveType MoveType, const FBox2D& ScreenRange) const;
@@ -224,6 +230,27 @@ private:
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
         TMap<FString, FTwinLinkNavSystemBuildingInfo> BuildingMap;
 
+    // 道コリジョンのHeightMap
+    // index :
+    // DemCollisionのAabb寄りも低い値が入っているときは不正値扱い
+    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
+        TArray<float> DemHeightMap;
+
+    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
+        int DemHeightMapSizeX = 0;
+
+    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
+        int DemHeightMapSizeY = 0;
+
+    std::optional<double> GetDemHeight(int Index) const;
+    int PositionToDemHeightMapIndex(const FVector3d& Pos)const;
+
+    std::optional<FVector3d> DemHeightMapIndexToPosition(int Index) const;
+
+    int DemHeightMapCellToIndex(int X, int Y) const;
+
+    bool TryDemHeightMapIndexToCell(int Index, int& OutX, int& OutY) const;
+
 private:
     // -----------------------
     // ランタイム系
@@ -262,6 +289,13 @@ private:
     // パス探索のアクター
     UPROPERTY(EditAnywhere, Category = TwinLink_Test)
         bool DebugDrawInfo = false;
+
+    // ハイトマップをデバッグ表示
+    UPROPERTY(EditAnywhere, Category = TwinLink_Test)
+        bool DebugDrawDemHeightMap = false;
+
+    UPROPERTY(EditAnywhere, Category = TwinLink_Test)
+        int DebugDrawDemHeightMapOffsetZ = 0;
 
     //    UTwinLinkFacilityInfo DebugStartBuilding;
     UPROPERTY(EditAnywhere, Category = TwinLink_Test)

@@ -9,6 +9,7 @@
 #include "TwinLinkActorEx.h"
 #include "TwinLinkFacilityInfo.h"
 #include "TwinLinkFacilityInfoSystem.h"
+#include "TwinLinkMathEx.h"
 #include "TwinLinkPLATEAUCityModelEx.h"
 #include "TwinLinkPLATEAUCityObjectGroupEx.h"
 #include "TwinLinkWorldViewer.h"
@@ -40,6 +41,8 @@ namespace {
         const auto Offset = (Index + 1) >> 1;
         return Sign * Offset;
     }
+    // ハイトマップのセルサイズ
+    constexpr float DEM_CELL_SIZE = 500;
 }
 
 ATwinLinkNavSystem::ATwinLinkNavSystem() {
@@ -117,6 +120,35 @@ void ATwinLinkNavSystem::Tick(float DeltaSeconds) {
 #endif
 }
 
+void ATwinLinkNavSystem::BuildDemHeightMap()
+{
+    auto MinX = FMath::FloorToInt(DemCollisionAabb.Min.X / DEM_CELL_SIZE);
+    auto MaxX = FMath::CeilToInt (DemCollisionAabb.Max.X / DEM_CELL_SIZE);
+    auto MinY = FMath::FloorToInt(DemCollisionAabb.Min.Y / DEM_CELL_SIZE);
+    auto MaxY = FMath::CeilToInt64(DemCollisionAabb.Max.Y / DEM_CELL_SIZE);
+    // 1m
+    auto Unit = 100;
+
+    DemHeightMapSizeX = MaxX - MinX + 1;
+    DemHeightMapSizeY = MaxY - MinY + 1;
+    DemHeightMap.Init(DemCollisionAabb.Min.Z - 100, DemHeightMapSizeX * DemHeightMapSizeY);
+    for(auto X = MinX; X <= MaxX; ++X)
+    {
+        for(auto Y = MinY; Y <= MaxY; ++Y)
+        {
+            auto P = FVector3d(X * DEM_CELL_SIZE, Y * DEM_CELL_SIZE, 0);
+            auto Start = FVector3d(P.X, P.Y, DemCollisionAabb.Max.Z + 1);
+            auto End = FVector3d(P.X, P.Y, DemCollisionAabb.Min.Z - 1);
+            FHitResult HeightResult;
+
+            if (GetWorld()->LineTraceSingleByChannel(HeightResult, Start, End, DemCollisionChannel)) {
+                auto Index = PositionToDemHeightMapIndex(Start);
+                DemHeightMap[Index] = HeightResult.Location.Z;
+            }
+        }
+    }
+}
+
 void ATwinLinkNavSystem::DebugDraw() {
 #ifdef WITH_EDITOR
     const UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
@@ -140,6 +172,21 @@ void ATwinLinkNavSystem::DebugDraw() {
         }
     }
 
+    if(DebugDrawDemHeightMap)
+    {
+        for(auto I = 0; I < DemHeightMap.Num(); ++I)
+        {
+            auto P = *DemHeightMapIndexToPosition(I);
+            auto Z = GetDemHeight(I);
+            if (Z.has_value() == false)
+                continue;
+            P.Z = *Z;
+            auto Center = P + FVector3d::One() * DEM_CELL_SIZE * 0.5f;
+            auto Extent = FVector3d(DEM_CELL_SIZE, DEM_CELL_SIZE, 10);
+            DrawDebugBox(GetWorld(), Center, Extent, FColor::Red);
+        }
+    }
+
     // NavSys->NavDataSet[0]->
 #endif
 }
@@ -149,6 +196,53 @@ void ATwinLinkNavSystem::DebugBeginPlay() {
 #endif
 }
 
+std::optional<double> ATwinLinkNavSystem::GetDemHeight(int Index) const
+{
+    if (Index < 0 || Index >= DemHeightMap.Num())
+        return std::nullopt;
+
+    // 設定値がAABBの範囲外ならそこには道は存在しない
+    const auto Height = DemHeightMap[Index];
+    if (Height < DemCollisionAabb.Min.Z)
+        return std::nullopt;
+    return Height;
+}
+
+int ATwinLinkNavSystem::PositionToDemHeightMapIndex(const FVector3d& Pos) const
+{
+    auto Offset = Pos - DemCollisionAabb.Min;
+    if (Offset.X < 0 || Offset.Z < 0)
+        return -1;
+
+    auto X = FMath::FloorToInt(Offset.X / DEM_CELL_SIZE);
+    auto Y = FMath::FloorToInt(Offset.Y / DEM_CELL_SIZE);
+    return DemHeightMapCellToIndex(X, Y);
+}
+
+std::optional<FVector3d> ATwinLinkNavSystem::DemHeightMapIndexToPosition(int Index) const
+{
+    int X;
+    int Y;
+    if (TryDemHeightMapIndexToCell(Index, X, Y) == false)
+        return std::nullopt;
+
+    return FVector3d(1.f * X * DEM_CELL_SIZE, 1.f * Y * DEM_CELL_SIZE, 0.f) + DemCollisionAabb.Min;
+}
+
+int ATwinLinkNavSystem::DemHeightMapCellToIndex(int X, int Y) const
+{
+    return Y * DemHeightMapSizeX + X;
+}
+
+bool ATwinLinkNavSystem::TryDemHeightMapIndexToCell(int Index, int& OutX, int& OutY) const
+{
+    if (Index < 0 || Index >= DemHeightMap.Num())
+        return false;
+
+    OutX = Index % DemHeightMapSizeX;
+    OutY = Index / DemHeightMapSizeX;
+    return true;
+}
 
 void ATwinLinkNavSystem::BeginPlay() {
     Super::BeginPlay();
