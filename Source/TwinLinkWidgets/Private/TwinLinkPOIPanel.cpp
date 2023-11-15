@@ -45,7 +45,7 @@ void UTwinLinkPOIPanel::TwinLinkPOIRegist() {
     if (POISubSystem.Get()->RegisteredPOIs.Contains(RegisteredName)) {
         for (const auto& Child : RegisteredAttributesScrollbox->GetAllChildren()) {
             const auto Element = Cast<UTwinLinkPOIElement>(Child);
-            if (Element->AttributeText->Text.ToString().Equals(RegisteredName)) {
+            if (Element->AttributeText->GetText().ToString().Equals(RegisteredName)) {
                 Element->TwinLinkPOIRemove();
             }
         }

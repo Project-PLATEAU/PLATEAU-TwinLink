@@ -16,13 +16,16 @@ void UTwinLinkAssetPlacementElement::TwinLinkAssetPlacementElementSetup(const in
     const auto Button = Cast<UButton>(GetRootWidget());//Cast<UButton>(Obj);
 
     if (Button) {
-        Button->WidgetStyle.Normal.SetResourceObject(AssetPlacementSys.Get()->PresetTextures[PresetID]);
-        Button->WidgetStyle.Normal.ImageSize = FVector2D(100, 100);
-        Button->WidgetStyle.Hovered.SetResourceObject(AssetPlacementSys.Get()->PresetTextures[PresetID]);
-        Button->WidgetStyle.Hovered.ImageSize = FVector2D(100, 100);
-        Button->WidgetStyle.Pressed.SetResourceObject(AssetPlacementSys.Get()->PresetTextures[PresetID]);
-        Button->WidgetStyle.Pressed.ImageSize = FVector2D(100, 100);
-        UE_TWINLINK_LOG(LogTemp, Log, TEXT("TwinLinkAssetPlacementElementSetup"));
+        auto Style = Button->GetStyle();
+
+        Style.Normal.SetResourceObject(AssetPlacementSys.Get()->PresetTextures[PresetID]);
+        Style.Normal.ImageSize = FVector2D(100, 100);
+        Style.Hovered.SetResourceObject(AssetPlacementSys.Get()->PresetTextures[PresetID]);
+        Style.Hovered.ImageSize = FVector2D(100, 100);
+        Style.Pressed.SetResourceObject(AssetPlacementSys.Get()->PresetTextures[PresetID]);
+        Style.Pressed.ImageSize = FVector2D(100, 100);
+
+        Button->SetStyle(Style);
     }
 }
 
