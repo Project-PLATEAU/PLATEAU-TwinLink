@@ -33,8 +33,6 @@ void UTwinLinkFacilityEditDialogBase::Setup(UTwinLinkFacilityInfo* Info) {
     check(FacilityInfoSys.IsValid());
     OnChangedCategoryGroup(FacilityInfoSys->GetCategoryDisplayNameCollection());
     OnChangedInfo();
-
-    OnVisibilityChanged.AddDynamic(this, &UTwinLinkFacilityEditDialogBase::OnChangeActive);
 }
 
 FString UTwinLinkFacilityEditDialogBase::GetDisplayCategoryName() const {
@@ -72,10 +70,4 @@ void UTwinLinkFacilityEditDialogBase::RequestEdit(const FString& Name, const FSt
     FacilityInfoSys->ExportFacilityInfo();
 
     OnSuccessRequestEdit();
-}
-
-void UTwinLinkFacilityEditDialogBase::OnChangeActive(ESlateVisibility Visible)
-{
-    if (auto NavSys = ATwinLinkNavSystem::GetInstance(GetWorld()))
-        NavSys->SetEntranceLocatorActive(Visible == ESlateVisibility::Visible);
 }

@@ -35,18 +35,11 @@ void UTwinLinkAddFacilityDialogBase::Setup() {
     check(FacilityInfoSys.IsValid());
     SyncCategoryCollectionWidget(
         FacilityInfoSys.Get()->GetCategoryDisplayNameCollection());
-    OnVisibilityChanged.AddDynamic(this, &UTwinLinkAddFacilityDialogBase::OnChangeActive);
 }
 
 const UPrimitiveComponent* UTwinLinkAddFacilityDialogBase::GetTargetFeatureComponent() const {
     const auto FacilityInfoSys = TwinLinkSubSystemHelper::GetInstance<UTwinLinkFacilityInfoSystem>();
     return FacilityInfoSys->FindFacility(FeatureID).Get();
-}
-
-void UTwinLinkAddFacilityDialogBase::OnChangeActive(ESlateVisibility Visible)
-{
-    if (auto NavSys = ATwinLinkNavSystem::GetInstance(GetWorld()))
-        NavSys->SetEntranceLocatorActive(Visible == ESlateVisibility::Visible);
 }
 
 void UTwinLinkAddFacilityDialogBase::AddFacilityInfo(const FString& InName, const FString& InCategory, const FString& InImageFileName, const FString& InDescription, const FString& InSpotInfo) {

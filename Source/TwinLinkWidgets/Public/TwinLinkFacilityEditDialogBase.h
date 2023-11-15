@@ -88,10 +88,6 @@ public:
     */
     UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
         void OnChangedCategoryGroup(const TArray<FString>& Categories);
-
-private:
-    UFUNCTION()
-        void OnChangeActive(ESlateVisibility Visible);
 private:
     TWeakObjectPtr<UTwinLinkFacilityInfo> FacilityInfo;
     FDelegateHandle EvOnChangedHnd;

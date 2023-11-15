@@ -95,7 +95,8 @@ public:
     /*
      * @brief : 入り口設定用アクターのオンオフ設定
      */
-    void SetEntranceLocatorActive(bool bIsActive);
+    UFUNCTION(BlueprintCallable)
+        void SetEntranceLocatorActive(bool bIsActive);
 
     /*
      * @brief : 道コリジョンのハイトマップ作製
@@ -257,7 +258,7 @@ private:
     // index :
     // DemCollisionのAabb寄りも低い値が入っているときは不正値扱い
     //UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
-        TArray<float> DemHeightMap;
+    TArray<float> DemHeightMap;
 
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
         int DemHeightMapSizeX = 0;

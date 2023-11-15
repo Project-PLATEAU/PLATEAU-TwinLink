@@ -65,11 +65,6 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
         const UPrimitiveComponent* GetTargetFeatureComponent() const;
-
-private:
-    UFUNCTION()
-        void OnChangeActive(ESlateVisibility Visible);
-
 protected:
     FString FeatureID;
 };
