@@ -97,7 +97,22 @@ TWeakObjectPtr<UTwinLinkObservableCollection> UTwinLinkAssetPlacementSystem::Get
 void UTwinLinkAssetPlacementSystem::AddAssetPlacementActor(const TObjectPtr<UTwinLinkAssetPlacementInfo> AssetPlacementInfo) {
     const auto Position = AssetPlacementInfo->GetPosition();
     const auto Rotation = FRotator(AssetPlacementInfo->GetRotationEuler().Y, AssetPlacementInfo->GetRotationEuler().Z, AssetPlacementInfo->GetRotationEuler().X);
-    const auto AssetPlacementActor = SpawnAssetPlacementActor(GetPresetAssetMesh(AssetPlacementInfo->GetPresetID()), Position, Rotation);
+    TObjectPtr<AActor> AssetPlacementActor;
+    const auto Preset = GetPresetAssetMesh(AssetPlacementInfo->GetPresetID());
+    if (Preset->IsA(UStaticMesh::StaticClass())) {
+        AssetPlacementActor = SpawnAssetPlacementActor(Cast<UStaticMesh>(Preset), Position, Rotation);
+    }
+    else if (Preset->IsA(UBlueprint::StaticClass())) {
+        auto Actor = GetWorld()->SpawnActor<AStaticMeshActor>(Cast<UBlueprint>(Preset)->GeneratedClass);
+        Actor->SetMobility(EComponentMobility::Movable);
+        Actor->SetActorLocation(Position);
+        Actor->SetActorRotation(Rotation);
+
+        AssetPlacementActor = Actor;
+    }
+    else {
+        return;
+    }
 
     AssetPlacementActorCollection.Add(AssetPlacementInfo->GetUniqueID(), AssetPlacementActor);
 }
@@ -148,6 +163,9 @@ void UTwinLinkAssetPlacementSystem::TwinLinkAssetPlacementRemoveActor(AActor* Ta
 void UTwinLinkAssetPlacementSystem::TwinLinkAssetPlacementRelocation() {
     for (const auto& AssetPlacementInfo : *AssetPlacementInfoCollection) {
         const auto& Val = AssetPlacementInfo.Value;
+        if (!PresetMeshes.Contains(Val->GetPresetID())) {
+            continue;
+        }
         AddAssetPlacementActor(Val);
     }
 }
@@ -161,7 +179,22 @@ void UTwinLinkAssetPlacementSystem::TwinLinkAssetPlacementRegistPresetAsset(cons
 void UTwinLinkAssetPlacementSystem::SpawnUnsettledActor(const TObjectPtr<UTwinLinkAssetPlacementInfo> AssetPlacementInfo) {
     const auto Position = AssetPlacementInfo->GetPosition();
     const auto Rotation = FRotator(AssetPlacementInfo->GetRotationEuler().Y, AssetPlacementInfo->GetRotationEuler().Z, AssetPlacementInfo->GetRotationEuler().X);
-    AssetPlacementUnsettledActor = SpawnAssetPlacementActor(GetPresetAssetMesh(AssetPlacementInfo->GetPresetID()), Position, Rotation);
+
+    const auto Preset = GetPresetAssetMesh(AssetPlacementInfo->GetPresetID());
+    if (Preset->IsA(UStaticMesh::StaticClass())) {
+        AssetPlacementUnsettledActor = SpawnAssetPlacementActor(Cast<UStaticMesh>(Preset), Position, Rotation);
+    }
+    else if (Preset->IsA(UBlueprint::StaticClass())) {
+        auto UnsettledActor = GetWorld()->SpawnActor<AStaticMeshActor>(Cast<UBlueprint>(Preset)->GeneratedClass);
+        UnsettledActor->SetMobility(EComponentMobility::Movable);
+        UnsettledActor->SetActorLocation(Position);
+        UnsettledActor->SetActorRotation(Rotation);
+
+        AssetPlacementUnsettledActor = UnsettledActor;
+    }
+    else {
+        return;
+    }
 
     AssetPlacementUnsettledActor->GetRootComponent()->SetHiddenInGame(true);
 
@@ -220,7 +253,7 @@ void UTwinLinkAssetPlacementSystem::TwinLinkAssetPlacementSettledActor() {
     CurrentMode = ETwinLinkAssetPlacementModes::AssetTransform;
 }
 
-TObjectPtr<UStaticMesh> UTwinLinkAssetPlacementSystem::GetPresetAssetMesh(const int PresetID) {
+TObjectPtr<UObject> UTwinLinkAssetPlacementSystem::GetPresetAssetMesh(const int PresetID) {
     if (PresetMeshes.Num() > 0) {
         return PresetMeshes[PresetID];
     }

@@ -149,7 +149,7 @@ private:
      * @param PresetID
      * @return
     */
-    TObjectPtr<UStaticMesh> GetPresetAssetMesh(const int PresetID);
+    TObjectPtr<UObject> GetPresetAssetMesh(const int PresetID);
 
 private:
 
@@ -183,9 +183,9 @@ public:
     UPROPERTY()
         TArray<int> PresetIDs;
 
-    /** プリセットアセットのスタティックメッシュ群 **/
+    /** プリセットアセットのスタティックメッシュ・アクタ群 **/
     UPROPERTY()
-        TMap<uint32, TObjectPtr<UStaticMesh>> PresetMeshes;
+        TMap<uint32, TObjectPtr<UObject>> PresetMeshes;
 
     /** プリセットアセットのウィジェット用テクスチャ群 **/
     UPROPERTY()
