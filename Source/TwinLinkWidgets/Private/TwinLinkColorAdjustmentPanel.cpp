@@ -67,7 +67,9 @@ void UTwinLinkColorAdjustmentPanel::OnSelectFloor(UPLATEAUCityObjectGroup* Value
 }
 
 void UTwinLinkColorAdjustmentPanel::TwinLinkColorAdjustmentExit() {
-    Editor->OnClickedClose();
+    if (Editor->GetVisibility() == ESlateVisibility::Visible) {
+        Editor->OnClickedClose();
+    }
 }
 
 void UTwinLinkColorAdjustmentPanel::SummaryFilter(const TArray<int>& EnableList) {
