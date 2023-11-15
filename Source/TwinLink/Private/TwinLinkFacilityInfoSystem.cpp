@@ -64,7 +64,7 @@ bool UTwinLinkFacilityInfoSystem::CheckValidFacilityInfo(const FString& Name, co
 }
 
 void UTwinLinkFacilityInfoSystem::AddFacilityInfo(
-    const FString& InName, const FString& InCategory, const FString& InFeatureID, const FString& InImageFileName, const FString& InDescription, const FString& InSpotInfo) {
+    const FString& InName, const FString& InCategory, const FString& InFeatureID, const FString& InImageFileName, const FString& InDescription, const FString& InSpotInfo, std::optional<FVector> Entrance) {
     UE_TWINLINK_LOG(LogTemp, Log, TEXT("TwinLink AddFacilityInfo : %s"), *Filepath);
 
 
@@ -73,7 +73,9 @@ void UTwinLinkFacilityInfoSystem::AddFacilityInfo(
     check(CategoryName != nullptr);
 
     // 施設情報の作成
-
+    TArray<FVector> Entrances;
+    if (Entrance.has_value())
+        Entrances.Add(*Entrance);
     UTwinLinkFacilityInfo* FacilityInfo = NewObject<UTwinLinkFacilityInfo>();
     const auto bIsSuc = FacilityInfo->Setup(
         InName,
@@ -81,7 +83,9 @@ void UTwinLinkFacilityInfoSystem::AddFacilityInfo(
         InFeatureID,
         InImageFileName,
         InDescription,
-        InSpotInfo);
+        InSpotInfo,
+        Entrances
+    );
 
     // CheckAddableFacilityInfo()内で チェック済みなので正常な値が格納されている前提で記述する
     check(bIsSuc);
@@ -166,7 +170,7 @@ void UTwinLinkFacilityInfoSystem::ImportFacilityInfo() {
 
 bool UTwinLinkFacilityInfoSystem::EditFacilityInfo(
     const TWeakObjectPtr<UTwinLinkFacilityInfo>& FacilityInfo,
-    const FString& Name, const FString& Category, const FString& ImageFileName, const FString& Guide, const FString& SpotInfo) {
+    const FString& Name, const FString& Category, const FString& ImageFileName, const FString& Guide, const FString& SpotInfo, std::optional<FVector> Entrance) {
     ensure(FacilityInfo.IsValid());
     if (FacilityInfo.IsValid() == false) {
         return false;
@@ -188,8 +192,10 @@ bool UTwinLinkFacilityInfoSystem::EditFacilityInfo(
     // 表示用カテゴリ名を識別用カテゴリ名に変換
     const auto CategoryName = ReverseCategoryDisplayNameMap.Find(Category);
     check(CategoryName != nullptr);
-
-    const auto isSuc = FacilityInfo->Setup(Name, *CategoryName, FeatureID, ImageFileName, Guide, SpotInfo);
+    TArray<FVector> Entrances;
+    if (Entrance.has_value())
+        Entrances.Add(*Entrance);
+    const auto isSuc = FacilityInfo->Setup(Name, *CategoryName, FeatureID, ImageFileName, Guide, SpotInfo, Entrances);
     if (isSuc == false) {
         UE_TWINLINK_LOG(LogTemp, Log, TEXT("Failed Setup Facility Info: %s"), *FacilityInfo->GetName());
         return false;
@@ -247,10 +253,15 @@ void UTwinLinkFacilityInfoSystem::MoveCharactersNearTheFacility(const TWeakObjec
 }
 
 TWeakObjectPtr<UPrimitiveComponent> UTwinLinkFacilityInfoSystem::FindFacility(const TWeakObjectPtr<UTwinLinkFacilityInfo>& FacilityInfo) {
-    /*コンポーネントを取得するためにアクター
-    tagかクラスで検索する　*/
     check(FacilityInfo.IsValid());
+    return FindFacility(FacilityInfo->GetFeatureID());
+}
 
+TWeakObjectPtr<UPrimitiveComponent> UTwinLinkFacilityInfoSystem::FindFacility(const FString& FeatureId) const {
+    /*
+     コンポーネントを取得するためにアクター
+     tagかクラスで検索する　
+     */
     TArray<AActor*> PLATEAUActors;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), APLATEAUInstancedCityModel::StaticClass(), PLATEAUActors);
     if (PLATEAUActors.IsEmpty()) {
@@ -267,16 +278,14 @@ TWeakObjectPtr<UPrimitiveComponent> UTwinLinkFacilityInfoSystem::FindFacility(co
         }
 
         for (auto& FeatureComponent : FeatureComponents) {
-            // FeatureIDで検索
-            const auto FeatureID = FacilityInfo->GetFeatureID();
-            if (FeatureID.Contains(FeatureComponent->GetName())) {
+            if (FeatureId.Contains(FeatureComponent->GetName())) {
                 return Cast<UPrimitiveComponent>(FeatureComponent);
             }
         }
     }
 
     // 見つからなかった
-    UE_TWINLINK_LOG(LogTemp, Log, TEXT("Faild find %s"), *FacilityInfo->GetFeatureID());
+    UE_TWINLINK_LOG(LogTemp, Log, TEXT("Faild find %s"), *FeatureId);
     return nullptr;
 }
 

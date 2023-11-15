@@ -1,6 +1,7 @@
 #include "TwinLinkMathEx.h"
 
 #include <array>
+#include <optional>
 
 #include "MaterialHLSLTree.h"
 #include "Camera/CameraComponent.h"
@@ -95,6 +96,125 @@ FBox2D TwinLinkMathEx::GetIntersectBoxXY(const FBox& A, const FBox& B) {
     return FBox2D(Min, Max);
 }
 
+FBox2D TwinLinkMathEx::GetIntersectBox2D(const FBox2D& A, const FBox2D& B) {
+    const auto Min = FVector2D::Max(A.Min, B.Min);
+    const auto Max = FVector2D::Min(A.Max, B.Max);
+    // Min が Max より大きい場合、重なる部分は存在しない
+    if (Min.X > Max.X || Min.Y > Max.Y)
+        return FBox2D(FVector2D::ZeroVector, FVector2D::ZeroVector);
+
+    return FBox2D(Min, Max);
+}
+
 double TwinLinkMathEx::GetAreaXY(const FBox& A) {
     return (A.Max.X - A.Min.X) * (A.Max.Y - A.Min.Y);
+}
+
+FVector2D TwinLinkMathEx::GetClosestPointOnEdge(const FBox2D& Self, const FVector2D& P) {
+    if (Self.IsInside(P) == false)
+        return Self.GetClosestPointTo(P);
+
+    const auto Max = Self.Max - P;
+    const auto Min = P - Self.Min;
+    // 辺との差
+    const double Diffs[] = { Min.X, Max.X, Min.Y, Max.Y };
+    const double Values[] = { Self.Min.X, Self.Max.X, Self.Min.Y, Self.Max.Y };
+    auto Index = 0;
+    for (auto I = 1; I < 4; ++I)
+        if (Diffs[I] < Diffs[Index])
+            Index = I;
+    // Xを移動させるのが一番近い場合
+    if (Index <= 1)
+        return FVector2D(Values[Index], P.Y);
+    // Yを移動させるのが違い場合
+    return FVector2D(P.X, Values[Index]);
+}
+
+FBox2D TwinLinkMathEx::MoveBox2DToNonOverlapPoint(const FBox2D& P, const FBox2D& A, const FBox2D& B,
+    const FBox2D& ScreenRange)
+{
+    if (!A.Intersect(P) && !B.Intersect(P))
+        return P;
+
+    // AとPが重ならない境界Box
+    const auto BorderA = A.ExpandBy(P.GetExtent());
+    const auto BorderB = B.ExpandBy(P.GetExtent());
+
+    // 両方の境界が重ならないならどっちかとしか重なっていない. なおかつ,それとの境界チェックだけすればよい
+    if (BorderA.Intersect(BorderB) == false) {
+        if (A.Intersect(P))
+            return P.MoveTo(GetClosestPointOnEdge(BorderA, P.GetCenter()));
+        return P.MoveTo(GetClosestPointOnEdge(BorderB, P.GetCenter()));
+    }
+
+    struct Segment {
+        FVector2D Start;
+        FVector2D End;
+    };
+    // 各矩形の辺を重なっていない部分だけまとめて線分にする
+    TArray<Segment> Edges;
+    auto AddEdge = [&](const FVector2D& Start, const FVector2D& End) {
+        if (ScreenRange.IsInsideOrOn(Start) && ScreenRange.IsInsideOrOn(End))
+            Edges.Add({ Start, End });
+    };
+
+    auto AddSegment = [&](const FBox2D& Self, const FBox2D& Other) {
+        auto CheckY = [&](float X) {
+            if (Self.Min.Y < Other.Min.Y)
+                AddEdge(FVector2D(X, Self.Min.Y), FVector2D(X, Other.Min.Y));
+            if (Self.Max.Y > Other.Max.Y)
+                AddEdge(FVector2D(X, Other.Max.Y), FVector2D(X, Self.Max.Y));
+        };
+        // Left辺(Min.X)
+        // 重なっているときは共通部分もアウトラインなので<=で比較
+        if (Self.Min.X <= Other.Min.X) {
+            AddEdge( FVector2D(Self.Min.X, Self.Min.Y), FVector2D(Self.Min.X, Self.Max.Y));
+        }
+        // Self/Otherは重なっている前提なので
+        // Self.Min.X > Other.Max.Xの時は考えない
+        else {
+            CheckY(Self.Min.X);
+        }
+
+        // Right(Max.X)
+        if (Self.Max.X >= Other.Max.X) {
+            AddEdge( FVector2D(Self.Max.X, Self.Min.Y), FVector2D(Self.Max.X, Self.Max.Y));
+        }
+        else {
+            CheckY(Self.Max.Y);
+        }
+
+        auto CheckX = [&](float Y) {
+            if (Self.Min.X < Other.Min.X)
+                AddEdge( FVector2D(Self.Min.X, Y), FVector2D(Other.Min.X, Y));
+            if (Self.Max.X > Other.Max.X)
+                AddEdge( FVector2D(Other.Max.X, Y), FVector2D(Self.Max.X, Y));
+        };
+        if (Self.Min.Y <= Other.Min.Y) {
+            AddEdge( FVector2D(Self.Min.X, Self.Min.Y), FVector2D(Self.Max.X, Self.Min.Y));
+        }
+        else {
+            CheckX(Self.Min.Y);
+        }
+
+        if (Self.Max.Y >= Other.Max.Y) {
+            AddEdge( FVector2D(Self.Min.X, Self.Max.Y), FVector2D(Self.Max.X, Self.Max.Y));
+        }
+        else {
+            CheckX(Self.Max.Y);
+        }
+    };
+    AddSegment(BorderA, BorderB);
+    AddSegment(BorderB, BorderA);
+    if (Edges.IsEmpty())
+        return P;
+
+    std::optional< std::tuple<FVector2D, float>> Ans;
+    for (auto I = 0; I < Edges.Num(); ++I) {
+        auto ClosestPos = FMath::ClosestPointOnSegment2D(P.GetCenter(), Edges[I].Start, Edges[I].End);
+        auto SqrLen = (ClosestPos - P.GetCenter()).SquaredLength();
+        if (Ans.has_value() == false || SqrLen < std::get<1>(*Ans))
+            Ans = std::make_tuple(ClosestPos, SqrLen);
+    }
+    return P.MoveTo(std::get<0>(*Ans));
 }

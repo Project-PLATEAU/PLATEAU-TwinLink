@@ -22,13 +22,12 @@ public:
      *        : (現状ギリギリの長さではなく簡単な計算で余裕の持った長さになっている)
      *        : 線分がFieldBbとの交点を持たない場合はnulloptが返る
      */
-    static std::optional<FBox>  ScreenToWorldRayThroughBoundingBox(const APlayerController* PlayerController, const FVector2D& ScreenPos, const FBox& FieldBb);
+    static std::optional<FBox>  ScreenToWorldRayThroughBoundingBox(const APlayerController* PlayerController, const FVector2D& ScreenPos, const FBox& FieldBb, float StartOffsetFromCamera = 0.f);
 
     /*
-     * @brief : マウス位置を返す
+     * @brief : PlayerController->GetMousePositionをoptional<FVector2D>で返す
      */
     static std::optional<FVector2D> GetMousePosition(const APlayerController* PlayerController);
-
 public:
     ATwinLinkPlayerController();
 

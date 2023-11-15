@@ -6,7 +6,7 @@
 bool UTwinLinkFacilityInfo::Setup(
     const FString& InName, const FString& InCategory,
     const FString& InFeatureID, const FString& InImageFileName,
-    const FString& InDescription, const FString& InSpotInfo) {
+    const FString& InDescription, const FString& InSpotInfo, const TArray<FVector>& Entrance) {
 
     Name = InName;
     Category = InCategory;
@@ -14,6 +14,7 @@ bool UTwinLinkFacilityInfo::Setup(
     ImageFileName = InImageFileName;
     Description = InDescription;
     SpotInfo = InSpotInfo;
+    Entrances = Entrance;
 
     check(!Name.IsEmpty());
     check(!Category.IsEmpty());

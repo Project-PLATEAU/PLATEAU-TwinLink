@@ -17,11 +17,14 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/InputComponent.h" 
+#include "Engine/Canvas.h"
 #include "NavSystem/TwinLinkNavSystemEx.h"
 #include "NavSystem/TwinLinkNavSystemPathFinder.h"
 
 #include "libshape/datatype.h"
 #include "libshape/shp_writer.h"
+#include "DrawDebugHelpers.h"
+#include "GameFramework/HUD.h"
 
 namespace {
     template<class T, class F>
@@ -43,6 +46,8 @@ namespace {
     }
     // ハイトマップのセルサイズ
     constexpr float DEM_CELL_SIZE = 500;
+
+    TMap<NavSystemPathPointType, FBox2D> DebugPathPointScreenRect;
 }
 
 ATwinLinkNavSystem::ATwinLinkNavSystem() {
@@ -78,6 +83,13 @@ UTwinLinkPeopleFlowSystem* ATwinLinkNavSystem::GetPeopleFlowSystem(const UWorld*
     if (!GameInstance)
         return nullptr;
     return GameInstance->GetSubsystem<UTwinLinkPeopleFlowSystem>();
+}
+
+ATwinLinkNavSystemEntranceLocator* ATwinLinkNavSystem::GetEntranceLocator(UWorld* World)
+{
+    if (const auto NavSys = GetInstance(World))
+        return NavSys->GetEntranceLocator();
+    return nullptr;
 }
 
 bool ATwinLinkNavSystem::FindNavMeshPoint(const UNavigationSystemV1* NavSys, const UStaticMeshComponent* StaticMeshComp, FVector& OutPos) {
@@ -120,10 +132,18 @@ void ATwinLinkNavSystem::Tick(float DeltaSeconds) {
 #endif
 }
 
-void ATwinLinkNavSystem::BuildDemHeightMap()
+void ATwinLinkNavSystem::SetEntranceLocatorActive(bool bIsActive)
 {
+    if (bIsActive)
+        EntranceLocatorRefCount += 1;
+    else
+        EntranceLocatorRefCount -= 1;
+    EntranceLocator->SetActorHiddenInGame(EntranceLocatorRefCount == 0);
+}
+
+void ATwinLinkNavSystem::BuildDemHeightMap() {
     auto MinX = FMath::FloorToInt(DemCollisionAabb.Min.X / DEM_CELL_SIZE);
-    auto MaxX = FMath::CeilToInt (DemCollisionAabb.Max.X / DEM_CELL_SIZE);
+    auto MaxX = FMath::CeilToInt(DemCollisionAabb.Max.X / DEM_CELL_SIZE);
     auto MinY = FMath::FloorToInt(DemCollisionAabb.Min.Y / DEM_CELL_SIZE);
     auto MaxY = FMath::CeilToInt64(DemCollisionAabb.Max.Y / DEM_CELL_SIZE);
     // 1m
@@ -132,10 +152,8 @@ void ATwinLinkNavSystem::BuildDemHeightMap()
     DemHeightMapSizeX = MaxX - MinX + 1;
     DemHeightMapSizeY = MaxY - MinY + 1;
     DemHeightMap.Init(DemCollisionAabb.Min.Z - 100, DemHeightMapSizeX * DemHeightMapSizeY);
-    for(auto X = MinX; X <= MaxX; ++X)
-    {
-        for(auto Y = MinY; Y <= MaxY; ++Y)
-        {
+    for (auto X = MinX; X <= MaxX; ++X) {
+        for (auto Y = MinY; Y <= MaxY; ++Y) {
             auto P = FVector3d(X * DEM_CELL_SIZE, Y * DEM_CELL_SIZE, 0);
             auto Start = FVector3d(P.X, P.Y, DemCollisionAabb.Max.Z + 1);
             auto End = FVector3d(P.X, P.Y, DemCollisionAabb.Min.Z - 1);
@@ -172,10 +190,8 @@ void ATwinLinkNavSystem::DebugDraw() {
         }
     }
 
-    if(DebugDrawDemHeightMap)
-    {
-        for(auto I = 0; I < DemHeightMap.Num(); ++I)
-        {
+    if (DebugDrawDemHeightMap) {
+        for (auto I = 0; I < DemHeightMap.Num(); ++I) {
             auto P = *DemHeightMapIndexToPosition(I);
             auto Z = GetDemHeight(I);
             if (Z.has_value() == false)
@@ -187,6 +203,44 @@ void ATwinLinkNavSystem::DebugDraw() {
         }
     }
 
+    {
+        const APlayerController* Controller = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+        auto GetMarkerScreenBb = [&](NavSystemPathPointType PointType) -> std::optional<FBox2D> {
+            if (!NowPathFinder)
+                return std::nullopt;
+            auto Bb = NowPathFinder->GetPathLocationBox(PointType);
+            if (Bb.has_value() == false)
+                return std::nullopt;
+            FVector Vertices[8];
+            Bb->GetVertices(Vertices);
+            std::optional<FBox2D> Ret;
+            for (auto& V : Vertices) {
+                FVector2D Tmp;
+                if (UGameplayStatics::ProjectWorldToScreen(Controller, V, Tmp)) {
+                    if (Ret.has_value() == false) {
+                        Ret = FBox2D(Tmp, Tmp);
+                    }
+                    else {
+                        Ret = *Ret + FBox2D(Tmp, Tmp);
+                    }
+                }
+            }
+            return Ret;
+        };
+        
+        auto DrawRect = [&](NavSystemPathPointType Type, FColor Color) {
+            auto Bb = GetMarkerScreenBb(Type);
+            if (Bb.has_value() == false)
+                return;
+            auto& Box = *Bb;;
+            auto HUD = Controller->GetHUD();
+
+            //HUD->DrawRDeecDet(Color, Box.Min.X, Box.Min.Y, Box.GetSize().X, Box.GetSize().Y);
+        };
+
+        DrawRect(NavSystemPathPointType::Start, FColor::Red);
+        DrawRect(NavSystemPathPointType::Dest, FColor::Blue);
+    }
     // NavSys->NavDataSet[0]->
 #endif
 }
@@ -196,8 +250,7 @@ void ATwinLinkNavSystem::DebugBeginPlay() {
 #endif
 }
 
-std::optional<double> ATwinLinkNavSystem::GetDemHeight(int Index) const
-{
+std::optional<double> ATwinLinkNavSystem::GetDemHeight(int Index) const {
     if (Index < 0 || Index >= DemHeightMap.Num())
         return std::nullopt;
 
@@ -208,8 +261,7 @@ std::optional<double> ATwinLinkNavSystem::GetDemHeight(int Index) const
     return Height;
 }
 
-int ATwinLinkNavSystem::PositionToDemHeightMapIndex(const FVector3d& Pos) const
-{
+int ATwinLinkNavSystem::PositionToDemHeightMapIndex(const FVector3d& Pos) const {
     auto Offset = Pos - DemCollisionAabb.Min;
     if (Offset.X < 0 || Offset.Z < 0)
         return -1;
@@ -219,8 +271,7 @@ int ATwinLinkNavSystem::PositionToDemHeightMapIndex(const FVector3d& Pos) const
     return DemHeightMapCellToIndex(X, Y);
 }
 
-std::optional<FVector3d> ATwinLinkNavSystem::DemHeightMapIndexToPosition(int Index) const
-{
+std::optional<FVector3d> ATwinLinkNavSystem::DemHeightMapIndexToPosition(int Index) const {
     int X;
     int Y;
     if (TryDemHeightMapIndexToCell(Index, X, Y) == false)
@@ -229,19 +280,59 @@ std::optional<FVector3d> ATwinLinkNavSystem::DemHeightMapIndexToPosition(int Ind
     return FVector3d(1.f * X * DEM_CELL_SIZE, 1.f * Y * DEM_CELL_SIZE, 0.f) + DemCollisionAabb.Min;
 }
 
-int ATwinLinkNavSystem::DemHeightMapCellToIndex(int X, int Y) const
-{
+int ATwinLinkNavSystem::DemHeightMapCellToIndex(int X, int Y) const {
     return Y * DemHeightMapSizeX + X;
 }
 
-bool ATwinLinkNavSystem::TryDemHeightMapIndexToCell(int Index, int& OutX, int& OutY) const
-{
+bool ATwinLinkNavSystem::TryDemHeightMapIndexToCell(int Index, int& OutX, int& OutY) const {
     if (Index < 0 || Index >= DemHeightMap.Num())
         return false;
 
     OutX = Index % DemHeightMapSizeX;
     OutY = Index / DemHeightMapSizeX;
     return true;
+}
+
+void ATwinLinkNavSystem::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos)
+{
+    Super::DisplayDebug(Canvas, DebugDisplay, YL, YPos);
+#ifdef WITH_EDITOR
+
+    const APlayerController* Controller = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+    auto GetMarkerScreenBb = [&](NavSystemPathPointType PointType) -> std::optional<FBox2D> {
+        if (!NowPathFinder)
+            return std::nullopt;
+        auto Bb = NowPathFinder->GetPathLocationBox(PointType);
+        if (Bb.has_value() == false)
+            return std::nullopt;
+        FVector Vertices[8];
+        Bb->GetVertices(Vertices);
+        std::optional<FBox2D> Ret;
+        for (auto& V : Vertices) {
+            FVector2D Tmp;
+            if (UGameplayStatics::ProjectWorldToScreen(Controller, V, Tmp)) {
+                if (Ret.has_value() == false) {
+                    Ret = FBox2D(Tmp, Tmp);
+                }
+                else {
+                    Ret = *Ret + FBox2D(Tmp, Tmp);
+                }
+            }
+        }
+        return Ret;
+    };
+    auto DrawRect = [&](NavSystemPathPointType Type, FColor Color) {
+        auto Bb = GetMarkerScreenBb(Type);
+        if (Bb.has_value() == false)
+            return;
+        auto& Box = *Bb;;
+        Canvas->K2_DrawLine(Box.Min, Box.Max, 1, Color);
+        Canvas->K2_DrawBox(Box.Min, Box.GetSize(), 1, Color);
+    };
+
+    DrawRect(NavSystemPathPointType::Start, FColor::Red);
+    DrawRect(NavSystemPathPointType::Dest, FColor::Blue);
+#endif
 }
 
 void ATwinLinkNavSystem::BeginPlay() {
@@ -288,11 +379,17 @@ void ATwinLinkNavSystem::BeginPlay() {
         }
     }
 
+    // 管理画面で使う入り口設定用のアクターを生成
+    EntranceLocator = TwinLinkActorEx::SpawnChildActor(this, EntranceLocatorBp, TEXT("EntranceLocator"));
+    EntranceLocator->SetActorHiddenInGame(true);
+
     // #TODO : 一時的にナビメッシュポイントは実行時に適当に設定する
     const UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
     if (NavSys) {
         if (const auto FacilitySystem = GetFacilityInfoSystem(GetWorld())) {
             for (auto& Item : FacilitySystem->GetFacilityInfoCollectionAsMap()) {
+                if (Item.Value->GetEntrances().IsEmpty() == false)
+                    continue;
                 const auto FeatureId = Item.Value->GetFeatureID();
                 if (BuildingMap.Contains(FeatureId)) {
                     FVector OutPos;
@@ -368,24 +465,78 @@ FTwinLinkNavSystemFindPathUiInfo ATwinLinkNavSystem::GetDrawMoveTimeUiInfo(TwinL
 
     const auto Center = FMath::Max(0, HeightCheckedPoints.Num() - 1) >> 1;
 
+    // スクリーン上のLeftTop
     FVector2D NearestPos;
     float NearestSqrLen = -1;
     for (auto I = 0; I < HeightCheckedPoints.Num(); ++I) {
         const auto Index = Center + AlterSignSequence(I);
         FVector2D Tmp;
         if (UGameplayStatics::ProjectWorldToScreen(Controller, HeightCheckedPoints[Index], Tmp)) {
-            if (ScreenRange.IsInsideOrOn(Tmp)) {
-                return FTwinLinkNavSystemFindPathUiInfo(Meter, Sec, Tmp);
-            }
             const auto SqrLen = (ScreenRange.GetCenter() - Tmp).SquaredLength();
+            if (ScreenRange.IsInsideOrOn(Tmp)) {
+                NearestPos = Tmp;
+                NearestSqrLen = SqrLen;
+                break;
+            }
             if (NearestSqrLen < 0.f || SqrLen < NearestSqrLen) {
                 NearestSqrLen = SqrLen;
                 NearestPos = Tmp;
             }
         }
     }
-    if (NearestSqrLen >= 0.f)
+
+    if (NearestSqrLen >= 0.f) {
+        auto GetMarkerScreenBb = [&](NavSystemPathPointType PointType) -> std::optional<FBox2D> {
+            if (!NowPathFinder)
+                return std::nullopt;
+            auto Bb = NowPathFinder->GetPathLocationBox(PointType);
+            if (Bb.has_value() == false)
+                return std::nullopt;
+            FVector Vertices[8];
+            Bb->GetVertices(Vertices);
+            std::optional<FBox2D> Ret;
+            for (auto& V : Vertices) {
+                FVector2D Tmp;
+                if (UGameplayStatics::ProjectWorldToScreen(Controller, V, Tmp)) {
+                    if (Ret.has_value() == false) {
+                        Ret = FBox2D(Tmp, Tmp);
+                    }
+                    else {
+                        Ret = *Ret + FBox2D(Tmp, Tmp);
+                    }
+                }
+            }
+            return Ret;
+        };
+        auto PanelBox = FBox2D(NearestPos, NearestPos + UiPanelSize);
+        const auto StartScreenBox = GetMarkerScreenBb(NavSystemPathPointType::Start);
+        const auto DestScreenBox = GetMarkerScreenBb(NavSystemPathPointType::Dest);
+        TArray<FBox2D> MarkerBoxes;
+        if(StartScreenBox.has_value())
+            MarkerBoxes.Add(*StartScreenBox);
+
+        if (DestScreenBox.has_value())
+            MarkerBoxes.Add(*DestScreenBox);
+
+        if(MarkerBoxes.Num() == 1)
+        {
+            auto& B = MarkerBoxes[0];
+            if(B.Intersect(PanelBox))
+            {
+                auto Rect = FBox2D(B.Min - UiPanelSize, B.Max - UiPanelSize);
+                NearestPos = TwinLinkMathEx::GetClosestPointOnEdge(Rect, NearestPos);
+            }
+        }
+        else if(MarkerBoxes.Num() == 2)
+        {
+            
+            auto B = TwinLinkMathEx::MoveBox2DToNonOverlapPoint(FBox2D(NearestPos, NearestPos + UiPanelSize), MarkerBoxes[0], MarkerBoxes[1], ScreenRange);
+            NearestPos = B.Min;
+        }
+
+
         return FTwinLinkNavSystemFindPathUiInfo(Meter, Sec, NearestPos);
+    }
     return FTwinLinkNavSystemFindPathUiInfo();
 }
 
@@ -441,8 +592,7 @@ bool ATwinLinkNavSystem::ExportOutputPathInfo(const FString& Path) const {
     layer.attribute_database.attributes = { attributes };
 
     shp::Shape shape;
-    for (const auto Point : Out.Route)
-    {
+    for (const auto Point : Out.Route) {
         shape.points.emplace_back(Point.longitude, Point.latitude, Point.height);
     }
     layer.shapes.push_back(std::move(shape));

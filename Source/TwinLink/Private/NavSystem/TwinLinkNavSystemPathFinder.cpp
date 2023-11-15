@@ -7,42 +7,14 @@
 
 #include "NavigationSystem.h"
 #include "Kismet/GameplayStatics.h"
-#include "Kismet/KismetSystemLibrary.h"
 #include <NavSystem/TwinLinkNavSystemPathLocator.h>
 
-#include "PLATEAUCityObjectGroup.h"
 #include "TwinLinkActorEx.h"
-#include "TwinLinkFacilityInfoSystem.h"
 #include "TwinLinkMathEx.h"
 #include "TwinLinkPlayerController.h"
 #include "TwinLinkWorldViewer.h"
-#include "Camera/CameraComponent.h"
 #include "NavSystem/TwinLinkNavSystem.h"
 namespace {
-
-    std::optional<FVector2D> GetMousePosition(const APlayerController* PlayerController) {
-        if (!PlayerController)
-            return std::nullopt;
-        float MouseX, MouseY;
-        if (PlayerController->GetMousePosition(MouseX, MouseY)) {
-            return FVector2D(MouseX, MouseY);
-        }
-        return std::nullopt;
-    }
-
-    // マウスカーソル位置におけるDemCollisionを包括するような線分を取得
-    // Min/Maxが始点/終点を表す
-    std::optional<FBox> GetMouseCursorWorldVector(const APlayerController* PlayerController, const FVector2D& MousePos, const FBox& RangeAabb) {
-
-        auto Line = ATwinLinkPlayerController::ScreenToWorldRayThroughBoundingBox(PlayerController, MousePos, RangeAabb);
-        if (Line.has_value() == false)
-            return std::nullopt;
-
-        const auto Dir = (Line->Max - Line->Min).GetSafeNormal();
-        Line->Min += Dir * 100;
-        return Line;
-    }
-
     bool CreateFindPathRequest(const UObject* Self, const FVector& Start, const FVector& End, FPathFindingQuery& OutRequest) {
         const UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(Self->GetWorld());
         if (!NavSys)
@@ -238,11 +210,11 @@ void ATwinLinkNavSystemPathFinderAnyLocation::Tick(float DeltaTime) {
     if (!NavSys)
         return;
     // 押したとき
-    auto MousePos = ::GetMousePosition(PlayerController);
+    auto MousePos = ATwinLinkPlayerController::GetMousePosition(PlayerController);
     if (MousePos.has_value() == false)
         return;
     if (PlayerController->WasInputKeyJustPressed(EKeys::LeftMouseButton)) {
-        auto Ray = ::GetMouseCursorWorldVector(PlayerController, *MousePos, DemCollisionAabb);
+        auto Ray = ::ATwinLinkPlayerController::ScreenToWorldRayThroughBoundingBox(PlayerController, *MousePos, DemCollisionAabb);
         if (Ray.has_value()) {
             TArray<FHitResult> HitResults;
             FCollisionQueryParams Params;
@@ -290,7 +262,7 @@ void ATwinLinkNavSystemPathFinderAnyLocation::Tick(float DeltaTime) {
     else if (PlayerController->IsInputKeyDown(EKeys::LeftMouseButton)) {
         if (NowSelectedPathLocatorActor) {
             const auto ScreenPos = *MousePos + NowSelectedPathLocatorActorScreenOffset;
-            const auto Ray = ::GetMouseCursorWorldVector(PlayerController, ScreenPos, DemCollisionAabb);
+            const auto Ray = ::ATwinLinkPlayerController::ScreenToWorldRayThroughBoundingBox(PlayerController, ScreenPos, DemCollisionAabb);
             if (Ray.has_value()) {
                 TArray<FHitResult> HitResults;
                 if (GetWorld()->LineTraceMultiByChannel(HitResults, Ray->Min, Ray->Max, ECollisionChannel::ECC_WorldStatic)) {
@@ -330,6 +302,16 @@ void ATwinLinkNavSystemPathFinderAnyLocation::SetPathLocation(NavSystemPathPoint
 void ATwinLinkNavSystemPathFinderAnyLocation::Clear() {
     for (auto& Item : PathLocatorActors)
         Item.Value->Destroy();
+}
+
+std::optional<FBox> ATwinLinkNavSystemPathFinderAnyLocation::GetPathLocationBox(
+    NavSystemPathPointType Type) const {
+    if (!PathLocatorActors.Contains(Type))
+        return std::nullopt;
+    if (const auto Locator = PathLocatorActors[Type]) {
+        return TwinLinkActorEx::GetActorBounds(Locator, false, true);
+    }
+    return std::nullopt;
 }
 
 ATwinLinkNavSystemPathLocator* ATwinLinkNavSystemPathFinderAnyLocation::GetOrSpawnActor(NavSystemPathPointType Type) {

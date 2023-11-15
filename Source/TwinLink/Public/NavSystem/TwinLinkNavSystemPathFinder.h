@@ -47,6 +47,12 @@ public:
     virtual std::optional<FVector> GetPathLocation(NavSystemPathPointType Type) const {
         return std::nullopt;
     }
+    /*
+     * @brief : 指定したポイントのマーカーのBoundingBoxを取得
+     */
+    virtual std::optional<FBox> GetPathLocationBox(NavSystemPathPointType Type) const {
+        return std::nullopt;
+    }
 
     /*
      * @brief : 指定したポイントの位置を設定
@@ -142,6 +148,11 @@ public:
      * @brief : 状態の初期化
      */
     virtual void Clear() override;
+
+    /*
+     * @brief : 指定したポイントの位置のマーカー含めたスクリーン領域を取得
+     */
+    std::optional<FBox> GetPathLocationBox(NavSystemPathPointType Type) const override;
 
 private:
     /*

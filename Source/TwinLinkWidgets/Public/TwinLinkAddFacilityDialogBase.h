@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -6,6 +6,8 @@
 #include "TwinLinkWidgetBase.h"
 #include "TwinLinkAddFacilityDialogBase.generated.h"
 
+class ATwinLinkNavSystemPathLocator;
+class ATwinLinkNavSystemEntranceLocator;
 class ATwinLinkWorldViewer;
 
 /**
@@ -61,7 +63,13 @@ public:
     UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
         void SyncCategoryCollectionWidget(const TArray<FString>& Categories);
 
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        const UPrimitiveComponent* GetTargetFeatureComponent() const;
+
+private:
+    UFUNCTION()
+        void OnChangeActive(ESlateVisibility Visible);
+
 protected:
     FString FeatureID;
-
 };

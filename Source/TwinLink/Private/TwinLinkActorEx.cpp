@@ -12,3 +12,11 @@ USceneComponent* TwinLinkActorEx::GetChild(USceneComponent* Self,
     }
     return Self;
 }
+
+FBox TwinLinkActorEx::GetActorBounds(const AActor* Self, bool bOnlyCollidingComponents,
+    bool bIncludeFromChildActors) {
+    FVector Center;
+    FVector Extent;
+    Self->GetActorBounds(bOnlyCollidingComponents, Center, Extent, bIncludeFromChildActors);
+    return FBox(Center - Extent, Center + Extent);
+}

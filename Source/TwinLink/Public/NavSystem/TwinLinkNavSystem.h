@@ -10,6 +10,7 @@
 #include "TwinLinkFacilityInfoSystem.h"
 #include "TwinLinkNavSystemBuildingInfo.h"
 #include "TwinLinkNavSystemDef.h"
+#include "TwinLinkNavSystemEntranceLocator.h"
 #include "TwinLinkNavSystemFindPathInfo.h"
 #include "TwinLinkNavSystemPathDrawer.h"
 #include "TwinLinkNavSystemParam.h"
@@ -61,6 +62,8 @@ public:
      */
     static UTwinLinkPeopleFlowSystem* GetPeopleFlowSystem(const UWorld* World);
 
+    static ATwinLinkNavSystemEntranceLocator* GetEntranceLocator(UWorld* World);
+
     static bool FindNavMeshPoint(const UNavigationSystemV1* NavSys, const UStaticMeshComponent* StaticMeshComp, FVector& OutPos);
     virtual void Tick(float DeltaSeconds) override;
 
@@ -75,6 +78,24 @@ public:
     void SetDemCollisionAabb(const FBox& Val) {
         DemCollisionAabb = Val;
     }
+
+    /*
+     * @brief : Editor用. 入口設定用アクターのBPを設定
+     */
+    void SetEntranceLocatorBp(TSubclassOf<ATwinLinkNavSystemEntranceLocator> Bp) {
+        EntranceLocatorBp = Bp;
+    }
+
+    /*
+     * @brief : 入り口設定用アクター取得
+     */
+    ATwinLinkNavSystemEntranceLocator* GetEntranceLocator() const {
+        return EntranceLocator;
+    }
+    /*
+     * @brief : 入り口設定用アクターのオンオフ設定
+     */
+    void SetEntranceLocatorActive(bool bIsActive);
 
     /*
      * @brief : 道コリジョンのハイトマップ作製
@@ -181,6 +202,8 @@ public:
      */
     UFUNCTION(BlueprintCallable)
         bool IsValid() const;
+
+    void DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos) override;
 private:
     /*
      * @brief : PathFinderからパス検索準備完了時のコールバックとして登録する
@@ -233,7 +256,7 @@ private:
     // 道コリジョンのHeightMap
     // index :
     // DemCollisionのAabb寄りも低い値が入っているときは不正値扱い
-    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
+    //UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
         TArray<float> DemHeightMap;
 
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
@@ -241,6 +264,10 @@ private:
 
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
         int DemHeightMapSizeY = 0;
+
+    // 建物の入り口設定用のロケーターブループリント
+    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
+        TSubclassOf<ATwinLinkNavSystemEntranceLocator> EntranceLocatorBp;
 
     std::optional<double> GetDemHeight(int Index) const;
     int PositionToDemHeightMapIndex(const FVector3d& Pos)const;
@@ -267,6 +294,13 @@ private:
     // パス探索のアクター
     UPROPERTY(EditAnywhere, Category = TwinLink_Runtime)
         ATwinLinkNavSystemPathFinder* NowPathFinder = nullptr;
+
+    // 入り口設定用ロケーター
+    UPROPERTY(EditAnywhere, Category = TwinLink_Runtime)
+        ATwinLinkNavSystemEntranceLocator* EntranceLocator = nullptr;
+
+    UPROPERTY(EditAnywhere, Category = TwinLink_Runtime)
+        int EntranceLocatorRefCount = 0;
 
     // パス検索情報
     std::optional<FTwinLinkNavSystemFindPathInfo> PathFindInfo;

@@ -1,4 +1,5 @@
 #pragma once
+#include <optional>
 class USceneComponent;
 class TWINLINK_API TwinLinkActorEx {
 public:
@@ -18,6 +19,18 @@ public:
             return Ret;
         Ret->SetActorLabel(FString(Name));
         Ret->AttachToActor(Self, FAttachmentTransformRules::KeepWorldTransform, Name);
+        return Ret;
+    }
+
+    template<class T>
+    static auto SpawnActor(UWorld* World, const TSubclassOf<T>& Class, const TCHAR* Name) -> T* {
+        FActorSpawnParameters Params;
+        Params.Owner = nullptr;
+        Params.Name = MakeUniqueObjectName(World, Class, FName(Name));
+        const auto Ret = World->SpawnActor<T>(Class, Params);
+        if (!Ret)
+            return Ret;
+        Ret->SetActorLabel(FString(Name));
         return Ret;
     }
 
@@ -45,4 +58,9 @@ public:
             return nullptr;
         return Cast<T>(UGameplayStatics::GetActorOfClass(World, T::StaticClass()));
     }
+
+    /*
+     * @brief : AActor::ActorBoundsのラッパー. Center/Extentを参照で渡すのではなくFBoxで返すように. Selfのnullチェックは行わない
+     */
+    static FBox GetActorBounds(const AActor* Self, bool bOnlyCollidingComponents, bool bIncludeFromChildActors = false);
 };

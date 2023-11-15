@@ -89,7 +89,10 @@ public:
      * @brief : A,Bのボックスの重なった部分(XY)ボックスを返す
      */
     static FBox2D GetIntersectBoxXY(const FBox& A, const FBox& B);
-
+    /*
+     * @brief : A,Bのボックスの重なった部分ボックスを返す
+     */
+    static FBox2D GetIntersectBox2D(const FBox2D& A, const FBox2D& B);
     /*
      * @brief : return (Max.X - Min.X) * (Max.Y - Min.Y);
      */
@@ -161,9 +164,9 @@ public:
         if (Predicate(Arr[Arr.Num() - 1]) == false)
             return Arr.Num() - 1;
 
-        if(Min < 0)
+        if (Min < 0)
             Min = 0;
-        if(Max < 0)
+        if (Max < 0)
             Max = Arr.Num() - 1;
         while (Min <= Max) {
             auto N = (Min + Max) / 2;
@@ -178,4 +181,14 @@ public:
         }
         return FMath::Clamp(Min - 1, -1, Arr.Num() - 1);
     }
+
+    /*
+     * @brief : PがSelfの辺上で最も近い位置を返す
+     */
+    static FVector2D GetClosestPointOnEdge(const FBox2D& Self, const FVector2D& P);
+
+    /*
+     * @brief : 矩形Pが, 矩形A, Bどちらとも重ならないような位置に移動したPを取得する
+     */
+    static FBox2D MoveBox2DToNonOverlapPoint(const FBox2D& P, const FBox2D& A, const FBox2D& B, const FBox2D& ScreenRange);
 };

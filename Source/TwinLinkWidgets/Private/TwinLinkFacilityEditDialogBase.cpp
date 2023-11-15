@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
 #include "TwinLinkFacilityEditDialogBase.h"
@@ -6,6 +6,8 @@
 
 #include "TwinLinkFacilityInfoSystem.h"
 #include "TwinLinkFacilityInfo.h"
+#include "NavSystem/TwinLinkNavSystem.h"
+#include "NavSystem/TwinLinkNavSystemEntranceLocator.h"
 
 void UTwinLinkFacilityEditDialogBase::Setup(UTwinLinkFacilityInfo* Info) {
     check(Info);
@@ -17,6 +19,8 @@ void UTwinLinkFacilityEditDialogBase::Setup(UTwinLinkFacilityInfo* Info) {
     }
 
     FacilityInfo = Info;
+    if (const auto Entrance = ATwinLinkNavSystem::GetEntranceLocator(GetWorld()))
+        Entrance->SetEntranceLocation(Info);
 
     // 変更された際に更新関数を呼び出す
     EvOnChangedHnd = FacilityInfo->EvOnChanged.AddLambda([this]() {
@@ -30,6 +34,7 @@ void UTwinLinkFacilityEditDialogBase::Setup(UTwinLinkFacilityInfo* Info) {
     OnChangedCategoryGroup(FacilityInfoSys->GetCategoryDisplayNameCollection());
     OnChangedInfo();
 
+    OnVisibilityChanged.AddDynamic(this, &UTwinLinkFacilityEditDialogBase::OnChangeActive);
 }
 
 FString UTwinLinkFacilityEditDialogBase::GetDisplayCategoryName() const {
@@ -44,6 +49,9 @@ void UTwinLinkFacilityEditDialogBase::RequestEdit(const FString& Name, const FSt
     auto FacilityInfoSys = TwinLinkSubSystemHelper::GetInstance<UTwinLinkFacilityInfoSystem>();
     check(FacilityInfoSys.IsValid());
 
+    std::optional<FVector> Entrance;
+    if (const auto EntranceLocator = ATwinLinkNavSystem::GetEntranceLocator(GetWorld()))
+            Entrance = EntranceLocator->GetPathLocation();
 
     const auto IsSuc = FacilityInfoSys->EditFacilityInfo(
         FacilityInfo,
@@ -51,7 +59,9 @@ void UTwinLinkFacilityEditDialogBase::RequestEdit(const FString& Name, const FSt
         Category,
         ImageFileName,
         Guide,
-        SpotInfo);
+        SpotInfo,
+        Entrance
+        );
 
     if (IsSuc == false) {
         UE_TWINLINK_LOG(LogTemp, Log, TEXT("Failed RequestEdit()"));
@@ -62,4 +72,10 @@ void UTwinLinkFacilityEditDialogBase::RequestEdit(const FString& Name, const FSt
     FacilityInfoSys->ExportFacilityInfo();
 
     OnSuccessRequestEdit();
+}
+
+void UTwinLinkFacilityEditDialogBase::OnChangeActive(ESlateVisibility Visible)
+{
+    if (auto NavSys = ATwinLinkNavSystem::GetInstance(GetWorld()))
+        NavSys->SetEntranceLocatorActive(Visible == ESlateVisibility::Visible);
 }

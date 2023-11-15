@@ -6,6 +6,7 @@
 #include "NavigationSystem.h"
 #include "TwinLinkMathEx.h"
 #include "TwinLinkWorldViewer.h"
+#include "Customizations/MathStructProxyCustomizations.h"
 #include "NavSystem/TwinLinkNavSystem.h"
 
 // Sets default values
@@ -19,8 +20,7 @@ void ATwinLinkNavSystemPathLocator::BeginPlay() {
 
 void ATwinLinkNavSystemPathLocator::Tick(float DeltaSeconds) {
     Super::Tick(DeltaSeconds);
-    if(auto WorldViewer = ATwinLinkNavSystem::GetWorldViewer(GetWorld()))
-    {
+    if (auto WorldViewer = ATwinLinkNavSystem::GetWorldViewer(GetWorld())) {
         const auto Forward = WorldViewer->GetNowCameraRotationOrDefault().RotateVector(FVector::ForwardVector);
         const auto ActorLocation = GetActorLocation();
         //CameraLocation.Z = ActorLocation.Z = 0;
