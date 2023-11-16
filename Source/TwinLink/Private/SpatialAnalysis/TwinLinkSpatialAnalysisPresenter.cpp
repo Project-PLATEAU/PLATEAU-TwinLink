@@ -28,7 +28,7 @@ void ATwinLinkSpatialAnalysisPresenter::BeginPlay() {
 void ATwinLinkSpatialAnalysisPresenter::Tick(float DeltaTime) {
     Super::Tick(DeltaTime);
     DrawUpdate(DeltaTime);
-#ifdef WITH_EDITOR
+#if WITH_EDITOR
     DebugNowSelectedId = GetNowSpatialId().value_or(FTwinLinkSpatialID());
     DebugDrawUpdate(DeltaTime);
 #endif
@@ -113,7 +113,7 @@ void ATwinLinkSpatialAnalysisPresenter::DrawUpdate(float DeltaTime) const {
 }
 
 void ATwinLinkSpatialAnalysisPresenter::DebugDrawUpdate(float DeltaTime) const {
-#ifdef WITH_EDITOR
+#if WITH_EDITOR
     if (!DebugShowSpace)
         return;
     if (IsValidSpatialId() == false)

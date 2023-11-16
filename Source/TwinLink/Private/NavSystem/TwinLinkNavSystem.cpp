@@ -211,7 +211,7 @@ void ATwinLinkNavSystem::BeginPlay() {
         }
     }
 
-#ifdef WITH_EDITOR
+#if WITH_EDITOR
     DebugBeginPlay();
 #endif
 }

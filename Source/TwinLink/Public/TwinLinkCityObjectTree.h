@@ -19,13 +19,13 @@ struct FTwinLinkDebugSpatialId {
 public:
     /** ズームレベル **/
     UPROPERTY(EditAnywhere)
-        int Z;
+        int Z = 0;
     /** 東西方向インデックス **/
     UPROPERTY(EditAnywhere)
-        int X;
+        int X = 0;
     /** 南北方向インデックス **/
     UPROPERTY(EditAnywhere)
-        int Y;
+        int Y = 0;
     /*範囲*/
     UPROPERTY(VisibleAnywhere)
         FBox Range;
@@ -142,7 +142,7 @@ public:
 
     // 自分自身を含めた子空間の数
     UPROPERTY(VisibleAnywhere)
-        int SpaceSize;
+        int SpaceSize = 0;
 };
 
 /*
