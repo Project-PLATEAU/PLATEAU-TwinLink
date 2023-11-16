@@ -213,6 +213,8 @@ void UTwinLinkColorAdjustmentEdit::OnClickedRegist() {
     this->SetVisibility(ESlateVisibility::Hidden);
 
     Thumbnail->SetColorAndOpacity(ColorAdjustmentSystem.Get()->MaterialParameter[MaterialIndex].BaseColor);
+
+    RevertMaterialParameter = ColorAdjustmentSystem.Get()->MaterialParameter[MaterialIndex];
 }
 
 void UTwinLinkColorAdjustmentEdit::OnRefrectMaterial() {

@@ -21,5 +21,5 @@ public:
         TObjectPtr<UTexture2D> WidgetTexture;
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
         /** スタティックメッシュ **/
-        TObjectPtr<UStaticMesh> AssetSils;
+        TObjectPtr<UObject> AssetSils;
 };

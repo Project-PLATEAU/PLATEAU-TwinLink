@@ -6,6 +6,9 @@
 #include "PLATEAUInstancedCityModel.h"
 
 UTwinLinkSelectActorComboBox::UTwinLinkSelectActorComboBox(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer) {
+}
+
+void UTwinLinkSelectActorComboBox::TwinLinkSelectActorComboBoxGenerate() {
     ModelActor = nullptr;
 
     TSharedRef<SObjectPropertyEntryBox> EntryBox = SNew(SObjectPropertyEntryBox)

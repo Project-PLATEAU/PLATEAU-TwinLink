@@ -60,8 +60,7 @@ void UTwinLinkBuildingDesignPanelBase::RequestEdit(const FString& ImageFileName)
     }
 
     if (BuildingDesignInfo.IsValid() == false) {
-        BuildingDesignInfo = Sys->AddBuildingDesign(Key, ImageFileName);
-        check(BuildingDesignInfo.IsValid());
+        Sys->AddBuildingDesign(Key, ImageFileName);
     }
     else {
         const auto bIsSuc = Sys->EditBuildingDesign(Key, BuildingDesignInfo, ImageFileName);

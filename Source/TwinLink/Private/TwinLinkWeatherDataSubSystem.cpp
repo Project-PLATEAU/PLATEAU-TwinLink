@@ -82,7 +82,7 @@ void UTwinLinkWeatherDataSubSystem::Parse(const TArray<FString>& StrData) {
     FDateTime DateTime;
     FDateTime::ParseIso8601(*UTCTime, DateTime);
 
-    auto JulianDay = FMath::TruncToInt32(DateTime.GetJulianDay());
+    auto JulianDay = FMath::TruncToInt32(DateTime.GetModifiedJulianDay());
     const auto TimeOfDay = DateTime.GetTimeOfDay();
     const auto Hours = FTimespan(TimeOfDay.GetHours(), 0, 0);
 
@@ -93,27 +93,34 @@ void UTwinLinkWeatherDataSubSystem::Parse(const TArray<FString>& StrData) {
                     SmartPoleInputs[Device][Unit][JulianDay][Hours].Add(DateTime, Value);
                 }
                 else {
-                    bool Found = false;
-                    for (const auto& TimeValue : SmartPoleInputs[Device][Unit][JulianDay][Hours]) {
-                        if (TimeOfDay < TimeValue.Key.GetTimeOfDay()) {
-                            Found = true;
-                            break;
+                    if (SmartPoleInputs[Device][Unit][JulianDay][Hours].IsEmpty()) {
+                        SmartPoleInputs[Device][Unit][JulianDay][Hours].Add(DateTime, Value);
+                    }
+                    else {
+                        bool Found = false;
+                        for (const auto& TimeValue : SmartPoleInputs[Device][Unit][JulianDay][Hours]) {
+                            if (TimeOfDay < TimeValue.Key.GetTimeOfDay()) {
+                                Found = true;
+                                break;
+                            }
+                        }
+                        if (Found) {
+                            SmartPoleInputs[Device][Unit][JulianDay][Hours].Reset();
+                            SmartPoleInputs[Device][Unit][JulianDay][Hours].Add(DateTime, Value);
                         }
                     }
-                    if (Found) {
-                        SmartPoleInputs[Device][Unit][JulianDay][Hours].Reset();
-                    }
-                    SmartPoleInputs[Device][Unit][JulianDay][Hours].Add(DateTime, Value);
                 }
             }
             else {
+                TMap<FDateTime, FString> NewTimeValueEmpty;
+
                 TMap<FDateTime, FString> NewTimeValue;
                 NewTimeValue.Add(DateTime, Value);
 
                 TMap<FTimespan, TMap<FDateTime, FString>> NewTimeOfDay;
                 for (int i = 0; i < 24; i++) {
                     TMap<FDateTime, FString> EmptyTimeValue;
-                    NewTimeOfDay.Add(FTimespan(i, 0, 0), NewTimeValue);
+                    NewTimeOfDay.Add(FTimespan(i, 0, 0), NewTimeValueEmpty);
                 }
                 NewTimeOfDay[Hours] = NewTimeValue;
 
@@ -121,13 +128,15 @@ void UTwinLinkWeatherDataSubSystem::Parse(const TArray<FString>& StrData) {
             }
         }
         else {
+            TMap<FDateTime, FString> NewTimeValueEmpty;
+
             TMap<FDateTime, FString> NewTimeValue;
             NewTimeValue.Add(DateTime, Value);
 
             TMap<FTimespan, TMap<FDateTime, FString>> NewTimeOfDay;
             for (int i = 0; i < 24; i++) {
                 TMap<FDateTime, FString> EmptyTimeValue;
-                NewTimeOfDay.Add(FTimespan(i, 0, 0), NewTimeValue);
+                NewTimeOfDay.Add(FTimespan(i, 0, 0), NewTimeValueEmpty);
             }
             NewTimeOfDay[Hours] = NewTimeValue;
 
@@ -138,13 +147,15 @@ void UTwinLinkWeatherDataSubSystem::Parse(const TArray<FString>& StrData) {
         }
     }
     else {
+        TMap<FDateTime, FString> NewTimeValueEmpty;
+
         TMap<FDateTime, FString> NewTimeValue;
         NewTimeValue.Add(DateTime, Value);
 
         TMap<FTimespan, TMap<FDateTime, FString>> NewTimeOfDay;
         for (int i = 0; i < 24; i++) {
             TMap<FDateTime, FString> EmptyTimeValue;
-            NewTimeOfDay.Add(FTimespan(i, 0, 0), NewTimeValue);
+            NewTimeOfDay.Add(FTimespan(i, 0, 0), NewTimeValueEmpty);
         }
         NewTimeOfDay[Hours] = NewTimeValue;
 
@@ -161,7 +172,7 @@ void UTwinLinkWeatherDataSubSystem::Parse(const TArray<FString>& StrData) {
 void UTwinLinkWeatherDataSubSystem::LoadSmartPoleDefine() {
     FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
     const auto Path = TEXT("/PLATEAU-TwinLink/DataAssets/DA_SmartPoleLink.DA_SmartPoleLink");
-    FAssetData AssetData = AssetRegistryModule.Get().GetAssetByObjectPath(FName(Path));
+    FAssetData AssetData = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(Path));
     if (!AssetData.IsValid()) {
         UE_TWINLINK_LOG(LogTemp, Log, TEXT("Failed LoadSmartPoleDefine : %s"), *Path);
         return;
@@ -172,7 +183,7 @@ void UTwinLinkWeatherDataSubSystem::LoadSmartPoleDefine() {
 void UTwinLinkWeatherDataSubSystem::LoadSmartPolePair() {
     FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
     const auto Path = TEXT("/PLATEAU-TwinLink/DataAssets/DA_SmartPolePair.DA_SmartPolePair");
-    FAssetData AssetData = AssetRegistryModule.Get().GetAssetByObjectPath(FName(Path));
+    FAssetData AssetData = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(Path));
     if (!AssetData.IsValid()) {
         UE_TWINLINK_LOG(LogTemp, Log, TEXT("Failed LoadSmartPolePair : %s"), *Path);
         return;

@@ -20,7 +20,7 @@ public:
     UPROPERTY(meta = (BindWidget))
         TObjectPtr<UTextBlock> TextTime;
     /** 項目リスト **/
-    UPROPERTY(meta = (BindWidget))
+    UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Category = "TwinLink")
         TObjectPtr<UPanelWidget> VerticalBox;
     /** キー **/
     FString DeviceKey;

@@ -112,8 +112,10 @@ void UTwinLinkWeatherDataPanel::SetupTimeSlider() {
     SliderTime->OnValueChanged.Clear();
     SliderTime->OnValueChanged.AddDynamic(this, &UTwinLinkWeatherDataPanel::OnValueChangedSliderTime);;
 
-    SliderTime->SetValue(0.0f);
-    OnValueChangedSliderTime(0.0f);
+    const auto DefaultTimeRate = 9.0f / 23.0f;
+
+    SliderTime->SetValue(DefaultTimeRate);
+    OnValueChangedSliderTime(DefaultTimeRate);
 }
 
 void UTwinLinkWeatherDataPanel::OnValueChangedSliderDay(float Value) {
@@ -126,12 +128,17 @@ void UTwinLinkWeatherDataPanel::OnValueChangedSliderDay(float Value) {
 
     int Index = FMath::RoundHalfFromZero(Value * (JulianDays.Num() - 1));
 
-    WeatherDataSubSystem.Get()->CurrentJulianDay = JulianDays[Index];
+    WeatherDataSubSystem.Get()->CurrentModifiedJulianDay = JulianDays[Index];
     
-    TextDay->SetText(FText::FromString(FDateTime::FromJulianDay(WeatherDataSubSystem.Get()->CurrentJulianDay).ToString(TEXT("%Y/%m/%d"))));
+    //修正ユリウス日からユリウス日へ変換
+    double JulianDay = WeatherDataSubSystem.Get()->CurrentModifiedJulianDay + 2400000.5;
 
-    SliderTime->SetValue(0.0f);
-    OnValueChangedSliderTime(0.0f);
+    TextDay->SetText(FText::FromString(FDateTime::FromJulianDay(JulianDay).ToString(TEXT("%Y/%m/%d"))));
+
+    const auto DefaultTimeRate = 9.0f / 23.0f;
+
+    SliderTime->SetValue(DefaultTimeRate);
+    OnValueChangedSliderTime(DefaultTimeRate);
 }
 
 void UTwinLinkWeatherDataPanel::OnValueChangedSliderTime(float Value) {

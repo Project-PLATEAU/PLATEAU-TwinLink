@@ -51,11 +51,11 @@ void UTwinLinkWeatherDataItem::Update() {
 
     for (int i = 0; i < VerticalBox->GetChildrenCount(); i++) {
         const auto Element = Cast<UTwinLinkWeatherDataItemElement>(VerticalBox->GetChildAt(i));
-        if (WeatherDataSubSystem.Get()->SmartPoleInputs[DeviceKey][Element->UnitKey].Contains(WeatherDataSubSystem.Get()->CurrentJulianDay)) {
-            if (WeatherDataSubSystem.Get()->SmartPoleInputs[DeviceKey][Element->UnitKey][WeatherDataSubSystem.Get()->CurrentJulianDay].Contains(WeatherDataSubSystem.Get()->CurrentTimeOfDay)) {
+        if (WeatherDataSubSystem.Get()->SmartPoleInputs[DeviceKey][Element->UnitKey].Contains(WeatherDataSubSystem.Get()->CurrentModifiedJulianDay)) {
+            if (WeatherDataSubSystem.Get()->SmartPoleInputs[DeviceKey][Element->UnitKey][WeatherDataSubSystem.Get()->CurrentModifiedJulianDay].Contains(WeatherDataSubSystem.Get()->CurrentTimeOfDay)) {
                 FString Value;
                 FDateTime Time;
-                for (const auto& TimeValue : WeatherDataSubSystem.Get()->SmartPoleInputs[DeviceKey][Element->UnitKey][WeatherDataSubSystem.Get()->CurrentJulianDay][WeatherDataSubSystem.Get()->CurrentTimeOfDay]) {
+                for (const auto& TimeValue : WeatherDataSubSystem.Get()->SmartPoleInputs[DeviceKey][Element->UnitKey][WeatherDataSubSystem.Get()->CurrentModifiedJulianDay][WeatherDataSubSystem.Get()->CurrentTimeOfDay]) {
                     Value = TimeValue.Value;
                     Time = TimeValue.Key;
                 }

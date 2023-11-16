@@ -149,7 +149,7 @@ public:
      * @param ImageFileName 
      * @return 
     */
-    TWeakObjectPtr<UTwinLinkBuildingDesignInfo> AddBuildingDesign(
+    void AddBuildingDesign(
         const FString& Key,
         const FString& ImageFileName);
 
@@ -207,6 +207,7 @@ private:
     const TwinLinkSystemVersionInfo VersionInfo = TwinLinkSystemVersionInfo(0, 0, 0);
 
     /** 設計情報のマップ フロア名キーに扱う **/
+    UPROPERTY()
     TMap<FString, TObjectPtr<UTwinLinkBuildingDesignInfo>> BuidingDesingInfoMap;
 
     /** 施設情報の永続化時のファイル名 **/

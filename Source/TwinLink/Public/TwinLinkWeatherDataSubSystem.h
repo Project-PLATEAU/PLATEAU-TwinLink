@@ -67,7 +67,7 @@ public:
     */
     FVector GetSmartPoleCoodinate(const FString& Device);
 public:
-    /** スマートポールデータのコレクション（Device<Unit<JulianDay<DayOfTime<Time, Value>>>>） **/
+    /** スマートポールデータのコレクション（Device<Unit<ModifiedJulianDay<DayOfTime<Time, Value>>>>） **/
     TMap<FString, TMap<FString, TMap<double, TMap<FTimespan, TMap<FDateTime, FString>>>>> SmartPoleInputs;
     /** スマートポール定義 **/
     UPROPERTY()
@@ -78,7 +78,7 @@ public:
     /** インポート済みファイル名 **/
     TArray<FString> FileNames;
     /** 表示日 **/
-    double CurrentJulianDay;
+    double CurrentModifiedJulianDay;
     /** 表示時刻 **/
     FTimespan CurrentTimeOfDay;
 };
