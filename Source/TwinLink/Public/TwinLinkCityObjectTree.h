@@ -28,7 +28,7 @@ public:
         int Y = 0;
     /*範囲*/
     UPROPERTY(VisibleAnywhere)
-        FBox Range;
+        FBox Range = FBox(FVector::Zero(), FVector::Zero());
 
     // 空間IDに変換する
     FTwinLinkSpatialID ToSpatialID() const {

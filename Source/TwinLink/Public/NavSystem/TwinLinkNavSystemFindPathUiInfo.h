@@ -26,7 +26,7 @@ public:
 
     // UIを表示すべきスクリーン位置
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Base")
-        FVector2D ScreenPos;
+        FVector2D ScreenPos = FVector2D::Zero();
 
     FTwinLinkNavSystemFindPathUiInfo()
         : bIsValid(false) {
