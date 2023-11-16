@@ -1,18 +1,25 @@
 // Copyright (C) 2023, MLIT Japan. All rights reserved.
 
-#include "TwinLinkPeopleFlowSystem.h"
+#include "TwinLinkPeopleFlowApi.h"
 #include "HttpModule.h"
 #include "JsonObjectConverter.h"
 #include "Interfaces/IHttpResponse.h"
 
-void UTwinLinkPeopleFlowSystem::Request(const FTwinLinkPeopleFlowApiRequest& Req) {
+FTWinLinkPeopleFlowApiResult FTWinLinkPeopleFlowApiResult::Error()
+{
+    FTWinLinkPeopleFlowApiResult Ret;
+    Ret.bSuccess = false;         
+    return Ret;
+}
+
+void UTwinLinkPeopleFlowApi::Request(const FTwinLinkPeopleFlowApiRequest& Req) {
     // https://dev.classmethod.jp/articles/unrealengine5-http-api-call/
     const FString Url = "http://localhost:3000/population";
     const FString Verb = "GET";
 
 
     const FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
-    Request->OnProcessRequestComplete().BindUObject(this, &UTwinLinkPeopleFlowSystem::OnResponseReceived);
+    Request->OnProcessRequestComplete().BindUObject(this, &UTwinLinkPeopleFlowApi::OnResponseReceived);
 
     // パラメータ設定
     Request->SetURL(Url);
@@ -31,14 +38,14 @@ void UTwinLinkPeopleFlowSystem::Request(const FTwinLinkPeopleFlowApiRequest& Req
     Request->ProcessRequest();
 }
 
-void UTwinLinkPeopleFlowSystem::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response,
+void UTwinLinkPeopleFlowApi::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response,
     bool bConnectionSuccessfully) {
     auto Result = ParseResponse(Response, bConnectionSuccessfully);
     OnReceivedPeopleFlowResponse.Broadcast(Result);
     UE_LOG(LogTemp, Display, TEXT("Response %s"), *Response->GetContentAsString());
 }
 
-FTWinLinkPeopleFlowApiResult UTwinLinkPeopleFlowSystem::ParseResponse(const FHttpResponsePtr& Response,
+FTWinLinkPeopleFlowApiResult UTwinLinkPeopleFlowApi::ParseResponse(const FHttpResponsePtr& Response,
     bool bConnectionSuccessfully)
 {
     if (!bConnectionSuccessfully)
