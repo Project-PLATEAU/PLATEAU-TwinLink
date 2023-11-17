@@ -152,14 +152,14 @@ ATwinLinkCityObjectTree::ATwinLinkCityObjectTree() {
 void ATwinLinkCityObjectTree::Tick(float DeltaSeconds) {
     Super::Tick(DeltaSeconds);
 
-#ifdef WITH_EDITOR
+#if WITH_EDITOR
     DebugDraw(DeltaSeconds);
 #endif
 }
 
 void ATwinLinkCityObjectTree::DebugDraw(float DeltaSeconds) {
 
-#ifdef WITH_EDITOR
+#if WITH_EDITOR
     if (DebugCheckAllVoxel) {
         DebugCheckAllVoxel = false;
         auto Test = [this](const FTwinLinkSpatialID& SpId) {

@@ -320,7 +320,7 @@ ATwinLinkNavSystemPathLocator* ATwinLinkNavSystemPathFinderAnyLocation::GetOrSpa
 
     FString Name = TEXT("PathLocator");
     Name.AppendInt(static_cast<int>(Type));
-    auto Ret = TwinLinkActorEx::SpawnChildActor(this, PathLocatorBps[Type], ToCStr(Name));
+    auto Ret = TwinLinkActorEx::SpawnChildActor(this, PathLocatorBps[Type], Name);
     PathLocatorActors.Add(Type, Ret);
     return Ret;
 }

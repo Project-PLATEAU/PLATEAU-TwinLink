@@ -127,7 +127,7 @@ void ATwinLinkNavSystem::Tick(float DeltaSeconds) {
         }
     }
 
-#ifdef WITH_EDITOR
+#if WITH_EDITOR
     DebugDraw();
 #endif
 }
@@ -168,7 +168,7 @@ void ATwinLinkNavSystem::BuildDemHeightMap() {
 }
 
 void ATwinLinkNavSystem::DebugDraw() {
-#ifdef WITH_EDITOR
+#if WITH_EDITOR
     const UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
     if (!NavSys)
         return;
@@ -246,7 +246,7 @@ void ATwinLinkNavSystem::DebugDraw() {
 }
 
 void ATwinLinkNavSystem::DebugBeginPlay() {
-#ifdef WITH_EDITOR
+#if WITH_EDITOR
 #endif
 }
 
@@ -402,7 +402,7 @@ void ATwinLinkNavSystem::BeginPlay() {
         }
     }
 
-#ifdef WITH_EDITOR
+#if WITH_EDITOR
     DebugBeginPlay();
 #endif
 }
@@ -431,7 +431,7 @@ void ATwinLinkNavSystem::ChangeMode(NavSystemMode Mode, bool bForce) {
     if (RuntimeParam->PathFinderBp.Contains(Mode)) {
         FString Name = TEXT("PathFinder");
         Name.AppendInt(static_cast<int>(Mode));
-        NowPathFinder = TwinLinkActorEx::SpawnChildActor(this, RuntimeParam->PathFinderBp[Mode], TCHAR_TO_WCHAR(*Name));
+        NowPathFinder = TwinLinkActorEx::SpawnChildActor(this, RuntimeParam->PathFinderBp[Mode], Name);
         NowPathFinder->OnReadyPathFinding.AddUObject(this, &ATwinLinkNavSystem::OnReadyPathFinding);
     }
 }
