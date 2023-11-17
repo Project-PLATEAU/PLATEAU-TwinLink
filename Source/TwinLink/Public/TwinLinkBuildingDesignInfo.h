@@ -45,6 +45,13 @@ public:
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
     FString GetImageFileName() const { return ImageFileName; }
 
+    /**
+     * @brief 正常な値がチェックする
+     * @return
+    */
+    bool IsValid() const;
+
+
 private:
     /** データ数 **/
     static const int NumDataElement = 1; // FVectorは3として数える

@@ -27,3 +27,7 @@ void UTwinLinkBuildingDesignInfo::Setup(TArray<FString> DataStr) {
     // 値が変更された
     BroadcastEvOnChanged();
 }
+
+bool UTwinLinkBuildingDesignInfo::IsValid() const {
+    return UTwinLinkBuildingDesignInfo::IsValid(ImageFileName);
+}
