@@ -8,16 +8,30 @@ public:
      */
     static USceneComponent* GetChild(USceneComponent* Self, const std::initializer_list<int>& Indices);
 
+    static void OnSpawnActor(AActor* Self, const FString& Name);
+    static void OnSpawnChildActor(AActor* Parent, AActor* Self, const FString& Name);
+
     template<class T>
-    static auto SpawnChildActor(AActor* Self, const TSubclassOf<T>& Class, const TCHAR* Name) -> T* {
+    static auto SpawnChildActor(AActor* Self, const TSubclassOf<T>& Class, const FString& Name) -> T* {
         FActorSpawnParameters Params;
         Params.Owner = Self;
         Params.Name = MakeUniqueObjectName(Self->GetWorld(), Class, FName(Name));
         const auto Ret = Self->GetWorld()->SpawnActor<T>(Class, Params);
         if (!Ret)
             return Ret;
-        Ret->SetActorLabel(FString(Name));
-        Ret->AttachToActor(Self, FAttachmentTransformRules::KeepWorldTransform, Name);
+        OnSpawnChildActor(Self, Ret, Name);
+        return Ret;
+    }
+
+    template<class T>
+    static auto SpawnActor(UWorld* World, const TSubclassOf<T>& Class, const FString& Name) -> T* {
+        FActorSpawnParameters Params;
+        Params.Owner = nullptr;
+        Params.Name = MakeUniqueObjectName(World, Class, FName(Name));
+        const auto Ret = World->SpawnActor<T>(Class, Params);
+        if (!Ret)
+            return Ret;
+        OnSpawnActor(Ret, Name);
         return Ret;
     }
 

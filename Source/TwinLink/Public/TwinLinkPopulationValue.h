@@ -16,5 +16,5 @@ public:
         FString Unit;
     // 人流度
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Base")
-        int PeopleFlow;
+        int PeopleFlow = 0;
 };

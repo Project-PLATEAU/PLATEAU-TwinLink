@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UnrealWidgetFwd.h"
 #include "Modules/ModuleManager.h"
 #include <Components/SlateWrapperTypes.h>
 

@@ -12,3 +12,16 @@ USceneComponent* TwinLinkActorEx::GetChild(USceneComponent* Self,
     }
     return Self;
 }
+
+void TwinLinkActorEx::OnSpawnActor(AActor* Self, const FString& Name) {
+#if UE_BUILD_DEVELOPMENT && WITH_EDITOR
+    Self->SetActorLabel(Name);
+#endif
+}
+
+void TwinLinkActorEx::OnSpawnChildActor(AActor* Parent, AActor* Self, const FString& Name) {
+#if UE_BUILD_DEVELOPMENT && WITH_EDITOR
+    Self->SetActorLabel(Name);
+#endif
+    Self->AttachToActor(Parent, FAttachmentTransformRules::KeepWorldTransform);
+}
