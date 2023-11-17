@@ -19,10 +19,9 @@ void ATwinLinkSpatialAnalysisPresenter::BeginPlay() {
         WorldViewer->EvOnAnyObjectClicked.AddUObject(this, &ATwinLinkSpatialAnalysisPresenter::OnClicked);
     SetZoom(FTwinLinkSpatialID::MAX_ZOOM_LEVEL);
 
-    if (auto PeopleFlow = ATwinLinkNavSystem::GetPeopleFlowSystem(GetWorld())) {
-        PeopleFlow->OnReceivedPeopleFlowResponse.AddDynamic(this, &ATwinLinkSpatialAnalysisPresenter::OnReceivedPeopleFlowResponse);
-    }
-
+    // 人流データ取得API構築
+    PeopleFlowApi = NewObject<UTwinLinkPeopleFlowApi>();
+    PeopleFlowApi->OnReceivedPeopleFlowResponse.AddDynamic(this, &ATwinLinkSpatialAnalysisPresenter::OnReceivedPeopleFlowResponse);
 }
 
 void ATwinLinkSpatialAnalysisPresenter::Tick(float DeltaTime) {
@@ -174,11 +173,11 @@ bool ATwinLinkSpatialAnalysisPresenter::RequestPeopleFlow(FDateTime DateTime) {
     const auto SpacialId = GetNowSpatialId();
     if (SpacialId.has_value() == false)
         return false;
-    if (const auto PeopleFlow = ATwinLinkNavSystem::GetPeopleFlowSystem(GetWorld())) {
+    if (PeopleFlowApi) {
         FTwinLinkPeopleFlowApiRequest Req;
         Req.SpatialIds.Add(*SpacialId);
         Req.DateTime = DateTime;
-        PeopleFlow->Request(Req);
+        PeopleFlowApi->Request(Req);
         return true;
     }
     return false;

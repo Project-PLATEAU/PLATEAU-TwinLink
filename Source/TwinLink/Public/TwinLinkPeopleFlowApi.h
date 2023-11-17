@@ -41,7 +41,7 @@ public:
 /**
  * 人流データのヒートマップを扱うクラス
  */
-UCLASS()
+UCLASS(BlueprintType)
 class TWINLINK_API UTwinLinkPeopleFlowApi : public UObject {
     GENERATED_BODY()
 public:

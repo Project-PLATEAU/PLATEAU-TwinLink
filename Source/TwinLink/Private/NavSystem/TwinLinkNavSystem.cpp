@@ -183,13 +183,6 @@ void ATwinLinkNavSystem::DebugDraw() {
         }
     }
 
-    if (DebugCallPeopleFlow) {
-        DebugCallPeopleFlow = false;
-        if (auto FlowSystem = GetPeopleFlowSystem(GetWorld())) {
-            FlowSystem->Request(DebugPeopleFlowRequest);
-        }
-    }
-
     if (DebugDrawDemHeightMap) {
         for (auto I = 0; I < DemHeightMap.Num(); ++I) {
             auto P = *DemHeightMapIndexToPosition(I);
@@ -297,7 +290,6 @@ void ATwinLinkNavSystem::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& 
 {
     Super::DisplayDebug(Canvas, DebugDisplay, YL, YPos);
 #ifdef WITH_EDITOR
-
     const APlayerController* Controller = UGameplayStatics::GetPlayerController(GetWorld(), 0);
     auto GetMarkerScreenBb = [&](NavSystemPathPointType PointType) -> std::optional<FBox2D> {
         if (!NowPathFinder)

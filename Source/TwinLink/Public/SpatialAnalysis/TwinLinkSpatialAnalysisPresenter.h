@@ -92,6 +92,10 @@ private:
     UPROPERTY(EditAnywhere)
         FDateTime LastPeopleFlowRequestedTime;
 
+    // 人流データ取得API
+    UPROPERTY(VisibleAnywhere)
+        UTwinLinkPeopleFlowApi* PeopleFlowApi = nullptr;
+
     // 毎回検索するの重そうなのでキャッシュ
     TWeakObjectPtr<ATwinLinkCityObjectTree> CacheTree;
 

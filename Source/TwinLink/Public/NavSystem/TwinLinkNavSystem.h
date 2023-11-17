@@ -313,14 +313,6 @@ private:
     UPROPERTY(EditAnywhere, Category = TwinLink_Test)
         bool DebugCallPathFinding = false;
 
-    // デバッグ用) 人流データ取得リクエストを呼ぶ
-    UPROPERTY(EditAnywhere, Category = TwinLink_Test)
-        bool DebugCallPeopleFlow = false;
-
-    // デバッグ用) 人流データ取得リクエスト
-    UPROPERTY(EditAnywhere, Category = TwinLink_Test)
-        FTwinLinkPeopleFlowApiRequest DebugPeopleFlowRequest;
-
     // パス探索のアクター
     UPROPERTY(EditAnywhere, Category = TwinLink_Test)
         bool DebugDrawInfo = false;
