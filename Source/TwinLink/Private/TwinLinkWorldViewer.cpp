@@ -240,7 +240,10 @@ void ATwinLinkWorldViewer::Click() {
 void ATwinLinkWorldViewer::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos)
 {
     Super::DisplayDebug(Canvas, DebugDisplay, YL, YPos);
+#if WITH_EDITOR
+    // デバッグ表示させる
     ATwinLinkNavSystem::GetInstance(GetWorld())->DisplayDebug(Canvas, DebugDisplay, YL, YPos);
+#endif
 }
 
 bool ATwinLinkWorldViewer::MoveInfo::Update(float DeltaSec, FVector& OutLocation, FRotator& OutRotation) {
