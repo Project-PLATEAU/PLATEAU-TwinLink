@@ -62,7 +62,7 @@ public:
      */
     static UTwinLinkPeopleFlowSystem* GetPeopleFlowSystem(const UWorld* World);
 
-    static ATwinLinkNavSystemEntranceLocator* GetEntranceLocator(UWorld* World);
+    static ATwinLinkNavSystemEntranceLocator* GetEntranceLocator(const UWorld* World);
 
     static bool FindNavMeshPoint(const UNavigationSystemV1* NavSys, const UStaticMeshComponent* StaticMeshComp, FVector& OutPos);
     virtual void Tick(float DeltaSeconds) override;
@@ -92,11 +92,6 @@ public:
     ATwinLinkNavSystemEntranceLocator* GetEntranceLocator() const {
         return EntranceLocator;
     }
-    /*
-     * @brief : 入り口設定用アクターのオンオフ設定
-     */
-    UFUNCTION(BlueprintCallable)
-        void SetEntranceLocatorActive(bool bIsActive);
 
     /*
      * @brief : 道コリジョンのハイトマップ作製
@@ -299,9 +294,6 @@ private:
     // 入り口設定用ロケーター
     UPROPERTY(EditAnywhere, Category = TwinLink_Runtime)
         ATwinLinkNavSystemEntranceLocator* EntranceLocator = nullptr;
-
-    UPROPERTY(EditAnywhere, Category = TwinLink_Runtime)
-        int EntranceLocatorRefCount = 0;
 
     // パス検索情報
     std::optional<FTwinLinkNavSystemFindPathInfo> PathFindInfo;

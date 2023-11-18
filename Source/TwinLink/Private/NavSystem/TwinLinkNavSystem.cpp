@@ -85,8 +85,7 @@ UTwinLinkPeopleFlowSystem* ATwinLinkNavSystem::GetPeopleFlowSystem(const UWorld*
     return GameInstance->GetSubsystem<UTwinLinkPeopleFlowSystem>();
 }
 
-ATwinLinkNavSystemEntranceLocator* ATwinLinkNavSystem::GetEntranceLocator(UWorld* World)
-{
+ATwinLinkNavSystemEntranceLocator* ATwinLinkNavSystem::GetEntranceLocator(const UWorld* World) {
     if (const auto NavSys = GetInstance(World))
         return NavSys->GetEntranceLocator();
     return nullptr;
@@ -127,18 +126,12 @@ void ATwinLinkNavSystem::Tick(float DeltaSeconds) {
         }
     }
 
+    if (EntranceLocator)
+        EntranceLocator->SetActorHiddenInGame(FTwinLinkEntranceLocatorNode::IsAnyNodeVisible() == false);
+
 #if WITH_EDITOR
     DebugDraw();
 #endif
-}
-
-void ATwinLinkNavSystem::SetEntranceLocatorActive(bool bIsActive)
-{
-    if (bIsActive)
-        EntranceLocatorRefCount += 1;
-    else
-        EntranceLocatorRefCount -= 1;
-    EntranceLocator->SetActorHiddenInGame(EntranceLocatorRefCount == 0);
 }
 
 void ATwinLinkNavSystem::BuildDemHeightMap() {
@@ -220,7 +213,7 @@ void ATwinLinkNavSystem::DebugDraw() {
             }
             return Ret;
         };
-        
+
         auto DrawRect = [&](NavSystemPathPointType Type, FColor Color) {
             auto Bb = GetMarkerScreenBb(Type);
             if (Bb.has_value() == false)
@@ -286,8 +279,7 @@ bool ATwinLinkNavSystem::TryDemHeightMapIndexToCell(int Index, int& OutX, int& O
     return true;
 }
 
-void ATwinLinkNavSystem::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos)
-{
+void ATwinLinkNavSystem::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos) {
     Super::DisplayDebug(Canvas, DebugDisplay, YL, YPos);
 #ifdef WITH_EDITOR
     const APlayerController* Controller = UGameplayStatics::GetPlayerController(GetWorld(), 0);
@@ -504,24 +496,21 @@ FTwinLinkNavSystemFindPathUiInfo ATwinLinkNavSystem::GetDrawMoveTimeUiInfo(TwinL
         const auto StartScreenBox = GetMarkerScreenBb(NavSystemPathPointType::Start);
         const auto DestScreenBox = GetMarkerScreenBb(NavSystemPathPointType::Dest);
         TArray<FBox2D> MarkerBoxes;
-        if(StartScreenBox.has_value())
+        if (StartScreenBox.has_value())
             MarkerBoxes.Add(*StartScreenBox);
 
         if (DestScreenBox.has_value())
             MarkerBoxes.Add(*DestScreenBox);
 
-        if(MarkerBoxes.Num() == 1)
-        {
+        if (MarkerBoxes.Num() == 1) {
             auto& B = MarkerBoxes[0];
-            if(B.Intersect(PanelBox))
-            {
+            if (B.Intersect(PanelBox)) {
                 auto Rect = FBox2D(B.Min - UiPanelSize, B.Max - UiPanelSize);
                 NearestPos = TwinLinkMathEx::GetClosestPointOnEdge(Rect, NearestPos);
             }
         }
-        else if(MarkerBoxes.Num() == 2)
-        {
-            
+        else if (MarkerBoxes.Num() == 2) {
+
             auto B = TwinLinkMathEx::MoveBox2DToNonOverlapPoint(FBox2D(NearestPos, NearestPos + UiPanelSize), MarkerBoxes[0], MarkerBoxes[1], ScreenRange);
             NearestPos = B.Min;
         }

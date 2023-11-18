@@ -19,8 +19,6 @@ void UTwinLinkFacilityEditDialogBase::Setup(UTwinLinkFacilityInfo* Info) {
     }
 
     FacilityInfo = Info;
-    if (const auto Entrance = ATwinLinkNavSystem::GetEntranceLocator(GetWorld()))
-        Entrance->SetEntranceLocation(Info);
 
     // 変更された際に更新関数を呼び出す
     EvOnChangedHnd = FacilityInfo->EvOnChanged.AddLambda([this]() {
@@ -28,6 +26,12 @@ void UTwinLinkFacilityEditDialogBase::Setup(UTwinLinkFacilityInfo* Info) {
         check(FacilityInfoSys.IsValid());
         OnChangedInfo();
         });
+
+    if (!EntranceLocatorNode)
+        EntranceLocatorNode = new FTwinLinkEntranceLocatorWidgetNode(this);
+
+    if (EntranceLocatorNode)
+        EntranceLocatorNode->SetEntranceLocation(Info);
 
     const auto FacilityInfoSys = TwinLinkSubSystemHelper::GetInstance<UTwinLinkFacilityInfoSystem>();
     check(FacilityInfoSys.IsValid());
@@ -43,13 +47,19 @@ FString UTwinLinkFacilityEditDialogBase::GetDisplayCategoryName() const {
     return FacilityInfoSys->GetCategoryDisplayName(FacilityInfo->GetCategory());
 }
 
+void UTwinLinkFacilityEditDialogBase::BeginDestroy() {
+    Super::BeginDestroy();
+    if (EntranceLocatorNode)
+        delete EntranceLocatorNode;
+}
+
 void UTwinLinkFacilityEditDialogBase::RequestEdit(const FString& Name, const FString& Category, const FString& ImageFileName, const FString& Guide, const FString& SpotInfo) {
     auto FacilityInfoSys = TwinLinkSubSystemHelper::GetInstance<UTwinLinkFacilityInfoSystem>();
     check(FacilityInfoSys.IsValid());
 
     std::optional<FVector> Entrance;
-    if (const auto EntranceLocator = ATwinLinkNavSystem::GetEntranceLocator(GetWorld()))
-            Entrance = EntranceLocator->GetPathLocation();
+    if (EntranceLocatorNode)
+        Entrance = EntranceLocatorNode->GetEntranceLocation();
 
     const auto IsSuc = FacilityInfoSys->EditFacilityInfo(
         FacilityInfo,
@@ -59,7 +69,7 @@ void UTwinLinkFacilityEditDialogBase::RequestEdit(const FString& Name, const FSt
         Guide,
         SpotInfo,
         Entrance
-        );
+    );
 
     if (IsSuc == false) {
         UE_TWINLINK_LOG(LogTemp, Log, TEXT("Failed RequestEdit()"));

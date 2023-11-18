@@ -7,19 +7,53 @@
 #include "CoreMinimal.h"
 #include "TwinLinkFacilityInfo.h"
 #include "TwinLinkNavSystemPathLocator.h"
+#include "Components/Widget.h"
 #include "GameFramework/Actor.h"
 #include "TwinLinkNavSystemEntranceLocator.generated.h"
 
 class ATwinLinkNavSystemPathLocator;
 class ATwinLinkNavSystem;
 
+/*
+ * EntranceLocatorの参照ノード. EntranceLocatorはSingleton前提
+ */
+class TWINLINK_API FTwinLinkEntranceLocatorNode {
+    static TArray<FTwinLinkEntranceLocatorNode*>& AllNodes();
+public:
+    static bool IsAnyNodeVisible();
+    FTwinLinkEntranceLocatorNode();
+
+    virtual ~FTwinLinkEntranceLocatorNode();
+    virtual bool IsVisibleEntranceLocator() const = 0;
+
+    virtual const UWorld* GetWorld() const = 0;
+
+    std::optional<FVector> GetEntranceLocation() const;
+    bool SetDefaultEntranceLocation(const FString& FeatureId) const;
+    bool SetEntranceLocation(const UTwinLinkFacilityInfo* Info) const;
+};
+
+class TWINLINK_API FTwinLinkEntranceLocatorWidgetNode : public FTwinLinkEntranceLocatorNode {
+public:
+    FTwinLinkEntranceLocatorWidgetNode(UWidget* W);
+    virtual bool IsVisibleEntranceLocator() const override;
+    virtual const UWorld* GetWorld() const override;
+
+private:
+    TWeakObjectPtr<UWidget> Widget = nullptr;
+};
+
+/*
+ * EntranceLocatorの実態はTwinLinkNavSystemが持っている
+ */
 UCLASS()
 class TWINLINK_API ATwinLinkNavSystemEntranceLocator : public ATwinLinkNavSystemPathLocator {
     GENERATED_BODY()
-
 public:
     // Sets default values for this actor's properties
     ATwinLinkNavSystemEntranceLocator();
+
+    virtual ~ATwinLinkNavSystemEntranceLocator() override;
 
 protected:
     // Called when the game starts or when spawned
@@ -46,7 +80,7 @@ public:
      * @brief : 指定したポイントの位置を設定.
      */
     UFUNCTION(BlueprintCallable)
-        void SetEntranceLocation(UTwinLinkFacilityInfo* Info);
+        void SetEntranceLocation(const UTwinLinkFacilityInfo* Info);
 
     /*
      * @brief : 指定したポイントの位置を設定.

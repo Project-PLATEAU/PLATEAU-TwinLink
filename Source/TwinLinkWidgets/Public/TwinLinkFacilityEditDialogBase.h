@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "TwinLinkWidgetBase.h"
+#include "NavSystem/TwinLinkNavSystemEntranceLocator.h"
 #include "TwinLinkFacilityEditDialogBase.generated.h"
 
 // 施設情報
@@ -13,7 +14,8 @@ class UTwinLinkFacilityInfo;
  * 施設情報編集用ダイアログの基底クラス
  */
 UCLASS(Abstract, Blueprintable, BlueprintType, ClassGroup = TwinLink)
-class TWINLINKWIDGETS_API UTwinLinkFacilityEditDialogBase : public UTwinLinkWidgetBase {
+class TWINLINKWIDGETS_API UTwinLinkFacilityEditDialogBase
+    : public UTwinLinkWidgetBase {
     GENERATED_BODY()
 
 public:
@@ -88,7 +90,10 @@ public:
     */
     UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
         void OnChangedCategoryGroup(const TArray<FString>& Categories);
+
+    virtual void BeginDestroy() override;
 private:
     TWeakObjectPtr<UTwinLinkFacilityInfo> FacilityInfo;
     FDelegateHandle EvOnChangedHnd;
+    FTwinLinkEntranceLocatorWidgetNode* EntranceLocatorNode = nullptr;
 };

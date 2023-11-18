@@ -4,12 +4,82 @@
 #include "NavigationSystem.h"
 #include "Kismet/GameplayStatics.h"
 #include <NavSystem/TwinLinkNavSystemPathLocator.h>
-#include "TwinLinkActorEx.h"
 #include "TwinLinkPlayerController.h"
+#include "TwinLinkWidgetEx.h"
+#include "Components/PanelWidget.h"
 #include "NavSystem/TwinLinkNavSystem.h"
+
+TArray<FTwinLinkEntranceLocatorNode*>& FTwinLinkEntranceLocatorNode::AllNodes() {
+    static TArray<FTwinLinkEntranceLocatorNode*> Ret;
+    return Ret;
+}
+
+bool FTwinLinkEntranceLocatorNode::IsAnyNodeVisible() {
+    for (const auto& N : AllNodes()) {
+        if (N->IsVisibleEntranceLocator())
+            return true;
+    }
+    return false;
+}
+
+FTwinLinkEntranceLocatorNode::FTwinLinkEntranceLocatorNode() {
+    AllNodes().Add(this);
+}
+
+FTwinLinkEntranceLocatorNode::~FTwinLinkEntranceLocatorNode() {
+    AllNodes().Remove(this);
+}
+
+std::optional<FVector> FTwinLinkEntranceLocatorNode::GetEntranceLocation() const {
+    if (const auto Locator = ATwinLinkNavSystem::GetEntranceLocator(GetWorld()))
+        return Locator->GetPathLocation();
+    return std::nullopt;
+}
+
+bool FTwinLinkEntranceLocatorNode::SetDefaultEntranceLocation(const FString& FeatureId) const {
+    // 見える設定じゃないなら無視する
+    if (IsVisibleEntranceLocator() == false)
+        return false;
+    if (const auto Locator = ATwinLinkNavSystem::GetEntranceLocator(GetWorld())) {
+        Locator->SetDefaultEntranceLocation(FeatureId);
+        return true;
+    }
+    return false;
+}
+
+bool FTwinLinkEntranceLocatorNode::SetEntranceLocation(const UTwinLinkFacilityInfo* Info) const {
+    // 見える設定じゃないなら無視する
+    if (IsVisibleEntranceLocator() == false)
+        return false;
+    if (const auto Locator = ATwinLinkNavSystem::GetEntranceLocator(GetWorld())) {
+        Locator->SetEntranceLocation(Info);
+        return true;
+    }
+    return false;
+}
+
+
+FTwinLinkEntranceLocatorWidgetNode::FTwinLinkEntranceLocatorWidgetNode(UWidget* W)
+    :Widget(W) {
+}
+
+bool FTwinLinkEntranceLocatorWidgetNode::IsVisibleEntranceLocator() const {
+    if (Widget.IsValid() == false)
+        return false;
+    return TwinLinkWidgetEx::IsVisibleIncludeOuter(Widget.Get());
+}
+
+const UWorld* FTwinLinkEntranceLocatorWidgetNode::GetWorld() const {
+    if (Widget.IsValid())
+        return Widget->GetWorld();
+    return nullptr;
+}
 
 ATwinLinkNavSystemEntranceLocator::ATwinLinkNavSystemEntranceLocator() {
     PrimaryActorTick.bCanEverTick = true;
+}
+
+ATwinLinkNavSystemEntranceLocator::~ATwinLinkNavSystemEntranceLocator() {
 }
 
 void ATwinLinkNavSystemEntranceLocator::BeginPlay() {
@@ -103,7 +173,7 @@ std::optional<FVector> ATwinLinkNavSystemEntranceLocator::GetPathLocation() cons
     return GetLastValidLocation();
 }
 
-void ATwinLinkNavSystemEntranceLocator::SetEntranceLocation(UTwinLinkFacilityInfo* Info) {
+void ATwinLinkNavSystemEntranceLocator::SetEntranceLocation(const UTwinLinkFacilityInfo* Info) {
     if (Info->GetEntrances().Num() > 0) {
         UpdateLocation(FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld()), Info->GetEntrances()[0]);
     }

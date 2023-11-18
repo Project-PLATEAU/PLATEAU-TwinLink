@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "TwinLinkWidgetBase.h"
+#include "NavSystem/TwinLinkNavSystemEntranceLocator.h"
 #include "TwinLinkAddFacilityDialogBase.generated.h"
 
 class ATwinLinkNavSystemPathLocator;
@@ -14,7 +15,9 @@ class ATwinLinkWorldViewer;
  * 施設情報追加ダイアログのcpp基底クラス
  */
 UCLASS(Abstract, Blueprintable, BlueprintType, ClassGroup = TwinLink)
-class TWINLINKWIDGETS_API UTwinLinkAddFacilityDialogBase : public UTwinLinkWidgetBase {
+class TWINLINKWIDGETS_API UTwinLinkAddFacilityDialogBase
+    : public UTwinLinkWidgetBase
+{
     GENERATED_BODY()
 
 public:
@@ -65,6 +68,10 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
         const UPrimitiveComponent* GetTargetFeatureComponent() const;
+
+    virtual void BeginDestroy() override;
+
 protected:
     FString FeatureID;
+    FTwinLinkEntranceLocatorWidgetNode* EntranceLocatorNode = nullptr;
 };
