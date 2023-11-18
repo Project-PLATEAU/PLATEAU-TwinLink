@@ -117,12 +117,18 @@ void UTwinLinkFacilityInfoSystem::ExportFacilityInfo() {
         const auto ImageFileName = Val->GetImageFileName();
         const auto Description = Val->GetDescription();
         const auto SpotInfo = Val->GetSpotInfo();
+
+        FString EntranceStr = "";
+        if (Val->GetEntrances().IsEmpty() == false) {
+            auto& E = Val->GetEntrances()[0];
+            EntranceStr = FString::Printf(TEXT("%f#%f#%f"), E.X, E.Y, E.Z);
+        }
         StringBuf =
             CSVContents.CreateBodyContents(
-                FString::Printf(TEXT("%s,%s,%s,%s,%s,%s"),
+                FString::Printf(TEXT("%s,%s,%s,%s,%s,%s,%s"),
                     *(Name),
                     *Category, *FeatureID, *ImageFileName,
-                    *Description, *SpotInfo));
+                    *Description, *SpotInfo, *EntranceStr));
 
         CSVExporter.AddBodyContents(StringBuf);
     }

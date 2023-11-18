@@ -6,7 +6,6 @@
 #include "NavigationSystem.h"
 #include "TwinLinkMathEx.h"
 #include "TwinLinkWorldViewer.h"
-#include "Customizations/MathStructProxyCustomizations.h"
 #include "NavSystem/TwinLinkNavSystem.h"
 
 // Sets default values

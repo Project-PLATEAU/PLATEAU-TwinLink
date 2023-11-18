@@ -27,8 +27,9 @@ bool UTwinLinkFacilityInfo::Setup(
 
 bool UTwinLinkFacilityInfo::Setup(const TArray<FString>& DataStr) {
     const auto NumDataElement = 6;
-    ensure(DataStr.Num() == NumDataElement);
-    if (DataStr.Num() != NumDataElement) {
+    // 後方互換のために不等号で比較する
+    ensure(DataStr.Num() >= NumDataElement);
+    if (DataStr.Num() < NumDataElement) {
         return false;
     }
 
@@ -38,6 +39,28 @@ bool UTwinLinkFacilityInfo::Setup(const TArray<FString>& DataStr) {
     ImageFileName = DataStr[3];
     Description = DataStr[4];
     SpotInfo = DataStr[5];
+
+    FString EStr = TEXT("");
+    if(DataStr.Num() >= 7)
+        EStr = DataStr[6];
+
+    Entrances.Reset();
+    if(EStr.IsEmpty() == false)
+    {
+        TArray<FString> Elems;
+        EStr.ParseIntoArray(Elems, TEXT("#"));
+        if(Elems.Num() == 3)
+        {
+            // すべて数値かチェック
+            if(Elems.ContainsByPredicate([](const FString& S) { return S.IsNumeric() == false; }) == false)
+            {
+                auto X = FCString::Atod(*Elems[0]);
+                auto Y = FCString::Atod(*Elems[1]);
+                auto Z = FCString::Atod(*Elems[2]);
+                Entrances.Add(FVector(X, Y, Z));
+            }            
+        }
+    }
 
     check(!Name.IsEmpty());
     check(!Category.IsEmpty());
