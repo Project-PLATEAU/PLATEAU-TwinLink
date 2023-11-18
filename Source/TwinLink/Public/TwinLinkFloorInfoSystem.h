@@ -165,6 +165,19 @@ public:
         const FString& ImageFileName);
 
     /**
+     * @brief 設計情報をエキスポートする
+     * @return 
+    */
+    void ExportBuildingDesign();
+
+    /**
+     * @brief 設計情報をインポートする
+     * @return 
+    */
+    void ImportBuildingDesign();
+
+
+    /**
      * @brief 施設情報の編集
      * @param FloorInfo
      * @param Name
@@ -209,6 +222,9 @@ private:
     /** 設計情報のマップ フロア名キーに扱う **/
     UPROPERTY()
     TMap<FString, TObjectPtr<UTwinLinkBuildingDesignInfo>> BuidingDesingInfoMap;
+
+    /** 設計情報永続化時のファイルパス **/
+    FString BuildingDesingFilePath;
 
     /** 施設情報の永続化時のファイル名 **/
     FString FileName;

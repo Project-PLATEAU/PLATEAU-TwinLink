@@ -128,7 +128,6 @@ void ATwinLinkNavSystem::Tick(float DeltaSeconds) {
 
     if (EntranceLocator)
         EntranceLocator->SetActorHiddenInGame(FTwinLinkEntranceLocatorNode::IsAnyNodeVisible() == false);
-
 #if WITH_EDITOR
     DebugDraw();
 #endif

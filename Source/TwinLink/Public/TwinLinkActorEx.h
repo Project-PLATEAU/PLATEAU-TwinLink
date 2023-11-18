@@ -37,18 +37,6 @@ public:
     }
 
     template<class T>
-    static auto SpawnActor(UWorld* World, const TSubclassOf<T>& Class, const TCHAR* Name) -> T* {
-        FActorSpawnParameters Params;
-        Params.Owner = nullptr;
-        Params.Name = MakeUniqueObjectName(World, Class, FName(Name));
-        const auto Ret = World->SpawnActor<T>(Class, Params);
-        if (!Ret)
-            return Ret;
-        Ret->SetActorLabel(FString(Name));
-        return Ret;
-    }
-
-    template<class T>
     static const T* FindActorInOwner(const AActor* Self, bool bIncludeSelf = false) {
         if (!Self)
             return nullptr;

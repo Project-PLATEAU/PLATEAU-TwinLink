@@ -23,6 +23,11 @@
 void UTwinLinkFloorInfoSystem::Initialize(FSubsystemCollectionBase& Collection) {
     Collection.InitializeDependency<UTwinLinkTickSystem>();
 
+    BuildingDesingFilePath = 
+        TwinLinkPersistentPaths::CreateBuildingDesignFilePath(TEXT("BuildingDesign.csv"));
+
+    ImportBuildingDesign();
+
     FileName = TEXT("FloorInfo.csv");
 
     ImportFloorInfo();
@@ -328,6 +333,7 @@ void UTwinLinkFloorInfoSystem::AddBuildingDesign(const FString& Key, const FStri
         EvOnAddedBuildingDesignInfoInstance.Broadcast();
     }
 
+    ExportBuildingDesign();
 }
 
 bool UTwinLinkFloorInfoSystem::EditBuildingDesign(const FString& Key, const TWeakObjectPtr<UTwinLinkBuildingDesignInfo>& BuidlingDesignInfo, const FString& ImageFileName) {
@@ -337,6 +343,73 @@ bool UTwinLinkFloorInfoSystem::EditBuildingDesign(const FString& Key, const TWea
     
     (*DataPtr)->Setup(ImageFileName);
     return true;
+}
+
+void UTwinLinkFloorInfoSystem::ExportBuildingDesign() {
+    UE_TWINLINK_LOG(LogTemp, Log, TEXT("TwinLink Export BuildingDesignInfo : %s"), *BuildingDesingFilePath);
+
+    TwinLinkCSVExporter CSVExporter;
+    TwinLinkCSVContents::Standard CSVContents(VersionInfo);
+    CSVExporter.SetHeaderContents(
+        CSVContents.CreateHeaderContents(
+            TEXT("key, image_file_name")));
+
+    FString StringBuf;
+    for (const auto& BuildingDesingInfo : BuidingDesingInfoMap) {
+        const auto& Key = BuildingDesingInfo.Key;
+        const auto& Val = BuildingDesingInfo.Value;
+        const auto ImageFileName = Val->GetImageFileName();
+        StringBuf =
+            CSVContents.CreateBodyContents(
+                FString::Printf(TEXT("%s,%s"),
+                    *Key,
+                    *ImageFileName));
+
+        CSVExporter.AddBodyContents(StringBuf);
+    }
+
+    const auto bIsSuc = CSVExporter.ExportCSV(*BuildingDesingFilePath);
+    check(bIsSuc);
+}
+
+void UTwinLinkFloorInfoSystem::ImportBuildingDesign() {
+    TwinLinkCSVImporter CSVImporter;
+    TwinLinkCSVContents::Standard CSVContents(VersionInfo);
+    const auto bIsSuc = CSVImporter.ImportCSV(*BuildingDesingFilePath, &CSVContents);
+
+    if (bIsSuc == false) {
+        UE_TWINLINK_LOG(LogTemp, Log, TEXT("Failed Import CSV : %s"), *BuildingDesingFilePath);
+        return;
+    }
+
+    // データを解析して取得する
+    const auto& BodyContents = CSVContents.GetBodyContents();
+    BuidingDesingInfoMap.Reset();
+    for (const auto& BodyContentsElement : BodyContents) {
+        for (const auto& ErrorStrDataElement : BodyContentsElement) {
+            UE_TWINLINK_LOG(LogTemp, Log, TEXT("Log Contains: %s"), *ErrorStrDataElement);
+        }
+
+        const auto Key = BodyContentsElement[0];
+        const auto Val = BodyContentsElement[1];
+
+        // データを解析する
+        const auto BuildingDesignInfo = NewObject<UTwinLinkBuildingDesignInfo>();
+        BuildingDesignInfo->Setup(Val);
+
+        // 無効なデータか
+        if (BuildingDesignInfo->IsValid() == false) {
+            // エラーデータを出力する デバッグ用
+            for (const auto& ErrorStrDataElement : BodyContentsElement) {
+                UE_TWINLINK_LOG(LogTemp, Log, TEXT("Contains invalid data : %s"), *ErrorStrDataElement);
+            }
+            // このデータの追加をスキップする
+            continue;
+        }
+
+        // データを追加する
+        BuidingDesingInfoMap.Add(Key, BuildingDesignInfo);
+    }
 }
 
 bool UTwinLinkFloorInfoSystem::EditFloorInfo(
