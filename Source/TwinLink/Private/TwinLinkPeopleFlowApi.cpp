@@ -5,24 +5,20 @@
 #include "JsonObjectConverter.h"
 #include "Interfaces/IHttpResponse.h"
 
-FTWinLinkPeopleFlowApiResult FTWinLinkPeopleFlowApiResult::Error()
-{
+//#define TWINLINK_USE_POST
+FTWinLinkPeopleFlowApiResult FTWinLinkPeopleFlowApiResult::Error() {
     FTWinLinkPeopleFlowApiResult Ret;
-    Ret.bSuccess = false;         
+    Ret.bSuccess = false;
     return Ret;
 }
 
 void UTwinLinkPeopleFlowApi::Request(const FTwinLinkPeopleFlowApiRequest& Req) {
     // https://dev.classmethod.jp/articles/unrealengine5-http-api-call/
-    const FString Url = "http://localhost:3000/population";
-    const FString Verb = "GET";
-
+    const FString Url = "https://plateau-spatialid-bim-api-3xfxdvazpa-an.a.run.app/population";
 
     const FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
     Request->OnProcessRequestComplete().BindUObject(this, &UTwinLinkPeopleFlowApi::OnResponseReceived);
 
-    // パラメータ設定
-    Request->SetURL(Url);
     FJsonObject Json;
     // https://synesthesias.atlassian.net/wiki/spaces/plateaubimkukanid/pages/174751754
     // https://eukarya.notion.site/API-5587dd0c756c44d6bd697b4089bc366b
@@ -31,10 +27,28 @@ void UTwinLinkPeopleFlowApi::Request(const FTwinLinkPeopleFlowApiRequest& Req) {
     for (auto& Id : Req.SpatialIds)
         SpatialIds.Add(Id.StringZFXY());
     const auto Ids = FString::Join(SpatialIds, TEXT(","));
-    const auto Time = Req.DateTime.ToFormattedString(TEXT("yyyy-MM-ddThh:mm:ss"));
-    const auto Query = FString::Printf(TEXT("spatialId=\"%s\"&time=\"%s\""), *Ids, *Time);
-    Request->SetURL(FString::Printf(TEXT("%s?%s"), *Url, *Query));
-    Request->SetVerb(Verb);
+    // #NOTE : タイムゾーンは日本前提
+    const auto Time = Req.DateTime.ToFormattedString(TEXT("%Y-%m-%dT%H:%M:%S+09:00"));
+    constexpr bool bUsePost = true;
+    if (bUsePost) {
+        Request->SetVerb(TEXT("POST"));
+        Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
+        if (Req.bUseDateTime) {
+            const auto Content = FString::Printf(TEXT("{\"spatialId\":\"%s\",\"time\":\"%s\"}"), *Ids, *Time);
+            Request->SetContentAsString(Content);
+        }
+        else {
+            const auto Content = FString::Printf(TEXT("{\"spatialId\":\"%s\"}"), *Ids);
+            Request->SetContentAsString(Content);
+        }
+        Request->SetURL(Url);
+    }
+    else {
+        const FString Verb = "GET";
+        Request->SetVerb(TEXT("GET"));
+        const auto Query = FString::Printf(TEXT("spatialId=\"%s\"&time=\"%s\""), *Ids, *Time);
+        Request->SetURL(FString::Printf(TEXT("%s?%s"), *Url, *Query));
+    }
     Request->ProcessRequest();
 }
 
@@ -46,15 +60,15 @@ void UTwinLinkPeopleFlowApi::OnResponseReceived(FHttpRequestPtr Request, FHttpRe
 }
 
 FTWinLinkPeopleFlowApiResult UTwinLinkPeopleFlowApi::ParseResponse(const FHttpResponsePtr& Response,
-    bool bConnectionSuccessfully)
-{
+    bool bConnectionSuccessfully) {
     if (!bConnectionSuccessfully)
         return FTWinLinkPeopleFlowApiResult::Error();
 
     // JSONオブジェクト格納用変数初期化
     TSharedPtr<FJsonObject> ResponseObj = MakeShareable(new FJsonObject());
     // 文字列からJSONを読み込むためのReader初期化
-    TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Response->GetContentAsString());
+    const auto ContentStr = Response->GetContentAsString();
+    TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ContentStr);
 
     // 文字列からJSONオブジェクトへデシリアライズ
     if (!FJsonSerializer::Deserialize(Reader, ResponseObj))

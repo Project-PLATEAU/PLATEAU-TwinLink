@@ -18,9 +18,14 @@ public:
     // 空間Idのリスト
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Base")
         TArray<FTwinLinkSpatialID> SpatialIds;
+
     // 時刻
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Base")
         FDateTime DateTime;
+
+    // 時刻を使うかどうか(falseの場合は最新の値を取ってくる)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Base")
+        bool bUseDateTime = true;
 };
 
 USTRUCT(BlueprintType)

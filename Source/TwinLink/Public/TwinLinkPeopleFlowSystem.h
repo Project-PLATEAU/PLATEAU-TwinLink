@@ -24,14 +24,14 @@ public:
         void Request(const FTwinLinkPeopleFlowApiRequest& Req);
     FOnReceivedPeopleFlowResponseDelegate OnReceivedPeopleFlowResponse;
 private:
-    /*
-     * @brief : レスポンスコールバック
-     */
-    void OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectionSuccessfully);
-
-    static FTWinLinkPeopleFlowApiResult ParseResponse(const FHttpResponsePtr& Response, bool bConnectionSuccessfully);
+    // 人流データレスポンス受信
+    UFUNCTION()
+        void OnReceivedPeopleFlowResponseImpl(const FTWinLinkPeopleFlowApiResult& Result);
 private:
     // 最後にリクエストした時刻
     UPROPERTY()
         FDateTime LastRequestDateTime;
+
+    UPROPERTY()
+        UTwinLinkPeopleFlowApi* Api = nullptr;
 };
