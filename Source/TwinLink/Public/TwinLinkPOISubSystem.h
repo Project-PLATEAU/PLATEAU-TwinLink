@@ -36,6 +36,8 @@ public:
 public:
     /** 属性選択用のリスト **/
     TArray<FString> AttributeList;
+    /** 属性選択用のインデックスリスト **/
+    TArray<int> AttributeListIndex;
     /** 登録済みPOIキーリスト **/
     TArray<FString> AttributeNames;
     /** 登録済みPOI情報 <Attribute, <Name, Vector>> **/
