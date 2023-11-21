@@ -27,7 +27,7 @@ public:
     virtual void NativeDestruct() override;
 
     /**  階層選択ウィジェット  **/
-    UPROPERTY(meta = (BindWidget))
+    UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
         TObjectPtr<UTwinLinkFloorViewPanel> Floor;
 
 protected:

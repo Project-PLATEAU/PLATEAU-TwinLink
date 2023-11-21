@@ -8,6 +8,8 @@
 #include "TwinLink.h"
 
 #include "TwinLinkFloorInfoSystem.h"
+#include "TwinLinkFloorSwitcher.h"
+#include "Components/ScrollBox.h"
 
 void UTwinLinkFloorViewPanel::SetupTwinLinkFloorView() {
     const auto CityModel = FTwinLinkModule::Get().GetFacilityModel();
@@ -60,7 +62,7 @@ void UTwinLinkFloorViewPanel::SetupTwinLinkFloorView() {
     if (SortFloorKeys.Num() > FloorKeys.Num()) {
         FloorKeys.Insert("Exterior", 0);
     }
-    
+
     //ResetChild
     FloorViewScrollBox->ClearChildren();
 
@@ -68,6 +70,20 @@ void UTwinLinkFloorViewPanel::SetupTwinLinkFloorView() {
     for (const auto& FloorKey : FloorKeys) {
         FloorViewScrollBox->AddChild(Cast<UWidget>(ElementWidgets[FloorKey]));
     }
+}
+
+void UTwinLinkFloorViewPanel::SetupTwinLinkFloorViewWithSwitcher(UTwinLinkFloorSwitcher* Switcher) {
+    FloorSwitcher = Switcher;
+
+    if (FloorKeys.IsEmpty()) {
+        return;
+    }
+
+    SelectedFloorKey = FloorKeys[0];
+
+    FloorViewChangeKey(SelectedFloorKey);
+
+    FloorSwitcher->TwinLinkFloorSwitcherSetup(this);
 }
 
 void UTwinLinkFloorViewPanel::FinalizeTwinLinkFloorView() {
@@ -113,4 +129,21 @@ void UTwinLinkFloorViewPanel::FloorViewChange(TObjectPtr<UUserWidget> Element) {
     OnChangedFloorView();
     const auto Arg = LinkComponents[*Key];
     OnChangeFloorDelegate.Broadcast(Arg.Get());
+
+    //選択解除
+    if (!SelectedFloorKey.IsEmpty()) {
+        Cast<UTwinLinkFloorViewElement>(ElementWidgets[SelectedFloorKey])->OnDeselect();
+    }
+
+    SelectedFloorKey = *Key;
+
+    if (FloorSwitcher != nullptr) {
+        FloorSwitcher->FloorSwitch();
+    }
+}
+
+void UTwinLinkFloorViewPanel::FloorViewChangeKey(const FString& Key) {
+    FloorViewChange(ElementWidgets[Key]);
+    Cast<UTwinLinkFloorViewElement>(ElementWidgets[Key])->OnSelect();
+    Cast<UScrollBox>(FloorViewScrollBox)->ScrollWidgetIntoView(ElementWidgets[Key]);
 }

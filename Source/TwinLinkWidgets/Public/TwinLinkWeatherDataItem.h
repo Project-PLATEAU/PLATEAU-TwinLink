@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "TwinLinkWidgetBase.h"
+#include "Components/TextBlock.h"
 #include "Components/PanelWidget.h"
 #include "TwinLinkWeatherDataItem.generated.h"
 
