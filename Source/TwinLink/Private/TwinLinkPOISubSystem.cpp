@@ -113,6 +113,23 @@ FColor UTwinLinkPOISubSystem::AssignColor() {
     return NewColor;
 }
 
+int UTwinLinkPOISubSystem::TwinLinkPOIGetInsidePOI(const FBox& Box, TMap<FString, TMap<FString, FVector>>& Ret) {
+    int num = 0;
+    for (const auto& Attribute : RegisteredPOIs) {
+        for (const auto& POI : Attribute.Value) {
+            // #NOTE : BoxはXY
+            if (Box.IsInsideXY(POI.Value)) {
+                if (!Ret.Contains(Attribute.Key)) {
+                    Ret.Add(Attribute.Key);
+                }
+                Ret[Attribute.Key].Add(POI.Key, POI.Value);
+                num++;
+            }
+        }
+    }
+    return num;
+}
+
 FString UTwinLinkPOISubSystem::ConvertSJISToFString(const std::string& SjisString) {
     // Shift-JISからUTF-16への変換
     FString Utf16String;

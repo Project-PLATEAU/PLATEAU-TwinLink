@@ -33,6 +33,13 @@ public:
     * @return 割り当てたカラー
     */
     FColor AssignColor();
+    /**
+    * @brief 空間IDへ連携するPOI
+    * @param 空間IDのBoundingBox（高さ方向はみない）
+    * @param POI情報　TMap<登録名, TMap<名称, 座標>>
+    * @return 取得POI数
+    */
+    int TwinLinkPOIGetInsidePOI(const FBox& Box, TMap<FString, TMap<FString, FVector>>& Ret);
 public:
     /** 属性選択用のリスト **/
     TArray<FString> AttributeList;

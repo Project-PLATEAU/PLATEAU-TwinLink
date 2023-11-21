@@ -2,7 +2,9 @@
 #include "SpatialAnalysis/TwinLinkSpatialAnalysisPresenter.h"
 
 #include "TwinLinkCityObjectTree.h"
+#include "TwinLinkCommon.h"
 #include "TwinLinkPLATEAUCityObjectGroupEx.h"
+#include "TwinLinkPOISubSystem.h"
 #include "TwinLinkWorldViewer.h"
 #include "NavSystem/TwinLinkNavSystem.h"
 
@@ -22,7 +24,6 @@ void ATwinLinkSpatialAnalysisPresenter::BeginPlay() {
     if (auto PeopleFlow = ATwinLinkNavSystem::GetPeopleFlowSystem(GetWorld())) {
         PeopleFlow->OnReceivedPeopleFlowResponse.AddDynamic(this, &ATwinLinkSpatialAnalysisPresenter::OnReceivedPeopleFlowResponse);
     }
-
 }
 
 void ATwinLinkSpatialAnalysisPresenter::Tick(float DeltaTime) {
@@ -41,18 +42,22 @@ void ATwinLinkSpatialAnalysisPresenter::CheckSpatialIdChanged(const std::optiona
     const auto After = GetNowSpatialId();
     if (After.has_value() == false)
         return;
+
     if (!Before.has_value() || *Before != *After) {
+        const auto POISystem = TwinLinkSubSystemHelper::GetInstance<UTwinLinkPOISubSystem>();
+        check(POISystem.IsValid());
+        const auto Bb = After->GetSpatialIDArea(*Tree->GetGeoReference());
+        TMap<FString, TMap<FString, FVector>> PoiMap;
+
         const auto Buildings = Tree->FindCityObjectGroups(*After);
         FTwinLinkSpatialAnalysisUiInfo Info;
         Info.SpatialId = *After;
         Info.BuildingCount = Buildings.Num();
-        if (const auto NavSystem = ATwinLinkNavSystem::GetInstance(GetWorld())) {
-            for (auto& B : Buildings) {
-                if (const auto BuildingInfo = NavSystem->FindBuildingInfo(B.CityObjectGroup)) {
-                    if (BuildingInfo->FacilityInfo.IsValid())
-                        Info.FacilityInfos.Add(BuildingInfo->FacilityInfo.Get());
-                }
-            }
+
+        // 各登録名ごとの数を入れる
+        POISystem->TwinLinkPOIGetInsidePOI(Bb, PoiMap);
+        for (auto& M : PoiMap) {
+            Info.PoiInfos.Add(FTwinLinkSpatialAnalysisPoiInfo{ M.Key, M.Value.Num() });
         }
 
         OnSpatialIdChanged.Broadcast(*Before, Info);
