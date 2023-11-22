@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #include "TwinLinkSpatialID.h"
 
@@ -251,6 +251,15 @@ FTwinLinkSpatialID FTwinLinkSpatialID::ZoomChanged(int Zoom) const {
     else {
         return Create(Zoom, _F << Bit, X << Bit, Y << Bit, bIsValidAltitude);
     }
+}
+
+FTwinLinkSpatialID FTwinLinkSpatialID::ZoomUp(int Zoom, int InX, int InY) const
+{
+    return FTwinLinkSpatialID::Create(
+        Z + Zoom, F,
+        (int)(X * FMath::Pow(2.0, Zoom) + InX),
+        (int)(Y * FMath::Pow(2.0, Zoom) + InY),
+        bIsValidAltitude);
 }
 
 void FTwinLinkSpatialID::ToGeoCoordinate(FPLATEAUGeoCoordinate& Out) const {

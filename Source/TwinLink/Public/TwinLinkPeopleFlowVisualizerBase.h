@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/SceneComponent.h"
+#include "Misc/DateTime.h"
 #include "TwinLinkPeopleFlowSystem.h"
 #include "TwinLinkPeopleFlowVisualizerBase.generated.h"
 
@@ -113,7 +114,7 @@ public:
     */
     UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
     void UpdateDecalInstance(
-        FVector Center, FVector Scale, UTexture* HeatmapTexture, int HeatmapResolution);
+        FVector Center, FVector Scale, UTexture* HeatmapTexture, int InHeatmapWidth, int InHeatmapHeight, float EmissiveBoost);
 
     /**
      * @brief 有効、無効の状態を切り替える
@@ -171,6 +172,11 @@ private:
         /** 最大ズームレベルでの最小空間IDのY**/
         int SpatialIDYMin;
 
+        /** 最大ズームレベルでの最小空間IDを基点とした範囲のX**/
+        int SpatialIDXRange;
+        /** 最大ズームレベルでの最大空間IDのY**/
+        int SpatialIDYRange;
+
         /** 最小ボクセルの面積 **/
         double MinmumVoxelArea;
 
@@ -179,6 +185,9 @@ private:
 
         /** サンプリング用の空間IDのボクセル 中心座標 最大ズームレベル **/
         FBox SamplingVoxelOnMaxLevel;
+
+        /** サンプリング用の空間IDのボクセル 中心座標 最大ズームレベル **/
+        FBox SamplingEdgeVoxelOnMaxLevel;
 
     };
 
@@ -193,6 +202,9 @@ private:
     };
 
     struct FCache {
+        // キャッシュを削除
+        void Clear();
+
         // プリミティブデータ用　サーバーから情報を受け取って適切な形に変換した結果を格納する配列
         TArray<PrimPopulationData> PrimDataAry;
 
@@ -249,6 +261,23 @@ private:
         FPLATEAUGeoReference* const GeoReference,
         const FVector& AreaCenter, const FVector& AreaExtent, double Altitude,
         double InThresholdForSubdivision);
+
+    void ExtractVoxelLocationsInView(
+        TMap<int, TArray<FVector>>* const OutLocationsMap, double InThresholdForSubdivision, FPLATEAUGeoReference* const GeoReference,
+        const FVector& ViewLocation, const FConvexVolume& ViewFrustumBounds, double Altitude,
+        double Zoom, int InMaxZoomLevel,
+        const FVector& RequestStartPosition,
+        int Width, int Depth,
+        const FVector& AreaCenter, const FVector2D& AreaExtent,
+        const UWorld* World = nullptr);
+
+    void ExtractVoxelLocationsInView(
+        TArray<FVector>* const OutLocations,
+        int Width, int Depth,
+        const FConvexVolume& ViewConvexVolume,
+        const FVector& OffsetToEdge,
+        const FVector& VoxelSize,
+        double Altitude);
 
 private:
     /** 都市モデルデータ関係の補助構造体 **/

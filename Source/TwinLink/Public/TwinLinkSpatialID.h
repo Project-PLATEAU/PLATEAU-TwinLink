@@ -140,6 +140,15 @@ public:
      */
     FTwinLinkSpatialID ZoomChanged(int Zoom) const;
 
+    /**
+     * @brief ズームアップを行う
+     * @param Zoom ズームしたい数値  18->19 なら 1
+     * @param InX 細分化された際のボクセルのインデックス 0<=X<=(2のZoom乗-1)　範囲外の値は隣の空間IDが渡される
+     * @param InY 
+     * @return 
+    */
+    FTwinLinkSpatialID ZoomUp(int Zoom, int InX, int InY) const;
+
     /*
      * @brief : 緯度経度高度に変換
      */
