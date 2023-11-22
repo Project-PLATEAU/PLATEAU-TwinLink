@@ -62,6 +62,15 @@ public:
         const FString& SpotInfo);
 
     /**
+     * @brief イメージファイルのパスを作成する
+     * @param InFileName 拡張子付きファイル名
+     * @return
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+    FString CreateImageFilePath(const FString& InFileName);
+
+
+    /**
      * @brief 編集のリクエストに成功した時に呼ばれる
     */
     UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")

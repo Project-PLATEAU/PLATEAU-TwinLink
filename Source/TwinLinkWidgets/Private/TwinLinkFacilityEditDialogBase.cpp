@@ -4,6 +4,7 @@
 #include "TwinLinkFacilityEditDialogBase.h"
 #include "TwinLinkCommon.h"
 
+#include "TwinLinkPersistentPaths.h"
 #include "TwinLinkFacilityInfoSystem.h"
 #include "TwinLinkFacilityInfo.h"
 
@@ -62,4 +63,8 @@ void UTwinLinkFacilityEditDialogBase::RequestEdit(const FString& Name, const FSt
     FacilityInfoSys->ExportFacilityInfo();
 
     OnSuccessRequestEdit();
+}
+
+FString UTwinLinkFacilityEditDialogBase::CreateImageFilePath(const FString& InFileName) {
+    return TwinLinkPersistentPaths::CreateFacilityImagePath(InFileName);
 }

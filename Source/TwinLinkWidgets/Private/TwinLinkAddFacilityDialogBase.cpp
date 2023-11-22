@@ -4,6 +4,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "TwinLinkCommon.h"
 
+#include "TwinLinkPersistentPaths.h"
 #include "TwinLinkWorldViewer.h"
 #include "TwinLinkFacilityInfoSystem.h"
 
@@ -45,4 +46,8 @@ void UTwinLinkAddFacilityDialogBase::AddFacilityInfo(const FString& InName, cons
 
     OnAddedFacilityInfo();
 
+}
+
+FString UTwinLinkAddFacilityDialogBase::CreateImageFilePath(const FString& InFileName) {
+    return TwinLinkPersistentPaths::CreateFacilityImagePath(InFileName);
 }
