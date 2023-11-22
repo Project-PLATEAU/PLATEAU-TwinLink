@@ -24,9 +24,11 @@ void UTwinLinkFacilityAttributeBase::BeginPlay()
 	// ...
     check(EvOnClickedHnd.IsValid() == false);
     const auto WorldViewer = ATwinLinkWorldViewer::GetInstance(GetWorld());
-    EvOnClickedHnd = WorldViewer->EvOnClicked.AddLambda([this]() {
-        LineTraceToCityObject();
-        });
+    if (WorldViewer.IsValid()) {
+        EvOnClickedHnd = WorldViewer->EvOnClicked.AddLambda([this]() {
+            LineTraceToCityObject();
+            });
+    }
 }
 
 void UTwinLinkFacilityAttributeBase::BeginDestroy() {

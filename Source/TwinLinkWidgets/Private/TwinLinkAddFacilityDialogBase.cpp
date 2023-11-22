@@ -11,6 +11,8 @@ void UTwinLinkAddFacilityDialogBase::Setup() {
     const auto WorldViewer = 
         ATwinLinkWorldViewer::GetInstance(GetWorld());
 
+    if (WorldViewer.IsValid() == false)
+        return;
     check(WorldViewer.IsValid());
 
     // クリック時にイベントを追加する
