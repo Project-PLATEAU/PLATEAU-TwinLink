@@ -36,4 +36,7 @@ public:
 
     UPROPERTY(EditAnywhere, meta = (Comment = "初期ズームレベル"), Category = "Base")
         int DefaultZoom = 18;
+
+    UPROPERTY(EditAnywhere, meta = (Comment = "BoxMeshBp"), Category = "Base")
+        TSubclassOf<UStaticMesh> BoxMesh;
 };

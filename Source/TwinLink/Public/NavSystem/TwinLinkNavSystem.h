@@ -10,6 +10,7 @@
 #include "TwinLinkFacilityInfoSystem.h"
 #include "TwinLinkNavSystemBuildingInfo.h"
 #include "TwinLinkNavSystemDef.h"
+#include "TwinLinkNavSystemEntranceLocator.h"
 #include "TwinLinkNavSystemFindPathInfo.h"
 #include "TwinLinkNavSystemPathDrawer.h"
 #include "TwinLinkNavSystemParam.h"
@@ -61,6 +62,8 @@ public:
      */
     static UTwinLinkPeopleFlowSystem* GetPeopleFlowSystem(const UWorld* World);
 
+    static ATwinLinkNavSystemEntranceLocator* GetEntranceLocator(const UWorld* World);
+
     static bool FindNavMeshPoint(const UNavigationSystemV1* NavSys, const UStaticMeshComponent* StaticMeshComp, FVector& OutPos);
     virtual void Tick(float DeltaSeconds) override;
 
@@ -75,6 +78,28 @@ public:
     void SetDemCollisionAabb(const FBox& Val) {
         DemCollisionAabb = Val;
     }
+
+    /*
+     * @brief : Editor用. 入口設定用アクターのBPを設定
+     */
+    void SetEntranceLocatorBp(TSubclassOf<ATwinLinkNavSystemEntranceLocator> Bp) {
+        EntranceLocatorBp = Bp;
+    }
+
+    /*
+     * @brief : 入り口設定用アクター取得
+     */
+    ATwinLinkNavSystemEntranceLocator* GetEntranceLocator() const {
+        return EntranceLocator;
+    }
+
+    UFUNCTION(BlueprintCallable)
+        bool IsEntranceLocatorVisible() const;
+
+    /*
+     * @brief : 道コリジョンのハイトマップ作製
+     */
+    void BuildDemHeightMap();
 
     /*
      * @brief : ナビメッシュの道情報を除いた都市モデルのAabb
@@ -125,9 +150,10 @@ public:
 
     /*
      * @brief : 移動パスの情報取得
+     * @UiPanelSize : スクリーンに表示するパネルサイズ(マーカーとの重なりチェックに使う
      */
     UFUNCTION(BlueprintCallable)
-        FTwinLinkNavSystemFindPathUiInfo GetDrawMoveTimeUiInfo(TwinLinkNavSystemMoveType MoveType, const FBox2D& ScreenRange) const;
+        FTwinLinkNavSystemFindPathUiInfo GetDrawMoveTimeUiInfo(TwinLinkNavSystemMoveType MoveType, const FBox2D& ScreenRange, const FVector2D& UiPanelSize) const;
 
     /*
      * @brief : 移動パスの情報出力情報取得
@@ -175,6 +201,8 @@ public:
      */
     UFUNCTION(BlueprintCallable)
         bool IsValid() const;
+
+    void DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos) override;
 private:
     /*
      * @brief : PathFinderからパス検索準備完了時のコールバックとして登録する
@@ -224,6 +252,31 @@ private:
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
         TMap<FString, FTwinLinkNavSystemBuildingInfo> BuildingMap;
 
+    // 道コリジョンのHeightMap
+    // index :
+    // DemCollisionのAabb寄りも低い値が入っているときは不正値扱い
+    //UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
+    TArray<float> DemHeightMap;
+
+    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
+        int DemHeightMapSizeX = 0;
+
+    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
+        int DemHeightMapSizeY = 0;
+
+    // 建物の入り口設定用のロケーターブループリント
+    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
+        TSubclassOf<ATwinLinkNavSystemEntranceLocator> EntranceLocatorBp;
+
+    std::optional<double> GetDemHeight(int Index) const;
+    int PositionToDemHeightMapIndex(const FVector3d& Pos)const;
+
+    std::optional<FVector3d> DemHeightMapIndexToPosition(int Index) const;
+
+    int DemHeightMapCellToIndex(int X, int Y) const;
+
+    bool TryDemHeightMapIndexToCell(int Index, int& OutX, int& OutY) const;
+
 private:
     // -----------------------
     // ランタイム系
@@ -241,6 +294,10 @@ private:
     UPROPERTY(EditAnywhere, Category = TwinLink_Runtime)
         ATwinLinkNavSystemPathFinder* NowPathFinder = nullptr;
 
+    // 入り口設定用ロケーター
+    UPROPERTY(EditAnywhere, Category = TwinLink_Runtime)
+        ATwinLinkNavSystemEntranceLocator* EntranceLocator = nullptr;
+
     // パス検索情報
     std::optional<FTwinLinkNavSystemFindPathInfo> PathFindInfo;
 
@@ -251,17 +308,16 @@ private:
     UPROPERTY(EditAnywhere, Category = TwinLink_Test)
         bool DebugCallPathFinding = false;
 
-    // デバッグ用) 人流データ取得リクエストを呼ぶ
-    UPROPERTY(EditAnywhere, Category = TwinLink_Test)
-        bool DebugCallPeopleFlow = false;
-
-    // デバッグ用) 人流データ取得リクエスト
-    UPROPERTY(EditAnywhere, Category = TwinLink_Test)
-        FTwinLinkPeopleFlowApiRequest DebugPeopleFlowRequest;
-
     // パス探索のアクター
     UPROPERTY(EditAnywhere, Category = TwinLink_Test)
         bool DebugDrawInfo = false;
+
+    // ハイトマップをデバッグ表示
+    UPROPERTY(EditAnywhere, Category = TwinLink_Test)
+        bool DebugDrawDemHeightMap = false;
+
+    UPROPERTY(EditAnywhere, Category = TwinLink_Test)
+        int DebugDrawDemHeightMapOffsetZ = 0;
 
     //    UTwinLinkFacilityInfo DebugStartBuilding;
     UPROPERTY(EditAnywhere, Category = TwinLink_Test)

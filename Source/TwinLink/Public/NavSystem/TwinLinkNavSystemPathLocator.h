@@ -9,6 +9,7 @@
 #include "GameFramework/Actor.h"
 #include "TwinLinkNavSystemPathLocator.generated.h"
 
+class UTwinLinkFacilityInfo;
 class UNavigationSystemV1;
 
 UCLASS()

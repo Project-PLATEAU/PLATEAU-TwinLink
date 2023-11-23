@@ -183,8 +183,10 @@ namespace {
             }
         }
 
-        if (Ret.DemAabb.has_value())
+        if (Ret.DemAabb.has_value()) {
             NavSystem->SetDemCollisionAabb(*Ret.DemAabb);
+            NavSystem->BuildDemHeightMap();
+        }
 
         return Ret;
     }

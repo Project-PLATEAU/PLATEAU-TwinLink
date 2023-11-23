@@ -25,3 +25,11 @@ void TwinLinkActorEx::OnSpawnChildActor(AActor* Parent, AActor* Self, const FStr
 #endif
     Self->AttachToActor(Parent, FAttachmentTransformRules::KeepWorldTransform);
 }
+
+FBox TwinLinkActorEx::GetActorBounds(const AActor* Self, bool bOnlyCollidingComponents,
+    bool bIncludeFromChildActors) {
+    FVector Center;
+    FVector Extent;
+    Self->GetActorBounds(bOnlyCollidingComponents, Center, Extent, bIncludeFromChildActors);
+    return FBox(Center - Extent, Center + Extent);
+}

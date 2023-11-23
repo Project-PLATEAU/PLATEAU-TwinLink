@@ -6,7 +6,8 @@
 #include "Kismet/GameplayStatics.h"
 
 std::optional<FBox> ATwinLinkPlayerController::ScreenToWorldRayThroughBoundingBox(
-    const APlayerController* PlayerController, const FVector2D& ScreenPos, const FBox& FieldBb)
+    const APlayerController* PlayerController, const FVector2D& ScreenPos, const FBox& FieldBb,
+    float StartOffsetFromCamera)
 {
     if (!PlayerController)
         return std::nullopt;
@@ -15,7 +16,7 @@ std::optional<FBox> ATwinLinkPlayerController::ScreenToWorldRayThroughBoundingBo
         // カメラ位置からBoxの中心点 + Boxの対角線の長さがあれば必ず貫くことはできる
         const auto ToCenterVec = FieldBb.GetCenter() - WorldPosition;
         const auto Length = ToCenterVec.Length() + (FieldBb.Max - FieldBb.Min).Length();
-        return FBox(WorldPosition, WorldPosition + WorldDirection * Length);
+        return FBox(WorldPosition + WorldDirection * StartOffsetFromCamera, WorldPosition + WorldDirection * Length);
     }
     return std::nullopt;
 }

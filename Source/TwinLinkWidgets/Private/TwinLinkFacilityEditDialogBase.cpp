@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
 #include "TwinLinkFacilityEditDialogBase.h"
@@ -7,6 +7,8 @@
 #include "TwinLinkPersistentPaths.h"
 #include "TwinLinkFacilityInfoSystem.h"
 #include "TwinLinkFacilityInfo.h"
+#include "NavSystem/TwinLinkNavSystem.h"
+#include "NavSystem/TwinLinkNavSystemEntranceLocator.h"
 
 void UTwinLinkFacilityEditDialogBase::Setup(UTwinLinkFacilityInfo* Info) {
     check(Info);
@@ -26,11 +28,16 @@ void UTwinLinkFacilityEditDialogBase::Setup(UTwinLinkFacilityInfo* Info) {
         OnChangedInfo();
         });
 
+    if (!EntranceLocatorNode)
+        EntranceLocatorNode = new FTwinLinkEntranceLocatorWidgetNode(this);
+
+    if (EntranceLocatorNode)
+        EntranceLocatorNode->SetEntranceLocation(Info);
+
     const auto FacilityInfoSys = TwinLinkSubSystemHelper::GetInstance<UTwinLinkFacilityInfoSystem>();
     check(FacilityInfoSys.IsValid());
     OnChangedCategoryGroup(FacilityInfoSys->GetCategoryDisplayNameCollection());
     OnChangedInfo();
-
 }
 
 FString UTwinLinkFacilityEditDialogBase::GetDisplayCategoryName() const {
@@ -41,10 +48,19 @@ FString UTwinLinkFacilityEditDialogBase::GetDisplayCategoryName() const {
     return FacilityInfoSys->GetCategoryDisplayName(FacilityInfo->GetCategory());
 }
 
+void UTwinLinkFacilityEditDialogBase::BeginDestroy() {
+    Super::BeginDestroy();
+    if (EntranceLocatorNode)
+        delete EntranceLocatorNode;
+}
+
 void UTwinLinkFacilityEditDialogBase::RequestEdit(const FString& Name, const FString& Category, const FString& ImageFileName, const FString& Guide, const FString& SpotInfo) {
     auto FacilityInfoSys = TwinLinkSubSystemHelper::GetInstance<UTwinLinkFacilityInfoSystem>();
     check(FacilityInfoSys.IsValid());
 
+    std::optional<FVector> Entrance;
+    if (EntranceLocatorNode)
+        Entrance = EntranceLocatorNode->GetEntranceLocation();
 
     const auto IsSuc = FacilityInfoSys->EditFacilityInfo(
         FacilityInfo,
@@ -52,7 +68,9 @@ void UTwinLinkFacilityEditDialogBase::RequestEdit(const FString& Name, const FSt
         Category,
         ImageFileName,
         Guide,
-        SpotInfo);
+        SpotInfo,
+        Entrance
+    );
 
     if (IsSuc == false) {
         UE_TWINLINK_LOG(LogTemp, Log, TEXT("Failed RequestEdit()"));

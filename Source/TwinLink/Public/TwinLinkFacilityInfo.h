@@ -26,7 +26,7 @@ public:
     bool Setup(
         const FString& InName, const FString& InCategory,
         const FString& InFeatureID, const FString& InImageFileName,
-        const FString& InDescription, const FString& InSpotInfo);
+        const FString& InDescription, const FString& InSpotInfo, const TArray<FVector>& Entrance);
 
     /**
      * @brief 初期化
@@ -112,6 +112,6 @@ private:
     /** スポット情報 **/
     FString SpotInfo;
 
-    /** 建物の入口(ワールド座標) **/
+    /** 建物の入口(ワールド座標). 空だと設定なし **/
     TArray<FVector> Entrances;
 };

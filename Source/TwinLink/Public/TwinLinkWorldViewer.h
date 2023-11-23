@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -104,6 +104,9 @@ private:
 
     UFUNCTION(BlueprintCallable, Category = "Movement")
         void Click();
+
+public:
+    virtual void DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos) override;
 
 private:
     /* カメラの移動速度 */

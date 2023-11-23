@@ -1,4 +1,5 @@
 #pragma once
+#include <optional>
 class USceneComponent;
 class TWINLINK_API TwinLinkActorEx {
 public:
@@ -59,4 +60,9 @@ public:
             return nullptr;
         return Cast<T>(UGameplayStatics::GetActorOfClass(World, T::StaticClass()));
     }
+
+    /*
+     * @brief : AActor::ActorBoundsのラッパー. Center/Extentを参照で渡すのではなくFBoxで返すように. Selfのnullチェックは行わない
+     */
+    static FBox GetActorBounds(const AActor* Self, bool bOnlyCollidingComponents, bool bIncludeFromChildActors = false);
 };

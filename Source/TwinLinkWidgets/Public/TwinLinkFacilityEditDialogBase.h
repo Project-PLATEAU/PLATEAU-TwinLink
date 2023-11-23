@@ -1,9 +1,10 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "TwinLinkWidgetBase.h"
+#include "NavSystem/TwinLinkNavSystemEntranceLocator.h"
 #include "TwinLinkFacilityEditDialogBase.generated.h"
 
 // 施設情報
@@ -13,7 +14,8 @@ class UTwinLinkFacilityInfo;
  * 施設情報編集用ダイアログの基底クラス
  */
 UCLASS(Abstract, Blueprintable, BlueprintType, ClassGroup = TwinLink)
-class TWINLINKWIDGETS_API UTwinLinkFacilityEditDialogBase : public UTwinLinkWidgetBase {
+class TWINLINKWIDGETS_API UTwinLinkFacilityEditDialogBase
+    : public UTwinLinkWidgetBase {
     GENERATED_BODY()
 
 public:
@@ -23,14 +25,14 @@ public:
      * @param Info 利用する施設情報
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
-    void Setup(UTwinLinkFacilityInfo* Info);
+        void Setup(UTwinLinkFacilityInfo* Info);
 
     /**
      * @brief 施設情報の取得
      * @return
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
-    UTwinLinkFacilityInfo* GetData() const {
+        UTwinLinkFacilityInfo* GetData() const {
         check(FacilityInfo.IsValid());
         return FacilityInfo.Get();
     }
@@ -42,7 +44,7 @@ public:
      * @return
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
-    FString GetDisplayCategoryName() const;
+        FString GetDisplayCategoryName() const;
 
     /**
      * @brief 施設情報の変更リクエストを行う
@@ -54,12 +56,13 @@ public:
      * @param SpotInfo
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
-    void RequestEdit(
-        const FString& Name,
-        const FString& Category,
-        const FString& ImageFileName,
-        const FString& Guide,
-        const FString& SpotInfo);
+        void RequestEdit(
+            const FString& Name,
+            const FString& Category,
+            const FString& ImageFileName,
+            const FString& Guide,
+            const FString& SpotInfo
+        );
 
     /**
      * @brief イメージファイルのパスを作成する
@@ -74,7 +77,7 @@ public:
      * @brief 編集のリクエストに成功した時に呼ばれる
     */
     UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
-    void OnSuccessRequestEdit();
+        void OnSuccessRequestEdit();
 
     /**
      * @brief 編集のリクエストに失敗した時に呼ばれる
@@ -82,23 +85,24 @@ public:
      * memo 失敗原因をUI側に表示するなら引数に情報を含めてもいいかも
     */
     UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
-    void OnFailedRequestEdit();
+        void OnFailedRequestEdit();
 
 
     /**
      * @brief 情報が変更された時に呼ばれる
     */
     UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
-    void OnChangedInfo();
+        void OnChangedInfo();
 
     /**
      * @brief 情報が変更された時に呼ばれる
     */
     UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
-    void OnChangedCategoryGroup(const TArray<FString>& Categories);
+        void OnChangedCategoryGroup(const TArray<FString>& Categories);
 
-
+    virtual void BeginDestroy() override;
 private:
     TWeakObjectPtr<UTwinLinkFacilityInfo> FacilityInfo;
     FDelegateHandle EvOnChangedHnd;
+    FTwinLinkEntranceLocatorWidgetNode* EntranceLocatorNode = nullptr;
 };

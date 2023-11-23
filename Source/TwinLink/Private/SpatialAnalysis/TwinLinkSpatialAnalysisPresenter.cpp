@@ -21,9 +21,9 @@ void ATwinLinkSpatialAnalysisPresenter::BeginPlay() {
         WorldViewer->EvOnAnyObjectClicked.AddUObject(this, &ATwinLinkSpatialAnalysisPresenter::OnClicked);
     SetZoom(FTwinLinkSpatialID::MAX_ZOOM_LEVEL);
 
-    if (auto PeopleFlow = ATwinLinkNavSystem::GetPeopleFlowSystem(GetWorld())) {
-        PeopleFlow->OnReceivedPeopleFlowResponse.AddDynamic(this, &ATwinLinkSpatialAnalysisPresenter::OnReceivedPeopleFlowResponse);
-    }
+    // 人流データ取得API構築
+    PeopleFlowApi = NewObject<UTwinLinkPeopleFlowApi>();
+    PeopleFlowApi->OnReceivedPeopleFlowResponse.AddDynamic(this, &ATwinLinkSpatialAnalysisPresenter::OnReceivedPeopleFlowResponse);
 }
 
 void ATwinLinkSpatialAnalysisPresenter::Tick(float DeltaTime) {
@@ -95,26 +95,45 @@ void ATwinLinkSpatialAnalysisPresenter::OnClicked(const FHitResult& HitResult) {
 }
 
 void ATwinLinkSpatialAnalysisPresenter::DrawUpdate(float DeltaTime) const {
-    if (IsValidSpatialId() == false)
-        return;
 
-    const auto NavSystem = ATwinLinkNavSystem::GetInstance(GetWorld());
-    if (!NavSystem)
-        return;
+    
 
-    auto NowSelectedId = GetNowSpatialId();
-    if (NowSelectedId.has_value() == false)
-        return;
-    const auto Tree = GetTree();
-    const auto DemBb = NavSystem->GetDemCollisionAabb();
-    const auto RangeWorld = Tree->GetRangeWorld();
-    auto Bb = NowSelectedId->GetSpatialIDArea(*Tree->GetGeoReference());
-    auto Min = Bb.Min;
-    Min.Z = DemBb.Min.Z;
-    auto Max = Bb.Max;
-    Max.Z = RangeWorld.Max.Z;
-    Bb = FBox(Min, Max);
-    DrawDebugBox(GetWorld(), Bb.GetCenter(), Bb.GetExtent(), FColor::Red);
+    
+    auto Bb = [&]()-> std::optional<FBox> {
+        if (IsValidSpatialId() == false)
+            return std::nullopt;
+
+        const auto NavSystem = ATwinLinkNavSystem::GetInstance(GetWorld());
+        if (!NavSystem)
+            return std::nullopt;
+
+        auto NowSelectedId = GetNowSpatialId();
+        if (NowSelectedId.has_value() == false)
+            return std::nullopt;
+        const auto Tree = GetTree();
+        const auto DemBb = NavSystem->GetDemCollisionAabb();
+        const auto RangeWorld = Tree->GetRangeWorld();
+        auto Bb = NowSelectedId->GetSpatialIDArea(*Tree->GetGeoReference());
+        auto Min = Bb.Min;
+        Min.Z = DemBb.Min.Z;
+        auto Max = Bb.Max;
+        Max.Z = RangeWorld.Max.Z;
+        return FBox(Min, Max);
+    }();
+   
+
+    if(auto Mesh = GetComponentByClass<UStaticMeshComponent>())
+    {
+        Mesh->SetVisibility(Bb.has_value());
+
+        Mesh->SetWorldLocation(Bb->GetCenter());
+        Mesh->SetWorldScale3D(Bb->GetSize() * 0.01f);
+    }
+
+    
+    
+    //if(Bb.has_value())
+   //     DrawDebugBox(GetWorld(), Bb->GetCenter(), Bb->GetExtent(), FColor::Red);
 }
 
 void ATwinLinkSpatialAnalysisPresenter::DebugDrawUpdate(float DeltaTime) const {
@@ -160,11 +179,11 @@ bool ATwinLinkSpatialAnalysisPresenter::RequestPeopleFlow(FDateTime DateTime) {
     const auto SpacialId = GetNowSpatialId();
     if (SpacialId.has_value() == false)
         return false;
-    if (const auto PeopleFlow = ATwinLinkNavSystem::GetPeopleFlowSystem(GetWorld())) {
+    if (PeopleFlowApi) {
         FTwinLinkPeopleFlowApiRequest Req;
         Req.SpatialIds.Add(*SpacialId);
         Req.DateTime = DateTime;
-        PeopleFlow->Request(Req);
+        PeopleFlowApi->Request(Req);
         return true;
     }
     return false;
