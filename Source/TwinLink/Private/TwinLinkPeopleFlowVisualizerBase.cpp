@@ -23,7 +23,7 @@ namespace {
     const auto CM2ToKM2 = 1000000.0;
 
     // デバッグ描画生存時間
-    const float DRAW_DEBUG_LIFE_TIME = 0.5f;
+    const float DRAW_DEBUG_LIFE_TIME = 0.1f;
 
     /**
      * @brief 地形オブジェクトを探す
@@ -121,124 +121,6 @@ namespace {
     }
 
     /**
-     * @brief
-     * @param OutLocations 座標を追加する配列　関数内部でAdd()を呼び出して要素を追加する
-     * @param Width ボクセルサイズ単位での幅
-     * @param Depth
-     * @param ViewConvexVolume
-     * @param OffsetToEdge
-     * @param VoxelSize
-     * @param Altitude
-    */
-    void ExtractVoxelLocationsInView(
-        TArray<FVector>* const OutLocations,
-        int Width, int Depth,
-        const FConvexVolume& ViewConvexVolume,
-        const FVector& OffsetToEdge,
-        const FVector& VoxelSize,
-        double Altitude) {
-        bool bOutFullyContained = false;
-        for (int y = 0; y < Depth; y++) {
-            for (int x = 0; x < Width; x++) {
-                const auto Orgin = FVector(
-                    OffsetToEdge.X + x * VoxelSize.X,
-                    OffsetToEdge.Y + y * VoxelSize.Y,
-                    Altitude);
-                const auto bIsContain = ViewConvexVolume.IntersectBox(Orgin, VoxelSize, bOutFullyContained);
-                if (bIsContain)
-                    OutLocations->Add(Orgin);
-            }
-        }
-    }
-
-    /**
-     * @brief 視推台内に存在するボクセルの座標を抽出する
-     * ボクセルは空間IDを基準に作成する
-     * 再帰的に利用できる関数
-     *
-     * @param OutLocations 結果を出力する配列（再帰でも固定
-     * @param ThresholdForSubdivision　細分化するかの閾値（再帰でも固定
-     * @param GeoReference （再帰でも固定）
-     * @param ViewLocation 視点の位置 (再帰でも固定)
-     * @param ViewFrustumBounds 視推台のバウンディングボックス（再帰でも固定）
-     * @param Altitude（再帰でも固定）
-     * @param Zoom 空間IDのズームレベル
-     * @param AreaCenter
-     * @param AreaExtent 判定を行うエリアの幅、奥行
-     * @param World　デバッグで使用（再帰でも固定）
-    */
-    void ExtractVoxelLocationsInView(
-        TMap<int, TArray<FVector>>* const OutLocationsMap, double ThresholdForSubdivision, FPLATEAUGeoReference* const GeoReference,
-        const FVector& ViewLocation, const FConvexVolume& ViewFrustumBounds, double Altitude,
-        double Zoom, int InMaxZoomLevel,
-        const FVector& AreaCenter, const FVector2D& AreaExtent,
-        const UWorld* World = nullptr) {
-
-        // サンプリングする際の範囲の端っこを計算
-        const auto RequestStartPosition = AreaCenter - FVector(AreaExtent.X, AreaExtent.Y, 0.0) * 0.5;
-        const auto OffsetToEdge =
-            CalculateSamplingStartPosition(GeoReference, RequestStartPosition, Zoom);
-
-        // サンプリングの範囲の端っこデバッグ描画
-        if (World)
-            DrawDebugPoint(World, FVector(OffsetToEdge.X, OffsetToEdge.Y, Altitude), 5.0f, FColor::Red, false, DRAW_DEBUG_LIFE_TIME, UINT8_MAX);
-
-        // CityModelの中心の空間IDを元にボクセルのサイズを求める
-        const auto VoxelSize = CalculateVoxelSize(GeoReference, AreaCenter, Zoom);
-
-        // ボクセルのサイズを単位の基準とした時の幅、高さ   サイズが丁度だとボクセルで範囲を埋めきれないので全体の範囲を少し拡張する
-        const auto Width = FMath::CeilToInt(AreaExtent.X / VoxelSize.X);
-        const auto Depth = FMath::CeilToInt(AreaExtent.Y / VoxelSize.Y);
-
-        // 錐台バウンド内に含まれるボクセルを算出   （各ボクセルについて、再帰的に以下を計算←この処理はまだ）
-        TArray<FVector> ContainLocations; ContainLocations.Reserve(Width * Depth);
-        ExtractVoxelLocationsInView(
-            &ContainLocations,
-            Width, Depth,
-            ViewFrustumBounds,
-            OffsetToEdge, VoxelSize, Altitude);
-
-        // 細分化必要なボクセルを抽出する　（ただしズームレベルが一定値以上高いと負荷が高いだけなので制限を掛ける）
-        TArray<FVector> SubdiviveLocations; SubdiviveLocations.Reserve(ContainLocations.Num());
-        if (Zoom < InMaxZoomLevel) {
-            for (const auto Location : ContainLocations) {
-                const auto DistanceSqr = FVector::DistSquared(Location, ViewLocation);
-                const auto CriteriaForSubdivision = ThresholdForSubdivision * FMath::Pow(0.5, Zoom);
-                if (DistanceSqr < CriteriaForSubdivision * CriteriaForSubdivision) {
-                    SubdiviveLocations.Add(Location);
-                }
-            }
-        }
-
-        // 細分化対象のボクセルを削除する
-        for (const auto Location : SubdiviveLocations) {
-            ContainLocations.Remove(Location);
-        }
-
-        // 細分化
-        for (const auto Location : SubdiviveLocations) {
-            const auto SpatialID = FTwinLinkSpatialID::Create(*GeoReference, Location, Zoom, false);
-            const auto SpatialIDVoxelSize = SpatialID.GetSpatialIDArea(*GeoReference);
-            ExtractVoxelLocationsInView(
-                OutLocationsMap, ThresholdForSubdivision, GeoReference, ViewLocation, ViewFrustumBounds, Altitude,
-                Zoom + 1, InMaxZoomLevel, SpatialIDVoxelSize.GetCenter(), FVector2D(SpatialIDVoxelSize.GetExtent()), World);
-        }
-
-        // ボクセルのデバッグ描画
-        if (World) {
-            for (const auto Location : ContainLocations) {
-                const auto DebugBoxExtent = FVector(VoxelSize.X * 0.5, VoxelSize.Y * 0.5, 5000) * 0.95;
-                const auto DebugBoxCenter = Location;
-                DrawDebugBox(World, DebugBoxCenter, DebugBoxExtent, FColor::Emerald, false, DRAW_DEBUG_LIFE_TIME, UINT8_MAX);
-            }
-        }
-
-        // 結果を格納
-        TArray<FVector>& Locations = OutLocationsMap->FindOrAdd(Zoom);
-        Locations.Append(ContainLocations);
-    }
-
-    /**
      * @brief テストデータの生成
      * @param Req
      * @return
@@ -248,8 +130,9 @@ namespace {
         for (const auto ReqSpatialID : Req) {
             const auto ZoomLevelDiff = InMaxZoomLevel - ReqSpatialID.GetZ();
             const auto PeopleFlow =
-                (ReqSpatialID.GetX() + ReqSpatialID.GetY()) % 5 < 2 ?
-                (int)(6420 * FMath::Pow(4.0, ZoomLevelDiff)) : (int)FMath::Pow(4.0, 5);
+                (ReqSpatialID.GetX() + ReqSpatialID.GetY()) % 8 * 
+                ((int)(6420 * FMath::Pow(4.0, ZoomLevelDiff)) / 8);
+
             Result.Populations.Add(FTwinLinkPopulationData{
                 ReqSpatialID, TEXT("Type"),
                 TArray<FTwinLinkPopulationValue>{FTwinLinkPopulationValue{FDateTime(), TEXT("Unit"), PeopleFlow}} });
@@ -318,16 +201,12 @@ void UTwinLinkPeopleFlowVisualizerBase::SetThresholdForSubdivision(double Distan
 void UTwinLinkPeopleFlowVisualizerBase::RequestChangeActiveState(bool bIsActiveHeatmap) {
     bIsRequestActiveState = bIsActiveHeatmap;
 
-    //// リクエストの結果待ち
-    //if (bIsWaitingRequestResult) {
-    //    UE_TWINLINK_LOG(LogTemp, Log, TEXT("Waiting for the result of the request"));
-    //    return;
-    //}
-
     UpdateActiveState();
 }
 
 void UTwinLinkPeopleFlowVisualizerBase::InitVisualizer(APLATEAUInstancedCityModel* InCityModel, int InBaseZoomLevel, int InMaxZoomLevel) {
+    Cache.Clear();
+
     check(InCityModel);
     // CityModelHelperの初期化
     CityModelHelper.Init(InCityModel);
@@ -339,34 +218,44 @@ void UTwinLinkPeopleFlowVisualizerBase::InitVisualizer(APLATEAUInstancedCityMode
     CurrentVisualizeTime = FDateTime::Now();
 
     // ヒートマップのエリアを算出
-    const FVector Center = CityModelHelper.DemCenter;
+    FVector Center = CityModelHelper.DemCenter;
     FVector Extent = CityModelHelper.DemExtent;
     FPLATEAUGeoReference* GeoReference = CityModelHelper.GeoReference;
     double Altitude = CityModelHelper.Altitude;
-
-    // ボクセル単位のサイズの基準として使用する空間ID
-    const auto SamplingVoxel =
-        FTwinLinkSpatialID::Create(*GeoReference,
-            Center, MaxZoomLevel).GetSpatialIDArea(*GeoReference);
 
     // 高さのある建物にもヒートマップを描画したいので高さの値のみ別で設定
     Extent.Z = CityModelHelper.CityExtent.Z +
         FMath::Abs(Center.Z - CityModelHelper.CityCenter.Z);  // 中心位置の差を加えることで街全体を包める
 
-    // 計算結果によっては端っこに値が入らないことがあるので少し大きめにサイズを取得する
-    Extent = Extent + SamplingVoxel.GetExtent() * 2;
+    const auto SamplingVoxel = FTwinLinkSpatialID::Create(*GeoReference, Center, BaseZoomLevel);
+
+    DrawDebugBox(GetWorld(), Center, Extent, FColor::Red, true);
+    // 計算結果によっては端っこの値が入らないことがあるので少し大きめにサイズを取得する
+    Extent = Extent + SamplingVoxel.GetSpatialIDArea(*GeoReference).GetExtent();
+    Center = Center + SamplingVoxel.GetSpatialIDArea(*GeoReference).GetExtent();
 
     // 空間IDボクセルヘルパーの初期化
     VoxelHelper.Init(GeoReference, BaseZoomLevel, MaxZoomLevel, Center, Extent, Altitude);
 
     // ヒートマップの設定
-    HeatmapCenter = Center;
-    HeatmapExtent = Extent;
 
-    // ヒートマップに必要な解像度を求める
-    HeatmapWidth = FMath::CeilToInt(HeatmapExtent.X / VoxelHelper.SamplingVoxelOnMaxLevel.GetExtent().X);
-    HeatmapDepth = FMath::CeilToInt(HeatmapExtent.Y / VoxelHelper.SamplingVoxelOnMaxLevel.GetExtent().Y);
+    // ヒートマップに必 要な解像度を求める
+    HeatmapWidth = VoxelHelper.SpatialIDXRange;
+    HeatmapDepth = VoxelHelper.SpatialIDYRange;   
+
+    // 
+    const FVector VoxelBaseCenter =
+        VoxelHelper.SamplingVoxelOnBaseLevel.GetCenter();
+
+    HeatmapCenter = VoxelBaseCenter;
+
+    HeatmapExtent = FVector(
+        HeatmapWidth * VoxelHelper.SamplingVoxelOnMaxLevel.GetExtent().X,
+        HeatmapDepth * VoxelHelper.SamplingVoxelOnMaxLevel.GetExtent().Y,
+        Extent.Z);
+
 }
+
 
 bool UTwinLinkPeopleFlowVisualizerBase::IsInited() const {
     return CityModelHelper.IsValid();
@@ -388,7 +277,7 @@ void UTwinLinkPeopleFlowVisualizerBase::SetMaximumAndMinimumAutomatically() {
     const auto AreaExtent = HeatmapExtent * 2.0;
     const auto Altitude = CityModelHelper.Altitude;
     const auto RequestStartPosition = AreaCenter - FVector(AreaExtent.X, AreaExtent.Y, 0.0) * 0.5;
-    const auto Zoom = MaxZoomLevel;
+    const auto Zoom = BaseZoomLevel;
     const auto OffsetToEdge =
         CalculateSamplingStartPosition(GeoReference, RequestStartPosition, Zoom);
 
@@ -398,9 +287,9 @@ void UTwinLinkPeopleFlowVisualizerBase::SetMaximumAndMinimumAutomatically() {
     // CityModelの中心の空間IDを元にボクセルのサイズを求める
     const auto VoxelSize = CalculateVoxelSize(GeoReference, AreaCenter, Zoom);
 
-    // ボクセルのサイズを単位の基準とした時の幅、高さ   サイズが丁度だとボクセルで範囲を埋めきれないので全体の範囲を少し拡張する
-    const auto Width = FMath::CeilToInt(AreaExtent.X / VoxelSize.X);
-    const auto Depth = FMath::CeilToInt(AreaExtent.Y / VoxelSize.Y);
+    // ボクセルのサイズを単位の基準とした時の幅、高さ
+    const auto Width = (int)(AreaExtent.X * 2 / VoxelSize.X);
+    const auto Depth = (int)(AreaExtent.Y * 2 / VoxelSize.Y);
 
     // 要求する空間IDの情報
     TArray<FTwinLinkSpatialID> RequestIDs; RequestIDs.Reserve(Width * Depth);
@@ -421,8 +310,8 @@ void UTwinLinkPeopleFlowVisualizerBase::SetMaximumAndMinimumAutomatically() {
     Sys->OnReceivedPeopleFlowResponse.AddUnique(OnSetMaximumAndMinimumAutomaticallyDelegate);
 
     FTwinLinkPeopleFlowApiRequest Req{ RequestIDs, CurrentVisualizeTime };
-    Sys->Request(Req);
-
+    //Sys->Request(Req);
+    OnSetMaximumAndMinimumAutomatically(TestCreateTestData(Req.SpatialIds, MaxZoomLevel));
 }
 
 void UTwinLinkPeopleFlowVisualizerBase::SetVisualizeTime(const FDateTime& Time) {
@@ -453,8 +342,11 @@ void UTwinLinkPeopleFlowVisualizerBase::OnSetMaximumAndMinimumAutomatically(cons
         Max = FMath::Max(PopulationVal.PeopleFlow, Max);
         Min = FMath::Min(PopulationVal.PeopleFlow, Min);
     }
-    MaxPopulationDensity = Max / VoxelHelper.MinmumVoxelArea * CM2ToKM2;
-    MinPopulationDensity = Min / VoxelHelper.MinmumVoxelArea * CM2ToKM2;
+
+    const auto VoxelVolume = 
+        VoxelHelper.SamplingVoxelOnBaseLevel.GetExtent().X * VoxelHelper.SamplingVoxelOnBaseLevel.GetExtent().Y;    // Zは無効値なので
+    MaxPopulationDensity = Max / VoxelVolume * CM2ToKM2;
+    MinPopulationDensity = Min / VoxelVolume * CM2ToKM2;
 
     // 最大値が最小値以下の時 最大値を最小値よりも大きくする(システム動作のため)
     if (MaxPopulationDensity <= MinPopulationDensity)
@@ -505,9 +397,8 @@ void UTwinLinkPeopleFlowVisualizerBase::RequestInfoFromSpatialID() {
     Sys->OnReceivedPeopleFlowResponse.AddUnique(UpdatePeopleFlowDelegate);
 
     FTwinLinkPeopleFlowApiRequest Req{ RequestSpatialIDs, CurrentVisualizeTime };
-    Sys->Request(Req);
-    UE_TWINLINK_LOG(LogTemp, Log, TEXT("Requset spatial info : %s"), *CurrentVisualizeTime.ToString());
-
+    //Sys->Request(Req);
+    OnUpdatePeopleFlow(TestCreateTestData(Req.SpatialIds, MaxZoomLevel));
 }
 
 void UTwinLinkPeopleFlowVisualizerBase::OnUpdatePeopleFlow(const FTWinLinkPeopleFlowApiResult& Result) {
@@ -576,8 +467,8 @@ void UTwinLinkPeopleFlowVisualizerBase::OnUpdatePeopleFlow(const FTWinLinkPeople
 
     // データ配列の生成
     for (const auto& Data : PrimDataAry) {
-        const auto X = Data.X - VoxelHelper.SpatialIDXMin;
-        const auto Y = Data.Y - VoxelHelper.SpatialIDYMin;
+        const auto X = Data.X - (VoxelHelper.SpatialIDXMin);
+        const auto Y = Data.Y - (VoxelHelper.SpatialIDYMin);
         const auto Index = X + Y * HeatmapWidth;
         if (Index >= PopulationDensityArray.Num() || Index < 0) {
             continue;
@@ -592,9 +483,14 @@ void UTwinLinkPeopleFlowVisualizerBase::OnUpdatePeopleFlow(const FTWinLinkPeople
     // ヒートマップテクスチャを作成する
     UTexture* Tex = CreateHeatmapTextureByAmount(HeatmapWidth, HeatmapDepth, MinPopulationDensity, MaxPopulationDensity, PopulationDensityArray);
 
+    // エミッシブの強化値を取得する
+    const auto EmissiveBoost = TwinLinkGraphicsEnv::GetEmissiveBoostFromEnv(GetWorld());
+
     // デカールはY軸で-90度回転している X,Z軸の方向が入れ替わる　スケールなので正負の方向は関係ない
     const auto DecalScale = FVector(HeatmapExtent.Z, HeatmapExtent.Y, HeatmapExtent.X);
-    UpdateDecalInstance(HeatmapCenter, HeatmapExtent, Tex, /*(*/HeatmapWidth/*+ HeatmapDepth) * 0.5*/);
+    const auto Extent = VoxelHelper.SamplingVoxelOnBaseLevel.GetExtent();
+    const auto DecalCenter = HeatmapCenter;   // ボクセルの端っこ基準であるため
+    UpdateDecalInstance(DecalCenter, HeatmapExtent, Tex, HeatmapWidth, HeatmapDepth, EmissiveBoost);
 
     // 
     UpdateActiveState();
@@ -652,11 +548,24 @@ TArray<FTwinLinkSpatialID> UTwinLinkPeopleFlowVisualizerBase::ExtractRequestSpat
     }
     TMap<int, TArray<FVector>>& LocationsWithZoomMap = Cache.LocationsWithZoomMap;
 
+    // VoxelHelperに移植したい
+    const auto RequestStartPosition = 
+        FTwinLinkSpatialID::Create(
+            *GeoReference, VoxelHelper.SamplingEdgeVoxelOnMaxLevel.GetCenter(), 
+            BaseZoomLevel, false).GetSpatialIDArea(*GeoReference).GetCenter();
+
+    const auto ZoomLevelFactor = (int)(FMath::Pow(2.0, MaxZoomLevel - BaseZoomLevel));
+    const auto Width = HeatmapWidth / ZoomLevelFactor;
+    const auto Depth = HeatmapDepth / ZoomLevelFactor;
+
     // 視推台内のボクセルの座標を抽出
     ExtractVoxelLocationsInView(
         &LocationsWithZoomMap, ThresholdForSubdivision,
         GeoReference, ProjectionData.ViewOrigin, ViewFrustumBounds, Altitude,
-        Zoom, MaxZoomLevel, AreaCenter, FVector2D(AreaExtent) * 2, bIsEnableDrawDebug ? World : nullptr);
+        Zoom, MaxZoomLevel, 
+        RequestStartPosition,
+        Width, Depth,
+        AreaCenter, FVector2D(AreaExtent), bIsEnableDrawDebug ? World : nullptr);
 
     // 空間IDを計算
     Cache.RequestSpatialIDs.Reset();
@@ -680,6 +589,99 @@ TArray<FTwinLinkSpatialID> UTwinLinkPeopleFlowVisualizerBase::ExtractRequestSpat
     }
 
     return RequestSpatialIDs;
+}
+
+
+void UTwinLinkPeopleFlowVisualizerBase::ExtractVoxelLocationsInView(
+    TMap<int, TArray<FVector>>* const OutLocationsMap,
+    double InThresholdForSubdivision,
+    FPLATEAUGeoReference* const GeoReference,
+    const FVector& ViewLocation, const FConvexVolume& ViewFrustumBounds, double Altitude,
+    double Zoom, int InMaxZoomLevel,
+    const FVector& RequestStartPosition,
+    int Width, int Depth,
+    const FVector& AreaCenter, const FVector2D& AreaExtent,
+    const UWorld* World) {
+
+    // サンプリングする際の範囲の端っこを計算
+    const auto OffsetToEdge =
+        CalculateSamplingStartPosition(GeoReference, RequestStartPosition, Zoom);
+
+    // サンプリングの範囲の端っこデバッグ描画
+    if (World)
+        DrawDebugPoint(World, FVector(OffsetToEdge.X, OffsetToEdge.Y, Altitude), 5.0f, FColor::Red, false, DRAW_DEBUG_LIFE_TIME, UINT8_MAX);
+
+    // CityModelの中心の空間IDを元にボクセルのサイズを求める
+    const auto VoxelSize = CalculateVoxelSize(GeoReference, AreaCenter, Zoom);
+
+    // 錐台バウンド内に含まれるボクセルを算出   （各ボクセルについて、再帰的に以下を計算←この処理はまだ）
+    TArray<FVector> ContainLocations; ContainLocations.Reserve(Width * Depth);
+    ExtractVoxelLocationsInView(
+        &ContainLocations,
+        Width, Depth,
+        ViewFrustumBounds,
+        OffsetToEdge, VoxelSize, Altitude);
+
+    // 細分化必要なボクセルを抽出する　（ただしズームレベルが一定値以上高いと負荷が高いだけなので制限を掛ける）
+    TArray<FVector> SubdiviveLocations; SubdiviveLocations.Reserve(ContainLocations.Num());
+    if (Zoom < InMaxZoomLevel) {
+        for (const auto Location : ContainLocations) {
+            const auto DistanceSqr = FVector::DistSquared(Location, ViewLocation);
+            const auto CriteriaForSubdivision = ThresholdForSubdivision * FMath::Pow(0.5, Zoom);
+            if (DistanceSqr < CriteriaForSubdivision * CriteriaForSubdivision) {
+                SubdiviveLocations.Add(Location);
+            }
+        }
+    }
+
+    // 細分化対象のボクセルを削除する
+    for (const auto Location : SubdiviveLocations) {
+        ContainLocations.Remove(Location);
+    }
+
+    // 細分化
+    for (const auto Location : SubdiviveLocations) {
+        const auto SpatialID = FTwinLinkSpatialID::Create(*GeoReference, Location, Zoom, false);
+        const auto SpatialIDVoxel = SpatialID.GetSpatialIDArea(*GeoReference);
+        const auto RequestStartPosition = SpatialIDVoxel.GetCenter() - SpatialIDVoxel.GetExtent() * 0.5;
+
+        const auto DivNum = 2;  // Zoomレベルを1上げると １辺２つに分割されるので2
+        ExtractVoxelLocationsInView(
+            OutLocationsMap, ThresholdForSubdivision, GeoReference, ViewLocation, ViewFrustumBounds, Altitude,
+            Zoom + 1, InMaxZoomLevel, 
+            RequestStartPosition,
+            DivNum, DivNum,
+            SpatialIDVoxel.GetCenter(), FVector2D(SpatialIDVoxel.GetExtent()), World);
+    }
+
+    // ボクセルのデバッグ描画
+    if (World) {
+        for (const auto Location : ContainLocations) {
+            const auto DebugBoxExtent = FVector(VoxelSize.X * 0.5, VoxelSize.Y * 0.5, 5000) * 0.95;
+            const auto DebugBoxCenter = Location;
+            DrawDebugBox(World, DebugBoxCenter, DebugBoxExtent, FColor::Emerald, false, DRAW_DEBUG_LIFE_TIME, UINT8_MAX);
+        }
+    }
+
+    // 結果を格納
+    TArray<FVector>& Locations = OutLocationsMap->FindOrAdd(Zoom);
+    Locations.Append(ContainLocations);
+}
+
+void UTwinLinkPeopleFlowVisualizerBase::ExtractVoxelLocationsInView(TArray<FVector>* const OutLocations, int Width, int Depth, const FConvexVolume& ViewConvexVolume, const FVector& OffsetToEdge, const FVector& VoxelSize, double Altitude) {
+    bool bOutFullyContained = false;
+    for (int y = 0; y < Depth; y++) {
+        for (int x = 0; x < Width; x++) {
+            const auto Orgin = FVector(
+                OffsetToEdge.X + x * VoxelSize.X,
+                OffsetToEdge.Y + y * VoxelSize.Y,
+                Altitude);
+            const auto bIsContain = ViewConvexVolume.IntersectBox(Orgin, VoxelSize, bOutFullyContained);
+            if (bIsContain)
+                OutLocations->Add(Orgin);
+        }
+    }
+
 }
 
 UTexture* UTwinLinkPeopleFlowVisualizerBase::CreateSampleHeatmapTexture() {
@@ -717,6 +719,7 @@ UTexture* UTwinLinkPeopleFlowVisualizerBase::CreateHeatmapTexture(int Width, int
     if (CacheTexture == nullptr) {
         CustomTexture = UTexture2D::CreateTransient(
             Width, Height, EPixelFormat::PF_R8G8B8A8);
+        CustomTexture->Filter = TextureFilter::TF_Nearest;
         Cache.HeatmapTexture = CustomTexture;
     }
     else {
@@ -796,23 +799,76 @@ void UTwinLinkPeopleFlowVisualizerBase::FCityModelHelper::Init(APLATEAUInstanced
 void UTwinLinkPeopleFlowVisualizerBase::FVoxelHelper::Init(
     FPLATEAUGeoReference* GeoReference, int InBaseZoomLevel, int InMaxZoomLevel, const FVector& Center, const FVector& Extent, double Altitude) {
 
+    // 仮の空間IDBox 値を調整後　空間IDBoxを改めて作成する
+    const auto TempSamplingEdge =
+        FTwinLinkSpatialID::Create(*GeoReference, Center - Extent, InBaseZoomLevel, false);
+
+    FTwinLinkSpatialID TempSamplingEdgeEnd =
+        FTwinLinkSpatialID::Create(*GeoReference, Center + Extent, InBaseZoomLevel, false);
+
+    const auto XDiff = TempSamplingEdgeEnd.GetX() - (TempSamplingEdge.GetX() - 1);
+    const auto YDiff = TempSamplingEdgeEnd.GetY() - (TempSamplingEdge.GetY() - 1);
+
+
+    // 偶数であるときに奇数になるように範囲と中心地点を調整する
+    // 奇数にしている理由　中心のボクセルを存在させるため
+    const auto bIsEvenX = XDiff % 2 == 0;
+    const auto bIsEvenY = YDiff % 2 == 0;
+
+    TempSamplingEdgeEnd = FTwinLinkSpatialID::Create(
+        TempSamplingEdgeEnd.GetZ(),
+        TempSamplingEdgeEnd.GetF(),
+        TempSamplingEdgeEnd.GetX() + (bIsEvenX ? 1 : 0),
+        TempSamplingEdgeEnd.GetY() + (bIsEvenY ? 1 : 0));
+
+
+    const auto TempSamplingEdgeBox = TempSamplingEdge.GetSpatialIDArea(*GeoReference);
+    const auto TempSamplingEdgeEndBox = TempSamplingEdgeEnd.GetSpatialIDArea(*GeoReference);
+    const auto EdgePos = (TempSamplingEdgeBox.GetCenter() - TempSamplingEdgeBox.GetExtent());
+    const auto EdgeEndPos = (TempSamplingEdgeEndBox.GetCenter() + TempSamplingEdgeEndBox.GetExtent());
+    FVector CustomExtent = (EdgeEndPos - EdgePos) * 0.5; // 境界線も含めたいので ボクセルの半径よりも小さい値を追加
+    FVector CustomCenter = (EdgePos + EdgeEndPos) * 0.5;
+
     const auto SpatialIDCenterBaseLevel =
-        FTwinLinkSpatialID::Create(*GeoReference, Center, InBaseZoomLevel, false);
+        FTwinLinkSpatialID::Create(*GeoReference, CustomCenter, InBaseZoomLevel, false);
     SamplingVoxelOnBaseLevel = SpatialIDCenterBaseLevel.GetSpatialIDArea(*GeoReference);
 
     const auto SpatialIDCenterMaxLevel =
-        FTwinLinkSpatialID::Create(*GeoReference, Center, InMaxZoomLevel, false);
+        FTwinLinkSpatialID::Create(*GeoReference, CustomCenter, InMaxZoomLevel, false);
     SamplingVoxelOnMaxLevel = SpatialIDCenterMaxLevel.GetSpatialIDArea(*GeoReference);
 
-    const auto RequestStartPosition = Center - FVector(Extent.X, Extent.Y, 0.0);
-    const auto SamplingEdgeSpatialID =
-        FTwinLinkSpatialID::Create(*GeoReference, RequestStartPosition, InMaxZoomLevel, false);
-    SpatialIDXMin = SamplingEdgeSpatialID.GetX() - 1;
-    SpatialIDYMin = SamplingEdgeSpatialID.GetY() - 1;
+
+    const auto ZoomDiff = InMaxZoomLevel - InBaseZoomLevel;
+    {
+        const auto SamplingEdgeSpatialID = TempSamplingEdge.ZoomUp(ZoomDiff, 0, 0);
+        SpatialIDXMin = SamplingEdgeSpatialID.GetX();
+        SpatialIDYMin = SamplingEdgeSpatialID.GetY();
+
+        SamplingEdgeVoxelOnMaxLevel = SamplingEdgeSpatialID.GetSpatialIDArea(*GeoReference);
+    }
+
+    {
+        const auto Offset = FMath::Pow(2.0, ZoomDiff) - 1;
+        const auto SamplingEndEdgeSpatialID = TempSamplingEdgeEnd.ZoomUp(ZoomDiff, Offset, Offset);
+        const auto SpatialIDXMax = SamplingEndEdgeSpatialID.GetX();
+        const auto SpatialIDYMax = SamplingEndEdgeSpatialID.GetY();
+
+        SpatialIDXRange = SpatialIDXMax - (SpatialIDXMin - 1);  // SpatialIDXMinを含むので-1
+        SpatialIDYRange = SpatialIDYMax - (SpatialIDYMin - 1);
+    }
 
     // 最小ボクセルの面積を計算
     const auto MinumVoxel = SamplingVoxelOnMaxLevel;
     MinmumVoxelArea = MinumVoxel.GetExtent().X * MinumVoxel.GetExtent().Y;
 
 
+}
+
+void UTwinLinkPeopleFlowVisualizerBase::FCache::Clear() {
+    PrimDataAry.Reset();
+    LocationsWithZoomMap.Reset();
+    RequestSpatialIDs.Reset();
+    PopulationDensityArray.Reset();
+    HeatLevels.Reset();
+    HeatmapTexture = nullptr;
 }

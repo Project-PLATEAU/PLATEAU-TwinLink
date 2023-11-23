@@ -2,6 +2,8 @@
 
 #include "TwinLinkCommon.h"
 #include "Kismet/GameplayStatics.h"
+#include "Components/SkyLightComponent.h"
+#include "Components/DirectionalLightComponent.h"
 
 #include "TwinLinkWorldViewer.h"
 
@@ -27,4 +29,23 @@ TWeakObjectPtr<ACharacter> TwinLinkWorldViewerHelper::GetInstance(UWorld* World)
     }
 
     return ApplicableTargets;
+}
+
+float TwinLinkGraphicsEnv::GetEmissiveBoostFromEnv(UWorld* World) {
+    float EmissiveBoost = 1.0;
+    //エミッシブ強度調整
+    TArray<TObjectPtr<AActor>> Actors;
+    UGameplayStatics::GetAllActorsOfClass(World, AActor::StaticClass(), Actors);
+    for (const auto& Actor : Actors) {
+        const auto SkyLight = Actor->GetComponentByClass(USkyLightComponent::StaticClass());
+        if (SkyLight != nullptr) {
+            const auto Component = Cast<USceneComponent>(Actor->GetComponentByClass(UDirectionalLightComponent::StaticClass()));
+            //ライトのYが+の場合は夜と判定
+            const auto Night = Component->GetRelativeRotation().Pitch > 0;
+            EmissiveBoost = Night ? 1 : 10000;
+            break;
+        }
+    }
+
+    return EmissiveBoost;
 }

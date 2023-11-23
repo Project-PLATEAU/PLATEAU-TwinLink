@@ -6,6 +6,19 @@
 #include "TwinLinkSpatialAnalysisUiInfo.generated.h"
 
 USTRUCT(BlueprintType)
+struct FTwinLinkSpatialAnalysisPoiInfo
+{
+    GENERATED_BODY()
+    // POI登録名
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Base")
+        FString PoiName;
+
+    // オブジェクト数
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Base")
+        int ObjectNum = 0;
+};
+
+USTRUCT(BlueprintType)
 struct FTwinLinkSpatialAnalysisUiInfo {
     GENERATED_BODY()
 public:
@@ -15,7 +28,7 @@ public:
 
     // 空間内に含まれている登録地物情報リスト
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Base")
-        TArray<UTwinLinkFacilityInfo*> FacilityInfos;
+        TArray<FTwinLinkSpatialAnalysisPoiInfo> PoiInfos;
 
     // 総建物数
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Base")

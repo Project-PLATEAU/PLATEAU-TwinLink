@@ -18,6 +18,8 @@ void UTwinLinkMainWindowBase::NativeDestruct() {
 
 void UTwinLinkMainWindowBase::SetupMainWindow() {
     const auto WorldViewer = ATwinLinkWorldViewer::GetInstance(GetWorld());
+    if (WorldViewer.IsValid() == false)
+        return;
 
     // クリック時にイベントを追加する
     EvOnClickedFacilityHnd = WorldViewer->EvOnClickedFacility.AddLambda([this](FHitResult HitResult) {

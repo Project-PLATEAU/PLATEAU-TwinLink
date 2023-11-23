@@ -34,9 +34,14 @@ void UTwinLinkPOISubSystem::ImportShapefile(const TArray<FString>& Files) {
         }
 
         AttributeList.Reset();
+        AttributeListIndex.Reset();
 
         for (int i = 0; i < Fields.size(); i++) {
-            AttributeList.Add(ConvertSJISToFString(Fields[i]) + ConvertSJISToFString(Attributes[0][i]));
+            if (ConvertSJISToFString(Attributes[0][i]) == TEXT("")) {
+                continue;
+            }
+            AttributeList.Add(ConvertSJISToFString(Fields[i]) + TEXT("(例:") + ConvertSJISToFString(Attributes[0][i]) + TEXT(")"));
+            AttributeListIndex.Add(i);
         }
 
         //複数選択廃止
@@ -68,11 +73,11 @@ void UTwinLinkPOISubSystem::RegisterAttributes(const FString& AttributeName, int
         Point = OutHit.ImpactPoint;
 
         if (RegisteredPOIs.Contains(AttributeName)) {
-            RegisteredPOIs[AttributeName].Add(ConvertSJISToFString(Attributes[i][AttributeIndex]), Point);
+            RegisteredPOIs[AttributeName].Add(ConvertSJISToFString(Attributes[i][AttributeListIndex[AttributeIndex]]), Point);
         }
         else {
             TMap<FString, FVector> POIData;
-            POIData.Add(ConvertSJISToFString(Attributes[i][AttributeIndex]), Point);
+            POIData.Add(ConvertSJISToFString(Attributes[i][AttributeListIndex[AttributeIndex]]), Point);
             RegisteredPOIs.Add(AttributeName, POIData);
         }
     }
@@ -106,6 +111,23 @@ FColor UTwinLinkPOISubSystem::AssignColor() {
     AssignColors.Add(NewColor);
 
     return NewColor;
+}
+
+int UTwinLinkPOISubSystem::TwinLinkPOIGetInsidePOI(const FBox& Box, TMap<FString, TMap<FString, FVector>>& Ret) {
+    int num = 0;
+    for (const auto& Attribute : RegisteredPOIs) {
+        for (const auto& POI : Attribute.Value) {
+            // #NOTE : BoxはXY
+            if (Box.IsInsideXY(POI.Value)) {
+                if (!Ret.Contains(Attribute.Key)) {
+                    Ret.Add(Attribute.Key);
+                }
+                Ret[Attribute.Key].Add(POI.Key, POI.Value);
+                num++;
+            }
+        }
+    }
+    return num;
 }
 
 FString UTwinLinkPOISubSystem::ConvertSJISToFString(const std::string& SjisString) {

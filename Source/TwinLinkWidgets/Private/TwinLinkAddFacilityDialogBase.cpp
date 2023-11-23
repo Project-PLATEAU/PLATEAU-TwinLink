@@ -6,6 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "TwinLinkCommon.h"
 
+#include "TwinLinkPersistentPaths.h"
 #include "TwinLinkWorldViewer.h"
 #include "TwinLinkFacilityInfoSystem.h"
 #include "NavSystem/TwinLinkNavSystem.h"
@@ -16,6 +17,8 @@ void UTwinLinkAddFacilityDialogBase::Setup() {
     const auto WorldViewer =
         ATwinLinkWorldViewer::GetInstance(GetWorld());
 
+    if (WorldViewer.IsValid() == false)
+        return;
     check(WorldViewer.IsValid());
     // クリック時にイベントを追加する
     WorldViewer->EvOnClickedFacility.AddLambda([this](FHitResult HitResult) {
@@ -65,4 +68,8 @@ void UTwinLinkAddFacilityDialogBase::AddFacilityInfo(const FString& InName, cons
     FacilityInfoSys->AddFacilityInfo(InName, InCategory, FeatureID, InImageFileName, InDescription, InSpotInfo, Entrance);
     FacilityInfoSys->ExportFacilityInfo();
     OnAddedFacilityInfo();
+}
+
+FString UTwinLinkAddFacilityDialogBase::CreateImageFilePath(const FString& InFileName) {
+    return TwinLinkPersistentPaths::CreateFacilityImagePath(InFileName);
 }

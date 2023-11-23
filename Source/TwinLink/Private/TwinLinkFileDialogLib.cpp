@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #include "TwinLinkFileDialogLib.h"
 
@@ -14,6 +14,8 @@
 // Unreal Engineのデスクトッププラットフォーム関係
 #include "Developer/DesktopPlatform/Public/IDesktopPlatform.h"
 #include "Developer/DesktopPlatform/Public/DesktopPlatformModule.h"
+
+#include "HAL/FileManager.h"
 
 //
 #include "TwinLinkCommon.h"
@@ -191,4 +193,10 @@ bool UTwinLinkFileDialogLib::CreateDirectoryTree(const FString& Directory) {
     }
 
     return true;
+}
+
+FString UTwinLinkFileDialogLib::GetFilenameOnDisk(const FString& Filename) {
+    //https://docs.unrealengine.com/5.3/en-US/API/Runtime/Core/HAL/IFileManager/GetFilenameOnDisk/
+    const auto Fullpath = IFileManager::Get().GetFilenameOnDisk(*Filename);
+    return Fullpath;
 }

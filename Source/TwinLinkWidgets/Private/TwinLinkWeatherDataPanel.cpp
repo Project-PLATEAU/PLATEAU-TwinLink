@@ -20,11 +20,12 @@ void UTwinLinkWeatherDataPanel::TwinLinkWeatherDataGetSource(const FString& Dire
         ScrollFileList->RemoveChildAt(1);
     }
 
+    const auto OriginElement = Cast<UTextBlock>(ScrollFileList->GetChildAt(0));
+
+    ScrollFileList->ClearChildren();
+
     for (int i = 0; i < WeatherDataSubSystem.Get()->FileNames.Num(); i++) {
-        if (i == 0) {
-            Cast<UTextBlock>(ScrollFileList->GetChildAt(0))->SetText(FText::FromString(WeatherDataSubSystem.Get()->FileNames[i]));
-        }
-        const auto Element = NewObject<UTextBlock>(ScrollFileList->GetChildAt(0));
+        const auto Element = DuplicateObject<UTextBlock>(OriginElement, ScrollFileList);
         Element->SetText(FText::FromString(WeatherDataSubSystem.Get()->FileNames[i]));
         ScrollFileList->AddChild(Element);
     }
@@ -129,7 +130,7 @@ void UTwinLinkWeatherDataPanel::OnValueChangedSliderDay(float Value) {
     int Index = FMath::RoundHalfFromZero(Value * (JulianDays.Num() - 1));
 
     WeatherDataSubSystem.Get()->CurrentModifiedJulianDay = JulianDays[Index];
-    
+
     //修正ユリウス日からユリウス日へ変換
     double JulianDay = WeatherDataSubSystem.Get()->CurrentModifiedJulianDay + 2400000.5;
 
@@ -152,7 +153,7 @@ void UTwinLinkWeatherDataPanel::OnValueChangedSliderTime(float Value) {
     int Index = FMath::RoundHalfFromZero(Value * (TimeOfDays.Num() - 1));
 
     WeatherDataSubSystem.Get()->CurrentTimeOfDay = TimeOfDays[Index];
-    
+
     TextTime->SetText(FText::FromString(WeatherDataSubSystem.Get()->CurrentTimeOfDay.ToString(TEXT("%h:%m:%s")).Replace(TEXT("+"), TEXT(""))));
 
     for (const auto& Item : WeatherDataItems) {
