@@ -54,7 +54,7 @@ void AUTwinLinkNavSystemPathDrawerArrow::DrawPath(const TArray<FVector>& PathPoi
 }
 
 bool AUTwinLinkNavSystemPathDrawerArrow::UpdateMatrix(float DeltaSeconds, bool bInterpolate) {
-    const auto Num =  FMath::Min(MaxArrowNum, FMath::CeilToInt(TotalPathDistance / DrawPointInterval));
+    const auto Num = FMath::Min(MaxArrowNum, FMath::CeilToInt(TotalPathDistance / DrawPointInterval));
     // 必要分を作る(作れなかった時のためにWhileではなくforで)
     for (auto I = ArrowComps.Num(); I < Num; ++I)
         CreateChildArrow();
