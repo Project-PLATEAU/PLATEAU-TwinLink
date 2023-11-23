@@ -93,6 +93,9 @@ public:
         return EntranceLocator;
     }
 
+    UFUNCTION(BlueprintCallable)
+        bool IsEntranceLocatorVisible() const;
+
     /*
      * @brief : 道コリジョンのハイトマップ作製
      */
