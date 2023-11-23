@@ -24,6 +24,16 @@ public:
      * @param Parent
     */
     void ElementSetup(const FString& Label, TObjectPtr<UTwinLinkFloorViewPanel> Parent);
+    /**
+     * @brief 選択解除ブループリント通知
+    */
+    UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
+        void OnDeselect();
+    /**
+     * @brief 選択ブループリント通知
+    */
+    UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
+        void OnSelect();
 public:
     /** ボタンウィジェット **/
     UPROPERTY(meta = (BindWidget))
@@ -34,7 +44,6 @@ public:
 private:
     /**
      * @brief デリゲート
-     * @return
     */
     UFUNCTION()
         void OnSelectElement();

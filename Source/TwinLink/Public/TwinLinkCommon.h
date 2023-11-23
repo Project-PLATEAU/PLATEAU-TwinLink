@@ -84,3 +84,17 @@ public:
     static TWeakObjectPtr<ACharacter> GetInstance(UWorld* World);
 
 };
+
+TWINLINK_API class TwinLinkGraphicsEnv {
+public:
+    /**
+     * @brief エミッシブの強化係数を取得する
+     * 2023/11/20時点では 昼夜によって変化する
+     * @param visibility
+     * @return
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+    static float GetEmissiveBoostFromEnv(UWorld* World);
+
+
+};

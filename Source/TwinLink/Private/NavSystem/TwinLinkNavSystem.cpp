@@ -133,6 +133,10 @@ void ATwinLinkNavSystem::Tick(float DeltaSeconds) {
 #endif
 }
 
+bool ATwinLinkNavSystem::IsEntranceLocatorVisible() const {
+    return EntranceLocator && FTwinLinkEntranceLocatorNode::IsAnyNodeVisible();
+}
+
 void ATwinLinkNavSystem::BuildDemHeightMap() {
     auto MinX = FMath::FloorToInt(DemCollisionAabb.Min.X / DEM_CELL_SIZE);
     auto MaxX = FMath::CeilToInt(DemCollisionAabb.Max.X / DEM_CELL_SIZE);

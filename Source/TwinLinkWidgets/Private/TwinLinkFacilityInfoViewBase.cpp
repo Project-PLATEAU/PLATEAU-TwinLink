@@ -4,6 +4,7 @@
 #include "TwinLinkFacilityInfoViewBase.h"
 #include "TwinLinkCommon.h"
 
+#include "TwinLinkPersistentPaths.h"
 #include "TwinLinkFacilityInfoSystem.h"
 #include "TwinLinkFacilityInfo.h"
 
@@ -19,4 +20,8 @@ void UTwinLinkFacilityInfoViewBase::Setup(UTwinLinkFacilityInfo* Info) {
         });
 
     OnChangedInfo();
+}
+
+FString UTwinLinkFacilityInfoViewBase::CreateImageFilePath(const FString& InFileName) {
+    return TwinLinkPersistentPaths::CreateFacilityImagePath(InFileName);
 }

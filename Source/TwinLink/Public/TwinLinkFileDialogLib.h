@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -161,6 +161,9 @@ public:
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink OpenFileDialog")
     static bool CreateDirectoryTree(const FString& Directory);
+
+    UFUNCTION(BlueprintCallable, Category = "TwinLink OpenFileDialog")
+    static FString GetFilenameOnDisk(const FString& Filename);
 
 private:
 

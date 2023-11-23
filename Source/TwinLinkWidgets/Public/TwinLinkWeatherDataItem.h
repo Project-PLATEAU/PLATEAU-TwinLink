@@ -1,10 +1,12 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "TwinLinkWidgetBase.h"
+#include "Components/TextBlock.h"
 #include "Components/PanelWidget.h"
+#include "Components/TextBlock.h"
 #include "TwinLinkWeatherDataItem.generated.h"
 
 /**

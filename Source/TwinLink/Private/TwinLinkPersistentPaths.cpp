@@ -16,7 +16,7 @@ FString TwinLinkPersistentPaths::CreateFacilityInfoFilePath(const FString& FileN
 }
 
 FString TwinLinkPersistentPaths::CreateFacilityImagePath(const FString& FileName) {
-    return FString::Printf(TEXT("%s/%s/%s"), *GetProjSaveDir(), TEXT("FacilityImage"), *FileName);
+    return FString::Printf(TEXT("%s%s/%s"), *GetProjSaveDir(), TEXT("FacilityImage"), *FileName);
 }
 
 FString TwinLinkPersistentPaths::CreateFloorInfoFolderPath() {

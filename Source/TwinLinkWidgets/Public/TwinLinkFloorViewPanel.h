@@ -8,6 +8,8 @@
 #include "Containers/SortedMap.h"
 #include "TwinLinkFloorViewPanel.generated.h"
 
+class UTwinLinkFloorSwitcher;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnChangeFloorDelegate, UPLATEAUCityObjectGroup*, Value);
 
 /**
@@ -23,6 +25,12 @@ public:
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
         void SetupTwinLinkFloorView();
+
+    /**
+     * @brief 階層表示パネルセットアップ
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        void SetupTwinLinkFloorViewWithSwitcher(UTwinLinkFloorSwitcher* Switcher);
 
     /**
      * @brief 階層表示パネル後始末
@@ -48,11 +56,26 @@ public:
     */
     UPROPERTY(BlueprintAssignable, Category = "TwinLink")
         FOnChangeFloorDelegate OnChangeFloorDelegate;
+
+    /**
+     * @brief
+    */
+    FString GetSelectedFloorKey() { return SelectedFloorKey; }
+
+    /**
+     * @brief
+    */
+    TArray<FString> GetFloorKeys() { return FloorKeys; }
+
+    /**
+     * @brief 階層表示パネル要素選択時処理
+     * @param Element
+    */
+    void FloorViewChangeKey(const FString& Key);
 public:
     /** 階層表示パネル要素追加先パネルウィジェット **/
     UPROPERTY(meta = (BindWidget))
         TObjectPtr<UPanelWidget> FloorViewScrollBox;
-
 private:
     /** 都市モデルの階層コンポーネントのコレクション **/
     TMap<FString, TWeakObjectPtr<UPLATEAUCityObjectGroup>> LinkComponents;
@@ -62,4 +85,10 @@ private:
 
     /** 階層表示パネル要素のソート済みキー配列 **/
     TArray<FString> FloorKeys;
+
+    /** 選択中階層キー **/
+    FString SelectedFloorKey;
+
+    /**  **/
+    TObjectPtr<UTwinLinkFloorSwitcher> FloorSwitcher;
 };
