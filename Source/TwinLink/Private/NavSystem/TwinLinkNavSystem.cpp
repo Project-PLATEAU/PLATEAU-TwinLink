@@ -120,7 +120,7 @@ void ATwinLinkNavSystem::Tick(float DeltaSeconds) {
         if (bBeforeSuccess == false && bAfterSuccess) {
             for (const auto Child : PathDrawers) {
                 if (Child)
-                    Child->DrawPath(PathFindInfo->HeightCheckedPoints);
+                    Child->DrawPath(PathFindInfo->HeightCheckedPoints, DeltaSeconds);
             }
             OnReadyFindPathInfo(*PathFindInfo);
         }
@@ -410,10 +410,16 @@ void ATwinLinkNavSystem::ChangeMode(NavSystemMode Mode, bool bForce) {
         return;
     }
     // パス描画クラスを再生成する
-    TwinLinkActorEx::SpawnChildActor(this, RuntimeParam->PathDrawerBp, TEXT("PathDrawerActor"));
-    ForeachChildActor<AUTwinLinkNavSystemPathDrawer>(this, [&](AUTwinLinkNavSystemPathDrawer* Child) {
-        PathDrawers.Add(Child);
-        });
+    for(auto& Bp : RuntimeParam->PathDrawerBps)
+    {
+        check(Bp);
+        if (Bp.Get() == nullptr)
+            continue;
+        TwinLinkActorEx::SpawnChildActor(this, Bp, Bp->GetName());
+        ForeachChildActor<AUTwinLinkNavSystemPathDrawer>(this, [&](AUTwinLinkNavSystemPathDrawer* Child) {
+            PathDrawers.Add(Child);
+            });
+    }
 
     if (RuntimeParam->PathFinderBp.Contains(Mode)) {
         FString Name = TEXT("PathFinder");

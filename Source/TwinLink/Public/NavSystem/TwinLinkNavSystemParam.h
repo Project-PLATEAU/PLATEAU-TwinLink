@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -36,7 +36,9 @@ public:
         float PathPointInterval = 1000;
 
     UPROPERTY(EditAnywhere, meta = (Comment = "パス描画アクターのBP"), Category = "Path")
-        TSubclassOf<AUTwinLinkNavSystemPathDrawer> PathDrawerBp;
+        TArray<TSubclassOf<AUTwinLinkNavSystemPathDrawer>> PathDrawerBps;
+
+
 
     UPROPERTY(EditAnywhere, meta = (Comment = "パス探索のBPアクターのBP"), Category = "Path")
         TMap<NavSystemMode, TSubclassOf<ATwinLinkNavSystemPathFinder>> PathFinderBp;
