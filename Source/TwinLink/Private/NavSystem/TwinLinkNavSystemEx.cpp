@@ -19,7 +19,7 @@ bool UTwinLinkNavSystemEx::TryGetBuildingInfo(const FTwinLinkNavSystemBuildingIn
     if (!IsValidBuilding(Info))
         return false;
     OutBuildingName = Info.FacilityInfo->GetName();
-    OutBuildingIconKey = Info.FacilityInfo->GetImageFileName();
+    OutBuildingIconKey = Info.FacilityInfo->GetCategory();
     OutEntrance = GetFirstEntranceOrZero(Info);
     return true;
 }
