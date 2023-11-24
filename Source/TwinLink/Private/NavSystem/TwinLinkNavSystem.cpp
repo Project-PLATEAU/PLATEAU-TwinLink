@@ -462,7 +462,8 @@ void ATwinLinkNavSystem::ChangeMode(NavSystemMode Mode, bool bForce) {
         return;
     }
     // パス描画クラスを再生成する
-    for (auto& Bp : RuntimeParam->PathDrawerBps) {
+    for(auto& Bp : RuntimeParam->PathDrawerBps)
+    {
         check(Bp);
         if (Bp.Get() == nullptr)
             continue;
