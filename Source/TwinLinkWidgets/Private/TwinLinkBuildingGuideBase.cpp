@@ -1,10 +1,13 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
-
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #include "TwinLinkBuildingGuideBase.h"
 #include "TwinLinkCommon.h"
 
 #include "TwinLinkFloorInfoSystem.h"
+#include "TwinLinkFacilityInfoSystem.h"
+#include "TwinLinkFacilityInfo.h"
+#include "TwinLink.h"
+#include "PLATEAUInstancedCityModel.h"
 
 void UTwinLinkBuildingGuideBase::NativeConstruct() {
     UTwinLinkTabContentBase::NativeConstruct();
@@ -23,10 +26,36 @@ bool UTwinLinkBuildingGuideBase::CheckIsSelectedGrpID(const FString& InGrpID) {
     return InfoSys->GetGrpIDBySelectedFloor().Equals(InGrpID, ESearchCase::Type::CaseSensitive);
 }
 
-void UTwinLinkBuildingGuideBase::Setup() {
+void UTwinLinkBuildingGuideBase::OnActivated() {
+    UpdateFacilityName();
+}
 
+void UTwinLinkBuildingGuideBase::Setup() {
+    UpdateFacilityName();
 }
 
 void UTwinLinkBuildingGuideBase::Finalize() {
+}
 
+void UTwinLinkBuildingGuideBase::UpdateFacilityName() {
+    const auto CityModel = FTwinLinkModule::Get().GetFacilityModel();
+    if (CityModel == nullptr) {
+        return;
+    }
+
+    const auto InfoSys = TwinLinkSubSystemHelper::GetInstance<UTwinLinkFacilityInfoSystem>();
+    check(InfoSys.IsValid());
+
+    const auto FacilityInfoCollection = InfoSys.Get()->GetFacilityInfoCollectionAsMap();
+
+    TArray<UPLATEAUCityObjectGroup*> CityObjects;
+    CityModel->GetComponents<UPLATEAUCityObjectGroup>(CityObjects);
+    for (int i = 0; i < CityObjects.Num(); i++) {
+        const auto Ret = InfoSys.Get()->FindFacilityInfoByFeatureId(CityObjects[i]->GetName());
+        if (Ret != nullptr) {
+            FacilityName->SetText(FText::FromString(Ret->GetName()));
+            OnSetupIcon(Ret->GetCategory());
+        }
+        break;
+    }
 }
