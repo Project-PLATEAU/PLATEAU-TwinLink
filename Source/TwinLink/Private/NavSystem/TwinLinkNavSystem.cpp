@@ -143,8 +143,6 @@ void ATwinLinkNavSystem::BuildDemHeightMap() {
     auto MaxX = FMath::CeilToInt(DemCollisionAabb.Max.X / DEM_CELL_SIZE);
     auto MinY = FMath::FloorToInt(DemCollisionAabb.Min.Y / DEM_CELL_SIZE);
     auto MaxY = FMath::CeilToInt64(DemCollisionAabb.Max.Y / DEM_CELL_SIZE);
-    // 1m
-    auto Unit = 100;
 
     DemHeightMapSizeX = MaxX - MinX + 1;
     DemHeightMapSizeY = MaxY - MinY + 1;
@@ -158,7 +156,8 @@ void ATwinLinkNavSystem::BuildDemHeightMap() {
 
             if (GetWorld()->LineTraceSingleByChannel(HeightResult, Start, End, DemCollisionChannel)) {
                 auto Index = PositionToDemHeightMapIndex(Start);
-                DemHeightMap[Index] = HeightResult.Location.Z;
+                if(Index >= 0 && Index < DemHeightMap.Num())
+                    DemHeightMap[Index] = HeightResult.Location.Z;
             }
         }
     }
