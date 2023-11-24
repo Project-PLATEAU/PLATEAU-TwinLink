@@ -255,8 +255,8 @@ private:
     // 道コリジョンのHeightMap
     // index :
     // DemCollisionのAabb寄りも低い値が入っているときは不正値扱い
-    //UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
-    TArray<float> DemHeightMap;
+    UPROPERTY()
+        TArray<float> DemHeightMap;
 
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
         int DemHeightMapSizeX = 0;
@@ -268,13 +268,39 @@ private:
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
         TSubclassOf<ATwinLinkNavSystemEntranceLocator> EntranceLocatorBp;
 
+    /*
+     * @brief : ワールド座標 -> ハイト情報取得
+     */
+    std::optional<double> GetDemHeight(const FVector2D& Pos) const;
+
+    /*
+     * @brief : インデックス -> ハイト情報取得
+     */
     std::optional<double> GetDemHeight(int Index) const;
+
+    /*
+     * @brief : セル -> ハイト情報取得
+     */
+    std::optional<double> GetDemHeight(int CellX, int CellY) const;
+
+    /*
+     * @brief : ワールド座標 -> ハイトマップインデックス. 対応外の場合は負数
+     */
     int PositionToDemHeightMapIndex(const FVector3d& Pos)const;
 
+    /*
+     * @brief : ハイトマップのインデックス -> 対応する座標を返す
+     */
     std::optional<FVector3d> DemHeightMapIndexToPosition(int Index) const;
 
+    /*
+     * @brief : ハイトマップのセル -> インデックス変換
+     */
     int DemHeightMapCellToIndex(int X, int Y) const;
 
+    /*
+     * @brief : ハイトマップのインデックス -> セル変換
+     */
     bool TryDemHeightMapIndexToCell(int Index, int& OutX, int& OutY) const;
 
 private:
