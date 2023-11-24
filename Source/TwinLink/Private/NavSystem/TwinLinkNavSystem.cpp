@@ -24,6 +24,7 @@
 #include "libshape/datatype.h"
 #include "libshape/shp_writer.h"
 #include "DrawDebugHelpers.h"
+#include "TwinLinkPlayerController.h"
 #include "GameFramework/HUD.h"
 
 namespace {
@@ -45,7 +46,7 @@ namespace {
         return Sign * Offset;
     }
     // ハイトマップのセルサイズ
-    constexpr float DEM_CELL_SIZE = 500;
+    constexpr float DEM_CELL_SIZE = 100;
 
     TMap<NavSystemPathPointType, FBox2D> DebugPathPointScreenRect;
 }
@@ -120,7 +121,7 @@ void ATwinLinkNavSystem::Tick(float DeltaSeconds) {
         if (bBeforeSuccess == false && bAfterSuccess) {
             for (const auto Child : PathDrawers) {
                 if (Child)
-                    Child->DrawPath(PathFindInfo->HeightCheckedPoints);
+                    Child->DrawPath(PathFindInfo->HeightCheckedPoints, DeltaSeconds);
             }
             OnReadyFindPathInfo(*PathFindInfo);
         }
@@ -180,16 +181,36 @@ void ATwinLinkNavSystem::DebugDraw() {
     }
 
     if (DebugDrawDemHeightMap) {
-        for (auto I = 0; I < DemHeightMap.Num(); ++I) {
-            auto P = *DemHeightMapIndexToPosition(I);
-            auto Z = GetDemHeight(I);
-            if (Z.has_value() == false)
-                continue;
-            P.Z = *Z;
-            auto Center = P + FVector3d::One() * DEM_CELL_SIZE * 0.5f;
-            auto Extent = FVector3d(DEM_CELL_SIZE, DEM_CELL_SIZE, 10);
-            DrawDebugBox(GetWorld(), Center, Extent, FColor::Red);
+
+
+        const APlayerController* Controller = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+        auto MousePos = ATwinLinkPlayerController::GetMousePosition(Controller);
+        if (MousePos.has_value())
+        {
+            auto Ray = ATwinLinkPlayerController::ScreenToWorldRayThroughBoundingBox(Controller, *MousePos, DemCollisionAabb, 100);
+            if(Ray.has_value())
+            {
+                FHitResult HitResult;
+                if (GetWorld()->LineTraceSingleByChannel(HitResult, Ray->Min, Ray->Max, ECC_WorldStatic)) {
+                    auto Center = HitResult.Location;
+                    auto Extent = DEM_CELL_SIZE * 50;
+                    FBox Range(Center - Extent, Center + Extent);
+                    for(auto X = Range.Min.X; X < Range.Max.X; X += DEM_CELL_SIZE)
+                    {
+                        for(auto Y = Range.Min.Y; Y < Range.Max.Y; Y += DEM_CELL_SIZE)
+                        {
+                            auto Z = GetDemHeight(FVector2D(X, Y));
+                            if (Z.has_value() == false)
+                                continue;
+                            const auto C = FVector(X, Y, *Z);
+                            const auto E = FVector3d(DEM_CELL_SIZE, DEM_CELL_SIZE, 10);
+                            DrawDebugBox(GetWorld(), C, E, FColor::Red);
+                        }
+                    }
+                }
+            }
         }
+       
     }
 
     {
@@ -239,6 +260,33 @@ void ATwinLinkNavSystem::DebugBeginPlay() {
 #endif
 }
 
+std::optional<double> ATwinLinkNavSystem::GetDemHeight(const FVector2D& Pos) const {
+    const auto Offset = Pos - TwinLinkMathEx::XY(DemCollisionAabb.Min);
+
+    // バイライナー補間
+    const auto X = FMath::Clamp(Offset.X / DEM_CELL_SIZE, 0.f, 1.f * DemHeightMapSizeX);
+    const auto Y = FMath::Clamp(Offset.Y / DEM_CELL_SIZE, 0.f, 1.f * DemHeightMapSizeY);
+
+    const auto X1 = FMath::FloorToInt(X);
+    const auto Y1 = FMath::FloorToInt(Y);
+    const auto X2 = FMath::CeilToInt(X);
+    const auto Y2 = FMath::CeilToInt(Y);
+
+    const auto Xt = 1.f - (X - X1);
+    const auto Yt = 1.f - (Y - Y1);
+
+    // 範囲チェックしているから値が入っていることは保証されている
+    const auto P11 = *GetDemHeight(X1, Y1);
+    const auto P12 = *GetDemHeight(X1, Y2);
+    const auto P22 = *GetDemHeight(X2, Y2);
+    const auto P21 = *GetDemHeight(X2, Y1);
+
+    const auto Px1 = FMath::Lerp(P11, P21, Xt);
+    const auto Px2 = FMath::Lerp(P12, P22, Xt);
+
+    return FMath::Lerp(Px1, Px2, Yt);
+}
+
 std::optional<double> ATwinLinkNavSystem::GetDemHeight(int Index) const {
     if (Index < 0 || Index >= DemHeightMap.Num())
         return std::nullopt;
@@ -248,6 +296,10 @@ std::optional<double> ATwinLinkNavSystem::GetDemHeight(int Index) const {
     if (Height < DemCollisionAabb.Min.Z)
         return std::nullopt;
     return Height;
+}
+
+std::optional<double> ATwinLinkNavSystem::GetDemHeight(int CellX, int CellY) const {
+    return GetDemHeight(DemHeightMapCellToIndex(CellX, CellY));
 }
 
 int ATwinLinkNavSystem::PositionToDemHeightMapIndex(const FVector3d& Pos) const {
@@ -410,10 +462,15 @@ void ATwinLinkNavSystem::ChangeMode(NavSystemMode Mode, bool bForce) {
         return;
     }
     // パス描画クラスを再生成する
-    TwinLinkActorEx::SpawnChildActor(this, RuntimeParam->PathDrawerBp, TEXT("PathDrawerActor"));
-    ForeachChildActor<AUTwinLinkNavSystemPathDrawer>(this, [&](AUTwinLinkNavSystemPathDrawer* Child) {
-        PathDrawers.Add(Child);
-        });
+    for (auto& Bp : RuntimeParam->PathDrawerBps) {
+        check(Bp);
+        if (Bp.Get() == nullptr)
+            continue;
+        TwinLinkActorEx::SpawnChildActor(this, Bp, Bp->GetName());
+        ForeachChildActor<AUTwinLinkNavSystemPathDrawer>(this, [&](AUTwinLinkNavSystemPathDrawer* Child) {
+            PathDrawers.Add(Child);
+            });
+    }
 
     if (RuntimeParam->PathFinderBp.Contains(Mode)) {
         FString Name = TEXT("PathFinder");
