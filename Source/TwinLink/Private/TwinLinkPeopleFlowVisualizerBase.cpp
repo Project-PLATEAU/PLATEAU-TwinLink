@@ -153,6 +153,8 @@ UTwinLinkPeopleFlowVisualizerBase::UTwinLinkPeopleFlowVisualizerBase() {
     bIsRequestActiveState = bIsCurrentActiveState = true;
     bIsWaitingRequestResult = false;
 
+    bIsInitedMaxMinPopulationDensity = false;
+
     // 東京都の市区町村別面積・人口・人口密度【2023年8月】
     // https://tisikijikan.com/tokyoto-area-population-matome/
     // 6425 人/km2
@@ -310,8 +312,8 @@ void UTwinLinkPeopleFlowVisualizerBase::SetMaximumAndMinimumAutomatically() {
     Sys->OnReceivedPeopleFlowResponse.AddUnique(OnSetMaximumAndMinimumAutomaticallyDelegate);
 
     FTwinLinkPeopleFlowApiRequest Req{ RequestIDs, CurrentVisualizeTime };
-    //Sys->Request(Req);
-    OnSetMaximumAndMinimumAutomatically(TestCreateTestData(Req.SpatialIds, MaxZoomLevel));
+    Sys->Request(Req);
+    //OnSetMaximumAndMinimumAutomatically(TestCreateTestData(Req.SpatialIds, MaxZoomLevel));
 }
 
 void UTwinLinkPeopleFlowVisualizerBase::SetVisualizeTime(const FDateTime& Time) {
@@ -359,10 +361,19 @@ void UTwinLinkPeopleFlowVisualizerBase::OnSetMaximumAndMinimumAutomatically(cons
     const auto Sys = TwinLinkSubSystemHelper::GetInstance<UTwinLinkPeopleFlowSystem>();
     Sys->OnReceivedPeopleFlowResponse.Remove(OnSetMaximumAndMinimumAutomaticallyDelegate);
 
+    // 初期化済みフラグを立てる
+    bIsInitedMaxMinPopulationDensity = true;
+
     bIsWaitingRequestResult = false;
 }
 
 void UTwinLinkPeopleFlowVisualizerBase::RequestInfoFromSpatialID() {
+    // 最大値、最小値が計算されていなかったら先に最大値、最小値の計算を行う
+    if (bIsInitedMaxMinPopulationDensity == false) {
+        SetMaximumAndMinimumAutomatically();
+        return;
+    }
+
     check(CityModelHelper.IsValid());
 
     // リクエストの結果待ち
@@ -397,8 +408,8 @@ void UTwinLinkPeopleFlowVisualizerBase::RequestInfoFromSpatialID() {
     Sys->OnReceivedPeopleFlowResponse.AddUnique(UpdatePeopleFlowDelegate);
 
     FTwinLinkPeopleFlowApiRequest Req{ RequestSpatialIDs, CurrentVisualizeTime };
-    //Sys->Request(Req);
-    OnUpdatePeopleFlow(TestCreateTestData(Req.SpatialIds, MaxZoomLevel));
+    Sys->Request(Req);
+    //OnUpdatePeopleFlow(TestCreateTestData(Req.SpatialIds, MaxZoomLevel));
 }
 
 void UTwinLinkPeopleFlowVisualizerBase::OnUpdatePeopleFlow(const FTWinLinkPeopleFlowApiResult& Result) {
