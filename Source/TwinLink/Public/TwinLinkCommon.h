@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -96,5 +96,10 @@ public:
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
     static float GetEmissiveBoostFromEnv(UWorld* World);
 
+    /**
+     * @brief 環境設定が夜かどうかを返す.
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        static float IsNight(UWorld* World);
 
 };

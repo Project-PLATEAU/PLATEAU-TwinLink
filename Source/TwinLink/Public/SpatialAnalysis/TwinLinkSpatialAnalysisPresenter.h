@@ -92,7 +92,10 @@ private:
     UPROPERTY(EditAnywhere)
         FDateTime LastPeopleFlowRequestedTime;
 
-    // 人流データ取得API
+    // 空間IDBoxのマテリアル
+    UPROPERTY(VisibleAnywhere)
+        UMaterialInstanceDynamic* DynamicMaterial = nullptr;
+
     UPROPERTY(VisibleAnywhere)
         UTwinLinkPeopleFlowApi* PeopleFlowApi = nullptr;
 
