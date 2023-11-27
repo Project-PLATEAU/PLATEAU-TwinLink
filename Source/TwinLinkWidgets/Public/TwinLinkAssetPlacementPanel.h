@@ -22,16 +22,6 @@ public:
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
         void SetupOnTwinLink();
-    
-protected:
-    /**
-     * @brief アセット配置情報を追加する
-     * @param PlacementPresetID
-     * @param Position
-     * @param RotationEuler
-    */
-    UFUNCTION(BlueprintCallable, Category = "TwinLink")
-        void AddAssetPlacement(const int PlacementPresetID, const FVector& PlacementPosition, const FVector& PlacementRotationEuler);
 
 private:
     /** システム層が保持するコレクションへの参照 **/

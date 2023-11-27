@@ -26,6 +26,13 @@ public:
     /** 設置高さ **/
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
         double Height;
+public:
+    FTwinLinkSmartPoleLinkData() {
+        DeviceName = FString();
+        Latitude = 0.0l;
+        Longitude = 0.0l;
+        Height = 0.0l;
+    }
 };
 
 /**

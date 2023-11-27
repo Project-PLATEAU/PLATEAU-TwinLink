@@ -22,4 +22,10 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
         /** スタティックメッシュ **/
         TObjectPtr<UObject> AssetSils;
+public:
+    FTwinLinkAssetPlacementPresetData() {
+        PresetID = 0;
+        WidgetTexture = nullptr;
+        AssetSils = nullptr;
+    }
 };

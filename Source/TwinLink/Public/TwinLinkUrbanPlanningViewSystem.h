@@ -23,7 +23,7 @@ public:
     /**
      * @brief デフォルトコンストラクタ
     */
-    FTwinLinkEdge() { ; }
+    FTwinLinkEdge() { StartPoint = FVector(); EndPoint = FVector(); }
     /**
      * @brief コンストラクタ
      * @param Start
