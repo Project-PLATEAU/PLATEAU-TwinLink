@@ -52,7 +52,16 @@ public:
     /**
      * @brief デフォルトコンストラクタ
     */
-    FTwinLinkAdjustmentMaterialParameter() { ; }
+    FTwinLinkAdjustmentMaterialParameter() {
+        Name = FString();
+        MaterialIndex = 0;
+        MaterialType = ETwinLinkColorAdjustmentMaterialType::Undefined;
+        BaseColor = FLinearColor();
+        SpecularColor = FLinearColor();
+        EmissiveColor = FLinearColor();
+        Shininess = 0.0f;
+        Transparency = 0.0f;
+    }
     /**
      * @brief コンストラクタ
     */

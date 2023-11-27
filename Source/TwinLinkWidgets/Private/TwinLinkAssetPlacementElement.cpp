@@ -13,7 +13,7 @@ void UTwinLinkAssetPlacementElement::TwinLinkAssetPlacementElementSetup(const in
 
     PresetID = AssetPresetID;
 
-    const auto Button = Cast<UButton>(GetRootWidget());//Cast<UButton>(Obj);
+    const auto Button = Cast<UButton>(GetRootWidget());
 
     if (Button) {
         auto Style = Button->GetStyle();
@@ -35,12 +35,6 @@ void UTwinLinkAssetPlacementElement::TwinLinkAssetPlacementAddPresetAsset() {
 
     const auto AssetPlacementInfo = NewObject<UTwinLinkAssetPlacementInfo>();
     const auto bIsSuc = AssetPlacementInfo->Setup(PresetID, FVector(0, 0, 0), FVector(0, 0, 0));
-    //check(bIsSuc);
-    //AssetPlacementSys.Get()->GetAssetPlacementInfoCollection()->Add(AssetPlacementInfo);
-    //AssetPlacementSys.Get()->ExportAssetPlacementInfo();
-
-    ////アセット追加
-    //AssetPlacementSys.Get()->AddAssetPlacementActor(AssetPlacementInfo);
 
     AssetPlacementSys.Get()->SpawnUnsettledActor(AssetPlacementInfo);
 

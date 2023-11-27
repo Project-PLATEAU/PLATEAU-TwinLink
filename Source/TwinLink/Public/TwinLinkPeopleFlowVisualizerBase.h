@@ -309,6 +309,8 @@ private:
     /** ヒートマップの高さ(画素単位)(奥行) **/
     int HeatmapDepth;
 
+    /** 人流データの密度の最大値と最小値が設定済みであるか **/
+    bool bIsInitedMaxMinPopulationDensity;
     /** 人流データの密度の最大値(人/m2) **/
     double MaxPopulationDensity;
     /** 人流データの密度の最小値 **/

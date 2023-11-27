@@ -294,7 +294,7 @@ private:
     std::optional<FVector3d> DemHeightMapIndexToPosition(int Index) const;
 
     /*
-     * @brief : ハイトマップのセル -> インデックス変換
+     * @brief : ハイトマップのセル -> インデックス変換. 対応外の場合は負数
      */
     int DemHeightMapCellToIndex(int X, int Y) const;
 
