@@ -23,8 +23,9 @@ void UTwinLinkTimeControlPanelBase::NativeDestruct() {
 
 void UTwinLinkTimeControlPanelBase::Setup() {
     const auto Now = FDateTime::Now();
-    const auto T = Now - FTimespan(6, 0, 0, 0, 0);  // Now-6, Now-5,... ,Now-1,Now
+    const auto T = Now - FTimespan((SelectableDaySpan - 1), 0, 0, 0, 0);  // SelectableDaySpanが7の時  Now-6, Now-5,... ,Now-1,Now
     StartDateTime = FDateTime(T.GetYear(), T.GetMonth(), T.GetDay());
+    OffsetDateTime = StartDateTime;
     SetupWBP();
 }
 
@@ -75,6 +76,13 @@ void UTwinLinkTimeControlPanelBase::SetOffsetDateTime(const FDateTime& Offset) {
     OnChangedSelectDateTime(GetCurrentDateTime());
 }
 
+void UTwinLinkTimeControlPanelBase::SetOffsetDateTimeFromStep(const float& Step) {
+    const auto PassedDay = (int)(Step * (SelectableDaySpan - 1));   // 当日に合わせるため 
+    OffsetDateTime = StartDateTime + FTimespan(PassedDay, 0, 0, 0);
+
+    OnChangedSelectDateTime(GetCurrentDateTime());
+}
+
 FDateTime UTwinLinkTimeControlPanelBase::GetCurrentDateTime() const {
     FDateTime Ret = OffsetDateTime + SlideTimespan;
     const auto Now = FDateTime::Now();
@@ -98,7 +106,7 @@ const TArray<FDateTime> UTwinLinkTimeControlPanelBase::GetWeekCollection() const
     return WeekCollection;
 }
 
-double UTwinLinkTimeControlPanelBase::NormalizeDateTimeAsDay(const FTimespan& Date) {
+double UTwinLinkTimeControlPanelBase::NormalizeDateTimeAsDay(const FTimespan& Date) const {
     const auto OneDay = FTimespan(1, 0, 0, 0);
     return (double)Date.GetTicks()/OneDay.GetTicks();
 }

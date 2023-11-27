@@ -48,6 +48,13 @@ public:
     void SetOffsetDateTime(const FDateTime& Offset);
 
     /**
+     * @brief ステップ値によって日時のオフセットを設定する
+     * @param Step 
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+    void SetOffsetDateTimeFromStep(const float& Step);
+
+    /**
      * @brief スライドバーで時間を操作する　24時間の範囲で
      * 24時間の開始地点はSetOffsetDateTime()で決める
      * @param Step
@@ -98,11 +105,14 @@ private:
      * @param Date 
      * @return 
     */
-    double NormalizeDateTimeAsDay(const FTimespan& Date);
+    double NormalizeDateTimeAsDay(const FTimespan& Date) const;
 
 private:
     /** 表示される期間の最初の地点 **/
     FDateTime StartDateTime;
+
+    /** 表示される期間の範囲 **/
+    const int SelectableDaySpan = 7;
 
     /** スライドバーで操作を開始する基準時間 **/
     FDateTime OffsetDateTime;
