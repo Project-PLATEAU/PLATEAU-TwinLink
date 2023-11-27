@@ -139,13 +139,10 @@ bool ATwinLinkNavSystem::IsEntranceLocatorVisible() const {
 }
 
 void ATwinLinkNavSystem::BuildDemHeightMap() {
-    auto MinX = FMath::FloorToInt(DemCollisionAabb.Min.X / DEM_CELL_SIZE);
-    auto MaxX = FMath::CeilToInt(DemCollisionAabb.Max.X / DEM_CELL_SIZE);
-    auto MinY = FMath::FloorToInt(DemCollisionAabb.Min.Y / DEM_CELL_SIZE);
-    auto MaxY = FMath::CeilToInt64(DemCollisionAabb.Max.Y / DEM_CELL_SIZE);
-    // 1m
-    auto Unit = 100;
-
+    auto MinX = FMath::CeilToInt(DemCollisionAabb.Min.X / DEM_CELL_SIZE);
+    auto MaxX = FMath::FloorToInt(DemCollisionAabb.Max.X / DEM_CELL_SIZE);
+    auto MinY = FMath::CeilToInt(DemCollisionAabb.Min.Y / DEM_CELL_SIZE);
+    auto MaxY = FMath::FloorToInt(DemCollisionAabb.Max.Y / DEM_CELL_SIZE);
     DemHeightMapSizeX = MaxX - MinX + 1;
     DemHeightMapSizeY = MaxY - MinY + 1;
     DemHeightMap.Init(DemCollisionAabb.Min.Z - 100, DemHeightMapSizeX * DemHeightMapSizeY);
@@ -158,7 +155,8 @@ void ATwinLinkNavSystem::BuildDemHeightMap() {
 
             if (GetWorld()->LineTraceSingleByChannel(HeightResult, Start, End, DemCollisionChannel)) {
                 auto Index = PositionToDemHeightMapIndex(Start);
-                DemHeightMap[Index] = HeightResult.Location.Z;
+                if (Index >= 0 && Index < DemHeightMap.Num())
+                    DemHeightMap[Index] = HeightResult.Location.Z;
             }
         }
     }
@@ -185,20 +183,16 @@ void ATwinLinkNavSystem::DebugDraw() {
 
         const APlayerController* Controller = UGameplayStatics::GetPlayerController(GetWorld(), 0);
         auto MousePos = ATwinLinkPlayerController::GetMousePosition(Controller);
-        if (MousePos.has_value())
-        {
+        if (MousePos.has_value()) {
             auto Ray = ATwinLinkPlayerController::ScreenToWorldRayThroughBoundingBox(Controller, *MousePos, DemCollisionAabb, 100);
-            if(Ray.has_value())
-            {
+            if (Ray.has_value()) {
                 FHitResult HitResult;
                 if (GetWorld()->LineTraceSingleByChannel(HitResult, Ray->Min, Ray->Max, ECC_WorldStatic)) {
                     auto Center = HitResult.Location;
                     auto Extent = DEM_CELL_SIZE * 50;
                     FBox Range(Center - Extent, Center + Extent);
-                    for(auto X = Range.Min.X; X < Range.Max.X; X += DEM_CELL_SIZE)
-                    {
-                        for(auto Y = Range.Min.Y; Y < Range.Max.Y; Y += DEM_CELL_SIZE)
-                        {
+                    for (auto X = Range.Min.X; X < Range.Max.X; X += DEM_CELL_SIZE) {
+                        for (auto Y = Range.Min.Y; Y < Range.Max.Y; Y += DEM_CELL_SIZE) {
                             auto Z = GetDemHeight(FVector2D(X, Y));
                             if (Z.has_value() == false)
                                 continue;
@@ -210,7 +204,7 @@ void ATwinLinkNavSystem::DebugDraw() {
                 }
             }
         }
-       
+
     }
 
     {
@@ -303,12 +297,12 @@ std::optional<double> ATwinLinkNavSystem::GetDemHeight(int CellX, int CellY) con
 }
 
 int ATwinLinkNavSystem::PositionToDemHeightMapIndex(const FVector3d& Pos) const {
-    auto Offset = Pos - DemCollisionAabb.Min;
+    const auto Offset = Pos - DemCollisionAabb.Min;
     if (Offset.X < 0 || Offset.Z < 0)
         return -1;
 
-    auto X = FMath::FloorToInt(Offset.X / DEM_CELL_SIZE);
-    auto Y = FMath::FloorToInt(Offset.Y / DEM_CELL_SIZE);
+    const auto X = FMath::FloorToInt(Offset.X / DEM_CELL_SIZE);
+    const auto Y = FMath::FloorToInt(Offset.Y / DEM_CELL_SIZE);
     return DemHeightMapCellToIndex(X, Y);
 }
 
@@ -322,6 +316,10 @@ std::optional<FVector3d> ATwinLinkNavSystem::DemHeightMapIndexToPosition(int Ind
 }
 
 int ATwinLinkNavSystem::DemHeightMapCellToIndex(int X, int Y) const {
+    if (X < 0 || X >= DemHeightMapSizeX)
+        return -1;
+    if (Y < 0 || Y >= DemHeightMapSizeY)
+        return -1;
     return Y * DemHeightMapSizeX + X;
 }
 
@@ -462,8 +460,7 @@ void ATwinLinkNavSystem::ChangeMode(NavSystemMode Mode, bool bForce) {
         return;
     }
     // パス描画クラスを再生成する
-    for(auto& Bp : RuntimeParam->PathDrawerBps)
-    {
+    for (auto& Bp : RuntimeParam->PathDrawerBps) {
         check(Bp);
         if (Bp.Get() == nullptr)
             continue;

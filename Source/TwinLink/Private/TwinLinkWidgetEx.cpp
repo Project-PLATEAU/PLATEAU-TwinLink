@@ -2,6 +2,7 @@
 
 #include "Components/PanelWidget.h"
 #include "Components/Widget.h"
+#include "Components/WidgetSwitcher.h"
 
 UWidget* TwinLinkWidgetEx::GetParentIncludeOuter(UWidget* Self) {
     if (!Self)
@@ -26,7 +27,15 @@ bool TwinLinkWidgetEx::IsVisibleIncludeOuter(UWidget* Self) {
     while (W != nullptr) {
         if (W->IsVisible() == false)
             return false;
-        W = GetParentIncludeOuter(W);
+
+        const auto Parent = GetParentIncludeOuter(W);
+        // WidgetSwitcherの非アクティブな子は表示されないのにIsVisibleはfalseにならない
+        // そのため、ActiveWidgetかどうかで判断する
+        if (const auto Switcher = Cast<UWidgetSwitcher>(Parent)) {
+            if (Switcher->GetActiveWidget() != W)
+                return false;
+        }
+        W = Parent;
     }
     return true;
 }
