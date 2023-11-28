@@ -113,6 +113,9 @@ private:
     UPROPERTY(VisibleAnywhere, Category = TwinLink_Runtime)
         float TotalPathDistance;
 
+    // デバッグで変更する夜係数(負数だと無視)
+    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
+        float DebugNightCoef = -1.f;
 };
 
 UCLASS(Blueprintable)

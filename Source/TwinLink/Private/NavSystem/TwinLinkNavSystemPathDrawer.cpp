@@ -28,8 +28,7 @@ void AUTwinLinkNavSystemPathDrawerNiagara::DrawPath(const TArray<FVector>& PathP
     UNiagaraDataInterfaceArrayFunctionLibrary::SetNiagaraArrayVector(NiagaraComponent, "PathPoints", PathPoints);
     NiagaraComponent->SetNiagaraVariableInt("ParticleNum", ParticleNum);
     NiagaraComponent->SetNiagaraVariableVec3("Offset", FVector::UpVector * DrawPointHeightOffset);
-    const auto bIsNight = TwinLinkGraphicsEnv::IsNight(GetWorld());
-    NiagaraComponent->SetNiagaraVariableFloat("NightCoef", bIsNight ? 1.f : 0.f);
+    NiagaraComponent->SetNiagaraVariableFloat("NightCoef", TwinLinkGraphicsEnv::GetNightIntensity(GetWorld()));
 }
 
 void AUTwinLinkNavSystemPathDrawerNiagara::Tick(float DeltaSeconds) {
@@ -49,9 +48,13 @@ AUTwinLinkNavSystemPathDrawerArrow::AUTwinLinkNavSystemPathDrawerArrow() {
 
 void AUTwinLinkNavSystemPathDrawerArrow::BeginPlay() {
     Super::BeginPlay();
+    const auto NightIntensity = TwinLinkGraphicsEnv::GetNightIntensity(GetWorld());
     for (auto& P : GetComponentsByClass(UStaticMeshComponent::StaticClass())) {
-        if (auto StaMesh = Cast<UStaticMeshComponent>(P))
+        if (auto StaMesh = Cast<UStaticMeshComponent>(P)) {
             ArrowComps.Add(StaMesh);
+            auto Mat = StaMesh->CreateAndSetMaterialInstanceDynamicFromMaterial(0, StaMesh->GetMaterial(0));
+            Mat->SetScalarParameterValue(FName(TEXT("NightCoef")), NightIntensity);
+        }
     }
 }
 
@@ -127,6 +130,13 @@ bool AUTwinLinkNavSystemPathDrawerArrow::UpdateMatrix(float DeltaSeconds, bool b
 void AUTwinLinkNavSystemPathDrawerArrow::Tick(float DeltaSeconds) {
     Super::Tick(DeltaSeconds);
     UpdateMatrix(DeltaSeconds, true);
+    if (DebugNightCoef >= 0.f) {
+        DebugNightCoef = -1.f;
+        for (const auto Arrow : ArrowComps) {
+            if (const auto Mat = Cast<UMaterialInstanceDynamic>(Arrow->GetMaterial(0)))
+                Mat->SetScalarParameterValue("NightCoef", DebugNightCoef);
+        }
+    }
 }
 
 UActorComponent* AUTwinLinkNavSystemPathDrawerArrow::CreateChildArrow() {

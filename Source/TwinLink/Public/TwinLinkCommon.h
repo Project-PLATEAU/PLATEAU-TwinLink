@@ -97,9 +97,10 @@ public:
     static float GetEmissiveBoostFromEnv(UWorld* World);
 
     /**
-     * @brief 環境設定が夜かどうかを返す.
+     * @brief 昼夜の状態を0 ~ 1の間で返す(1が夜)
+     *        #NOTE : 現状は0.0 or 1.0の2択
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
-        static float IsNight(UWorld* World);
+        static float GetNightIntensity(UWorld* World);
 
 };
