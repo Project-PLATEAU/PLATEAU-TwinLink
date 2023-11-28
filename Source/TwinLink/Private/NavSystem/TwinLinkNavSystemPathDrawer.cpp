@@ -4,11 +4,13 @@
 #include "NavSystem/TwinLinkNavSystemPathDrawer.h"
 #include "NiagaraDataInterfaceArrayFunctionLibrary.h"
 #include "NiagaraComponent.h"
+#include "TwinLinkCommon.h"
 // Sets default values for this component's properties
 AUTwinLinkNavSystemPathDrawer::AUTwinLinkNavSystemPathDrawer() {
 }
 
 AUTwinLinkNavSystemPathDrawerNiagara::AUTwinLinkNavSystemPathDrawerNiagara() {
+    PrimaryActorTick.bCanEverTick = true;
 }
 
 void AUTwinLinkNavSystemPathDrawerNiagara::DrawPath(const TArray<FVector>& PathPoints, float DeltaSeconds) {
@@ -26,7 +28,19 @@ void AUTwinLinkNavSystemPathDrawerNiagara::DrawPath(const TArray<FVector>& PathP
     UNiagaraDataInterfaceArrayFunctionLibrary::SetNiagaraArrayVector(NiagaraComponent, "PathPoints", PathPoints);
     NiagaraComponent->SetNiagaraVariableInt("ParticleNum", ParticleNum);
     NiagaraComponent->SetNiagaraVariableVec3("Offset", FVector::UpVector * DrawPointHeightOffset);
-    //UNiagaraDataInterface::Set
+    const auto bIsNight = TwinLinkGraphicsEnv::IsNight(GetWorld());
+    NiagaraComponent->SetNiagaraVariableFloat("NightCoef", bIsNight ? 1.f : 0.f);
+}
+
+void AUTwinLinkNavSystemPathDrawerNiagara::Tick(float DeltaSeconds) {
+    Super::Tick(DeltaSeconds);
+#if WITH_EDITOR
+    if (DebugNightCoef >= 0.f) {
+        const auto NiagaraComponent = GetComponentByClass<UNiagaraComponent>();
+        NiagaraComponent->SetNiagaraVariableFloat("NightCoef", DebugNightCoef);
+        DebugNightCoef = -1.f;
+    }
+#endif
 }
 
 AUTwinLinkNavSystemPathDrawerArrow::AUTwinLinkNavSystemPathDrawerArrow() {

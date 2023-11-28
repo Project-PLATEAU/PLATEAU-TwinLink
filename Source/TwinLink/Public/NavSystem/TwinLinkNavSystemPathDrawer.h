@@ -29,20 +29,19 @@ public:
 
     virtual void DrawPath(const TArray<FVector>& PathPoints, float DeltaSeconds) override;;
 
+    virtual void Tick(float DeltaSeconds) override;
 private:
     // 描画ポイント
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
         float DrawPointInterval = 10;
 
-    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
-        float PathEmissiveMin = 1.f;
-
-    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
-        float PathEmissiveMax = 100.f;
-
     // 高さ方向の描画オフセット
-    UPROPERTY(EditAnywhere, Category = TwinLink_Test)
+    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
         float DrawPointHeightOffset = 10;
+
+    // デバッグで変更する夜係数(負数だと無視)
+    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
+        float DebugNightCoef = -1.f;
 };
 
 /*
