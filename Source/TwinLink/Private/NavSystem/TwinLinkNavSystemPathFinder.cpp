@@ -43,14 +43,14 @@ bool ATwinLinkNavSystemPathFinder::RequestStartPathFinding(FTwinLinkNavSystemFin
     // まだ両地点生成済みじゃない場合は無視する
     if (IsReadyPathFinding() == false)
         return false;
-    auto Start = *GetPathLocation(NavSystemPathPointType::Start);
-    auto Dest = *GetPathLocation(NavSystemPathPointType::Dest);
+    auto Start = *GetPathLocation(TwinLinkNavSystemPathPointType::Start);
+    auto Dest = *GetPathLocation(TwinLinkNavSystemPathPointType::Dest);
     Start.Z = Dest.Z = 0;
     Out = RequestPathFinding(Start, Dest);
     return true;
 }
 
-bool ATwinLinkNavSystemPathFinder::TryGetPathLocation(NavSystemPathPointType Type, FVector& Out) const {
+bool ATwinLinkNavSystemPathFinder::TryGetPathLocation(TwinLinkNavSystemPathPointType Type, FVector& Out) const {
     auto Ret = GetPathLocation(Type);
     if (Ret.has_value() == false)
         return false;
@@ -60,9 +60,9 @@ bool ATwinLinkNavSystemPathFinder::TryGetPathLocation(NavSystemPathPointType Typ
 
 bool ATwinLinkNavSystemPathFinder::TryGetCameraLocationAndLookAt(const FVector& NowCameraLocation, FVector& OutLocation, FVector& OutLookAt) const {
     FVector Start;
-    const auto HasStart = TryGetPathLocation(NavSystemPathPointType::Start, Start);
+    const auto HasStart = TryGetPathLocation(TwinLinkNavSystemPathPointType::Start, Start);
     FVector Dest;
-    const auto HasDest = TryGetPathLocation(NavSystemPathPointType::Dest, Dest);
+    const auto HasDest = TryGetPathLocation(TwinLinkNavSystemPathPointType::Dest, Dest);
 
     const auto NavSystem = ATwinLinkNavSystem::GetInstance(GetWorld());
     if (!NavSystem)
@@ -240,7 +240,7 @@ void ATwinLinkNavSystemPathFinderAnyLocation::Tick(float DeltaTime) {
                 if (BlockHitResult != nullptr && NowSelectedPathLocatorActor == nullptr && PointType.IsValid()) {
                     NowSelectedPathLocatorActor = GetOrSpawnActor(PointType.GetEnumValue());
                     NowSelectedPathLocatorActor->UpdateLocation(NavSys, *BlockHitResult);
-                    SetNowSelectedPointType(static_cast<NavSystemPathPointType>(PointType.GetValue() + 1));
+                    SetNowSelectedPointType(static_cast<TwinLinkNavSystemPathPointType>(PointType.GetValue() + 1));
                 }
                 if (NowSelectedPathLocatorActor) {
                     NowSelectedPathLocatorActor->Select();
@@ -280,10 +280,10 @@ void ATwinLinkNavSystemPathFinderAnyLocation::Tick(float DeltaTime) {
 }
 
 bool ATwinLinkNavSystemPathFinderAnyLocation::IsReadyPathFinding() const {
-    return GetPathLocation(NavSystemPathPointType::Start).has_value() && GetPathLocation(NavSystemPathPointType::Dest).has_value();
+    return GetPathLocation(TwinLinkNavSystemPathPointType::Start).has_value() && GetPathLocation(TwinLinkNavSystemPathPointType::Dest).has_value();
 }
 
-std::optional<FVector> ATwinLinkNavSystemPathFinderAnyLocation::GetPathLocation(NavSystemPathPointType Type) const {
+std::optional<FVector> ATwinLinkNavSystemPathFinderAnyLocation::GetPathLocation(TwinLinkNavSystemPathPointType Type) const {
     if (PathLocatorActors.Contains(Type)) {
         if (const auto Actor = PathLocatorActors[Type])
             return Actor->GetLastValidLocation();
@@ -291,7 +291,7 @@ std::optional<FVector> ATwinLinkNavSystemPathFinderAnyLocation::GetPathLocation(
     return std::nullopt;
 }
 
-void ATwinLinkNavSystemPathFinderAnyLocation::SetPathLocation(NavSystemPathPointType Type, FVector Location) {
+void ATwinLinkNavSystemPathFinderAnyLocation::SetPathLocation(TwinLinkNavSystemPathPointType Type, FVector Location) {
     if (const auto Actor = GetOrSpawnActor(Type)) {
         const auto bIsChanged = Actor->UpdateLocation(FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld()), Location);
         if (bIsChanged && IsReadyPathFinding())
@@ -305,7 +305,7 @@ void ATwinLinkNavSystemPathFinderAnyLocation::Clear() {
 }
 
 std::optional<FBox> ATwinLinkNavSystemPathFinderAnyLocation::GetPathLocationBox(
-    NavSystemPathPointType Type) const {
+    TwinLinkNavSystemPathPointType Type) const {
     if (!PathLocatorActors.Contains(Type))
         return std::nullopt;
     if (const auto Locator = PathLocatorActors[Type]) {
@@ -314,7 +314,7 @@ std::optional<FBox> ATwinLinkNavSystemPathFinderAnyLocation::GetPathLocationBox(
     return std::nullopt;
 }
 
-ATwinLinkNavSystemPathLocator* ATwinLinkNavSystemPathFinderAnyLocation::GetOrSpawnActor(NavSystemPathPointType Type) {
+ATwinLinkNavSystemPathLocator* ATwinLinkNavSystemPathFinderAnyLocation::GetOrSpawnActor(TwinLinkNavSystemPathPointType Type) {
     if (PathLocatorActors.Contains(Type))
         return PathLocatorActors[Type];
 
@@ -334,7 +334,7 @@ void ATwinLinkNavSystemPathFinderListSelect::Tick(float DeltaTime) {
     Super::Tick(DeltaTime);
 }
 
-void ATwinLinkNavSystemPathFinderListSelect::SetPathLocation(NavSystemPathPointType Type, FVector Location) {
+void ATwinLinkNavSystemPathFinderListSelect::SetPathLocation(TwinLinkNavSystemPathPointType Type, FVector Location) {
     Super::SetPathLocation(Type, Location);
 }
 

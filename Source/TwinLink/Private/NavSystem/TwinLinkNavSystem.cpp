@@ -48,7 +48,7 @@ namespace {
     // ハイトマップのセルサイズ
     constexpr float DEM_CELL_SIZE = 100;
 
-    TMap<NavSystemPathPointType, FBox2D> DebugPathPointScreenRect;
+    TMap<TwinLinkNavSystemPathPointType, FBox2D> DebugPathPointScreenRect;
 }
 
 ATwinLinkNavSystem::ATwinLinkNavSystem() {
@@ -209,7 +209,7 @@ void ATwinLinkNavSystem::DebugDraw() {
 
     {
         const APlayerController* Controller = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-        auto GetMarkerScreenBb = [&](NavSystemPathPointType PointType) -> std::optional<FBox2D> {
+        auto GetMarkerScreenBb = [&](TwinLinkNavSystemPathPointType PointType) -> std::optional<FBox2D> {
             if (!NowPathFinder)
                 return std::nullopt;
             auto Bb = NowPathFinder->GetPathLocationBox(PointType);
@@ -232,7 +232,7 @@ void ATwinLinkNavSystem::DebugDraw() {
             return Ret;
         };
 
-        auto DrawRect = [&](NavSystemPathPointType Type, FColor Color) {
+        auto DrawRect = [&](TwinLinkNavSystemPathPointType Type, FColor Color) {
             auto Bb = GetMarkerScreenBb(Type);
             if (Bb.has_value() == false)
                 return;
@@ -242,8 +242,8 @@ void ATwinLinkNavSystem::DebugDraw() {
             //HUD->DrawRDeecDet(Color, Box.Min.X, Box.Min.Y, Box.GetSize().X, Box.GetSize().Y);
         };
 
-        DrawRect(NavSystemPathPointType::Start, FColor::Red);
-        DrawRect(NavSystemPathPointType::Dest, FColor::Blue);
+        DrawRect(TwinLinkNavSystemPathPointType::Start, FColor::Red);
+        DrawRect(TwinLinkNavSystemPathPointType::Dest, FColor::Blue);
     }
     // NavSys->NavDataSet[0]->
 #endif
@@ -336,7 +336,7 @@ void ATwinLinkNavSystem::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& 
     Super::DisplayDebug(Canvas, DebugDisplay, YL, YPos);
 #ifdef WITH_EDITOR
     const APlayerController* Controller = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-    auto GetMarkerScreenBb = [&](NavSystemPathPointType PointType) -> std::optional<FBox2D> {
+    auto GetMarkerScreenBb = [&](TwinLinkNavSystemPathPointType PointType) -> std::optional<FBox2D> {
         if (!NowPathFinder)
             return std::nullopt;
         auto Bb = NowPathFinder->GetPathLocationBox(PointType);
@@ -358,7 +358,7 @@ void ATwinLinkNavSystem::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& 
         }
         return Ret;
     };
-    auto DrawRect = [&](NavSystemPathPointType Type, FColor Color) {
+    auto DrawRect = [&](TwinLinkNavSystemPathPointType Type, FColor Color) {
         auto Bb = GetMarkerScreenBb(Type);
         if (Bb.has_value() == false)
             return;
@@ -367,8 +367,8 @@ void ATwinLinkNavSystem::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& 
         Canvas->K2_DrawBox(Box.Min, Box.GetSize(), 1, Color);
     };
 
-    DrawRect(NavSystemPathPointType::Start, FColor::Red);
-    DrawRect(NavSystemPathPointType::Dest, FColor::Blue);
+    DrawRect(TwinLinkNavSystemPathPointType::Start, FColor::Red);
+    DrawRect(TwinLinkNavSystemPathPointType::Dest, FColor::Blue);
 #endif
 }
 
@@ -444,7 +444,7 @@ void ATwinLinkNavSystem::BeginPlay() {
 #endif
 }
 
-void ATwinLinkNavSystem::ChangeMode(NavSystemMode Mode, bool bForce) {
+void ATwinLinkNavSystem::ChangeMode(TwinLinkNavSystemMode Mode, bool bForce) {
     if (NowSelectedMode == Mode && !bForce)
         return;
 
@@ -452,7 +452,7 @@ void ATwinLinkNavSystem::ChangeMode(NavSystemMode Mode, bool bForce) {
     Clear();
 
     NowSelectedMode = Mode;
-    if (NavSystemModeT(NowSelectedMode).IsValid() == false)
+    if (TwinLinkNavSystemModeT(NowSelectedMode).IsValid() == false)
         return;
 
     if (!RuntimeParam) {
@@ -528,7 +528,7 @@ FTwinLinkNavSystemFindPathUiInfo ATwinLinkNavSystem::GetDrawMoveTimeUiInfo(TwinL
     }
 
     if (NearestSqrLen >= 0.f) {
-        auto GetMarkerScreenBb = [&](NavSystemPathPointType PointType) -> std::optional<FBox2D> {
+        auto GetMarkerScreenBb = [&](TwinLinkNavSystemPathPointType PointType) -> std::optional<FBox2D> {
             if (!NowPathFinder)
                 return std::nullopt;
             auto Bb = NowPathFinder->GetPathLocationBox(PointType);
@@ -551,8 +551,8 @@ FTwinLinkNavSystemFindPathUiInfo ATwinLinkNavSystem::GetDrawMoveTimeUiInfo(TwinL
             return Ret;
         };
         auto PanelBox = FBox2D(NearestPos, NearestPos + UiPanelSize);
-        const auto StartScreenBox = GetMarkerScreenBb(NavSystemPathPointType::Start);
-        const auto DestScreenBox = GetMarkerScreenBb(NavSystemPathPointType::Dest);
+        const auto StartScreenBox = GetMarkerScreenBb(TwinLinkNavSystemPathPointType::Start);
+        const auto DestScreenBox = GetMarkerScreenBb(TwinLinkNavSystemPathPointType::Dest);
         TArray<FBox2D> MarkerBoxes;
         if (StartScreenBox.has_value())
             MarkerBoxes.Add(*StartScreenBox);
@@ -743,7 +743,7 @@ void ATwinLinkNavSystem::Clear() {
         Drawer->Destroy();
     PathDrawers.RemoveAll([](auto& a) { return true; });
     PathFindInfo = std::nullopt;
-    NowSelectedMode = NavSystemMode::Undefined;
+    NowSelectedMode = TwinLinkNavSystemMode::Undefined;
 }
 
 bool ATwinLinkNavSystem::IsValid() const {

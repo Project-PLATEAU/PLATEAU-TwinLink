@@ -30,7 +30,7 @@ void ATwinLinkNavSystemPathLocator::Tick(float DeltaSeconds) {
     }
 }
 
-NavSystemPathLocatorState ATwinLinkNavSystemPathLocator::GetNowState() const {
+TwinLinkNavSystemPathLocatorState ATwinLinkNavSystemPathLocator::GetNowState() const {
     return State;
 }
 
@@ -39,7 +39,7 @@ bool ATwinLinkNavSystemPathLocator::UpdateLocation(const UNavigationSystemV1* Na
 
     // 壁についている
     if (FVector::DotProduct(HitResult.Normal, FVector::UpVector) < FMath::Cos(FMath::DegreesToRadians(70))) {
-        State = NavSystemPathLocatorState::OnWall;
+        State = TwinLinkNavSystemPathLocatorState::OnWall;
         return false;
     }
 
@@ -54,11 +54,11 @@ bool ATwinLinkNavSystemPathLocator::UpdateLocation(const UNavigationSystemV1* Na
     Pos.Z = 0.f;
     FNavLocation OutStart;
     if (NavSys->ProjectPointToNavigation(Pos, OutStart, FVector::One() * 100) == false) {
-        State = NavSystemPathLocatorState::OutsideNavMesh;
+        State = TwinLinkNavSystemPathLocatorState::OutsideNavMesh;
         return false;
     }
     OutStart.Location.Z = Location.Z;
-    State = NavSystemPathLocatorState::Valid;
+    State = TwinLinkNavSystemPathLocatorState::Valid;
     LastValidLocation = OutStart.Location;
     return true;
 }
@@ -70,7 +70,7 @@ void ATwinLinkNavSystemPathLocator::Select() {
 void ATwinLinkNavSystemPathLocator::UnSelect() {
     if (LastValidLocation.has_value()) {
         SetActorLocation(*LastValidLocation);
-        State = NavSystemPathLocatorState::Valid;
+        State = TwinLinkNavSystemPathLocatorState::Valid;
     }
     //LastValidLocation = std::nullopt;
     IsSelected = false;

@@ -26,7 +26,7 @@ public:
 
     // 現在の状態
     UFUNCTION(BlueprintCallable)
-        NavSystemPathLocatorState GetNowState() const;
+        TwinLinkNavSystemPathLocatorState GetNowState() const;
 
     // 位置更新する
     bool UpdateLocation(const UNavigationSystemV1* NavSys, const FHitResult& HitResult);
@@ -45,7 +45,7 @@ public:
 protected:
     // 現在の状態
     UPROPERTY(EditAnywhere, Category = TwinLink_Base)
-        NavSystemPathLocatorState State = NavSystemPathLocatorState::Undefined;
+        TwinLinkNavSystemPathLocatorState State = TwinLinkNavSystemPathLocatorState::Undefined;
 
 
     // 現在の状態

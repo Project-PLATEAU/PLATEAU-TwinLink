@@ -39,18 +39,18 @@ public:
      * @brief : 指定したタイプの位置を取得する. 存在しない場合はfalse
      */
     UFUNCTION(BlueprintCallable)
-        bool TryGetPathLocation(NavSystemPathPointType Type, FVector& Out) const;
+        bool TryGetPathLocation(TwinLinkNavSystemPathPointType Type, FVector& Out) const;
 
     /*
      * @brief : 指定したポイントの位置を取得
      */
-    virtual std::optional<FVector> GetPathLocation(NavSystemPathPointType Type) const {
+    virtual std::optional<FVector> GetPathLocation(TwinLinkNavSystemPathPointType Type) const {
         return std::nullopt;
     }
     /*
      * @brief : 指定したポイントのマーカーのBoundingBoxを取得
      */
-    virtual std::optional<FBox> GetPathLocationBox(NavSystemPathPointType Type) const {
+    virtual std::optional<FBox> GetPathLocationBox(TwinLinkNavSystemPathPointType Type) const {
         return std::nullopt;
     }
 
@@ -58,7 +58,7 @@ public:
      * @brief : 指定したポイントの位置を設定
      */
     UFUNCTION(BlueprintCallable)
-        virtual void SetPathLocation(NavSystemPathPointType Type, FVector Location) {}
+        virtual void SetPathLocation(TwinLinkNavSystemPathPointType Type, FVector Location) {}
 
     UFUNCTION(BlueprintCallable)
         virtual bool TryGetCameraLocationAndLookAt(const FVector& NowCameraLocation, FVector& OutLocation, FVector& OutLookAt) const;
@@ -121,11 +121,11 @@ public:
     // Called every frame
     virtual void Tick(float DeltaTime) override;
 
-    NavSystemPathPointTypeT GetNextCreatePointType() const {
+    TwinLinkNavSystemPathPointTypeT GetNextCreatePointType() const {
         return NextCreatePointType;
     }
 
-    void SetNowSelectedPointType(NavSystemPathPointTypeT Val) {
+    void SetNowSelectedPointType(TwinLinkNavSystemPathPointTypeT Val) {
         NextCreatePointType = Val.GetEnumValue();
     }
 
@@ -137,12 +137,12 @@ public:
     /*
      * @brief : 指定したポイントの位置を取得
      */
-    virtual std::optional<FVector> GetPathLocation(NavSystemPathPointType Type) const override;
+    virtual std::optional<FVector> GetPathLocation(TwinLinkNavSystemPathPointType Type) const override;
 
     /*
      * @brief : 指定したポイントの位置を設定
      */
-    virtual void SetPathLocation(NavSystemPathPointType Type, FVector Location) override;
+    virtual void SetPathLocation(TwinLinkNavSystemPathPointType Type, FVector Location) override;
 
     /*
      * @brief : 状態の初期化
@@ -152,25 +152,25 @@ public:
     /*
      * @brief : 指定したポイントの位置のマーカー含めたスクリーン領域を取得
      */
-    std::optional<FBox> GetPathLocationBox(NavSystemPathPointType Type) const override;
+    std::optional<FBox> GetPathLocationBox(TwinLinkNavSystemPathPointType Type) const override;
 
 private:
     /*
      * @brief : 指定したポイントのアクターを生成して返す
      */
-    ATwinLinkNavSystemPathLocator* GetOrSpawnActor(NavSystemPathPointType Type);
+    ATwinLinkNavSystemPathLocator* GetOrSpawnActor(TwinLinkNavSystemPathPointType Type);
 
     // パス検索地点のBP
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
-        TMap<NavSystemPathPointType, TSubclassOf<ATwinLinkNavSystemPathLocator>> PathLocatorBps;
+        TMap<TwinLinkNavSystemPathPointType, TSubclassOf<ATwinLinkNavSystemPathLocator>> PathLocatorBps;
 
     // 次生成予定の目的地タイプ
     UPROPERTY(EditAnywhere, Category = TwinLink_Path)
-        NavSystemPathPointType NextCreatePointType = NavSystemPathPointType::Start;
+        TwinLinkNavSystemPathPointType NextCreatePointType = TwinLinkNavSystemPathPointType::Start;
 
     // パス検索地点のアクター
     UPROPERTY(EditDefaultsOnly, Category = TwinLink_Path)
-        TMap<NavSystemPathPointType, ATwinLinkNavSystemPathLocator*> PathLocatorActors;
+        TMap<TwinLinkNavSystemPathPointType, ATwinLinkNavSystemPathLocator*> PathLocatorActors;
 
     // 現在選択しているアクター
     UPROPERTY(EditAnywhere, Category = TwinLink_Path)
@@ -191,7 +191,7 @@ public:
     // Called every frame
     virtual void Tick(float DeltaTime) override;
 
-    virtual void SetPathLocation(NavSystemPathPointType Type, FVector Location) override;
+    virtual void SetPathLocation(TwinLinkNavSystemPathPointType Type, FVector Location) override;
 
 private:
     // 現在選択しているアクターのスクリーン位置オフセット
