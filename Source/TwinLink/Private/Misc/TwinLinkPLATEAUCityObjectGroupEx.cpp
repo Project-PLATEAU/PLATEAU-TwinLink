@@ -1,4 +1,4 @@
-#include "TwinLinkPLATEAUCityObjectGroupEx.h"
+#include "Misc/TwinLinkPLATEAUCityObjectGroupEx.h"
 
 bool FTwinLinkPLATEAUCityObjectGroupEx::TryBoundingBox(const UPLATEAUCityObjectGroup* Self, FBox& Out) {
     auto Ret = GetBoundingBox(Self);

@@ -6,7 +6,7 @@
 #include "PLATEAUCityObjectGroup.h"
 #include "Kismet/GameplayStatics.h"
 #include "TwinLinkCommon.h"
-#include "TwinLinkMathEx.h"
+#include "Misc/TwinLinkMathEx.h"
 #include "TwinLinkPlayerController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 

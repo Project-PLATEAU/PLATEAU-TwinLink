@@ -9,8 +9,8 @@
 #include "Kismet/GameplayStatics.h"
 #include <NavSystem/TwinLinkNavSystemPathLocator.h>
 
-#include "TwinLinkActorEx.h"
-#include "TwinLinkMathEx.h"
+#include "Misc/TwinLinkActorEx.h"
+#include "Misc/TwinLinkMathEx.h"
 #include "TwinLinkPlayerController.h"
 #include "TwinLinkWorldViewer.h"
 #include "NavSystem/TwinLinkNavSystem.h"

@@ -3,7 +3,7 @@
 
 #include "TwinLinkCityObjectTree.h"
 #include "TwinLinkCommon.h"
-#include "TwinLinkPLATEAUCityObjectGroupEx.h"
+#include "Misc/TwinLinkPLATEAUCityObjectGroupEx.h"
 #include "TwinLinkPOISubSystem.h"
 #include "TwinLinkWorldViewer.h"
 #include "NavSystem/TwinLinkNavSystem.h"

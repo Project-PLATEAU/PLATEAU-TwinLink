@@ -1,7 +1,7 @@
-#include "TwinLinkPLATEAUGeoReferenceEx.h"
+#include "Misc/TwinLinkPLATEAUGeoReferenceEx.h"
 
-#include "TwinLinkPLATEAUCityModelEx.h"
-#include "TwinLinkPLATEAUCityObjectGroupEx.h"
+#include "Misc/TwinLinkPLATEAUCityModelEx.h"
+#include "Misc/TwinLinkPLATEAUCityObjectGroupEx.h"
 
 inline FBox FTwinLinkPLATEAUGeoReferenceEx::GetSpatialBox(FPLATEAUGeoReference& Self,
     const UPLATEAUCityObjectGroup* CityModel, int Zoom) {

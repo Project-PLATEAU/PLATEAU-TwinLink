@@ -4,7 +4,7 @@
 #include "NavSystem/TwinLinkNavSystemPathLocator.h"
 
 #include "NavigationSystem.h"
-#include "TwinLinkMathEx.h"
+#include "Misc/TwinLinkMathEx.h"
 #include "TwinLinkWorldViewer.h"
 #include "NavSystem/TwinLinkNavSystem.h"
 

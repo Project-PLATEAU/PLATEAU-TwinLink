@@ -1,9 +1,9 @@
-#include "TwinLinkPLATEAUCityModelEx.h"
+#include "Misc/TwinLinkPLATEAUCityModelEx.h"
 
 #include "Components/SceneComponent.h" 
 #include "FTwinLinkEnumT.h"
-#include "TwinLinkActorEx.h"
-#include "TwinLinkPLATEAUGeoReferenceEx.h"
+#include "Misc/TwinLinkActorEx.h"
+#include "Misc/TwinLinkPLATEAUGeoReferenceEx.h"
 
 bool TwinLinkPLATEAUCityModelFindRequest::IsTargetMeshType(FTwinLinkFindCityModelMeshType MeshType) const {
     if (FTwinLinkEnumEx::IsValid(MeshType) == false)

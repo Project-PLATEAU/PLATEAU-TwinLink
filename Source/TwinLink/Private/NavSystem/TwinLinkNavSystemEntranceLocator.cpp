@@ -5,7 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include <NavSystem/TwinLinkNavSystemPathLocator.h>
 #include "TwinLinkPlayerController.h"
-#include "TwinLinkWidgetEx.h"
+#include "Misc/TwinLinkWidgetEx.h"
 #include "Components/PanelWidget.h"
 #include "NavSystem/TwinLinkNavSystem.h"
 

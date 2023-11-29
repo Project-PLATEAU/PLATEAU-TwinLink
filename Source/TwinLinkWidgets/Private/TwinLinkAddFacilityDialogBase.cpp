@@ -2,7 +2,7 @@
 
 #include "TwinLinkAddFacilityDialogBase.h"
 
-#include "TwinLinkActorEx.h"
+#include "Misc/TwinLinkActorEx.h"
 #include "Kismet/GameplayStatics.h"
 #include "TwinLinkCommon.h"
 
