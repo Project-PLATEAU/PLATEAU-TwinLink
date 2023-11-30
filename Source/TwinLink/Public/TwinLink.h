@@ -140,4 +140,10 @@ public:
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
         static ESlateVisibility AsSlateVisibility(bool visibility);
+
+    /**
+    * @brief エミッシブの強化係数を取得する
+    */
+    UFUNCTION(BlueprintPure, Category = "TwinLink", meta = (WorldContext = WorldContextObject))
+        static float GetEmissiveBoostFromEnv(UObject* WorldContextObject);
 };
