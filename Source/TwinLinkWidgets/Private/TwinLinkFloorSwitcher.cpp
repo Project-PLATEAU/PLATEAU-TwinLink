@@ -20,7 +20,7 @@ void UTwinLinkFloorSwitcher::OnClickedDown() {
     }
     const auto Floor = FloorPanel->GetSelectedFloorKey();
     const auto Floors = FloorPanel->GetFloorKeys();
-    const auto NextFloor = Floors[Floors.Find(Floor) + 1];
+    const auto NextFloor = Floors[Floors.Find(Floor) - 1];
     FloorPanel->FloorViewChangeKey(NextFloor);
 }
 
@@ -30,7 +30,7 @@ void UTwinLinkFloorSwitcher::OnClickedUp() {
     }
     const auto Floor = FloorPanel->GetSelectedFloorKey();
     const auto Floors = FloorPanel->GetFloorKeys();
-    const auto NextFloor = Floors[Floors.Find(Floor) - 1];
+    const auto NextFloor = Floors[Floors.Find(Floor) + 1];
     FloorPanel->FloorViewChangeKey(NextFloor);
 }
 
@@ -42,7 +42,7 @@ void UTwinLinkFloorSwitcher::FloorSwitch() {
     const auto Floors = FloorPanel->GetFloorKeys();
     const auto Index = Floors.Find(Floor);
 
-    FloorDownButton->Button->SetIsEnabled(Index != Floors.Num() - 1);
-    FloorUpButton->Button->SetIsEnabled(Index != 0);
-    FloorText->SetText(FText::FromString(Floor));
+    FloorDownButton->Button->SetIsEnabled(Index != 0);
+    FloorUpButton->Button->SetIsEnabled(Index != Floors.Num() - 1);
+    FloorText->SetText(FText::FromString(Floor.Equals("Exterior") ? TEXT("外観") : Floor));
 }

@@ -11,6 +11,8 @@
 #include "TwinLinkFloorSwitcher.h"
 #include "Components/ScrollBox.h"
 
+#include "TwinLinkAssetPlacementSystem.h"
+
 void UTwinLinkFloorViewPanel::SetupTwinLinkFloorView() {
     const auto CityModel = FTwinLinkModule::Get().GetFacilityModel();
     if (CityModel == nullptr) {
@@ -24,43 +26,42 @@ void UTwinLinkFloorViewPanel::SetupTwinLinkFloorView() {
     if (WidgetClass == nullptr) {
         return;
     }
-    TArray<FString> SortFloorKeys;
+    TMap<FString, float> SortFloorKeys;
 
     for (const auto& CityObject : CityObjects) {
         const auto Obj = CityObject->GetAllRootCityObjects()[0];
         const auto Attribute = Obj.Attributes.AttributeMap.Find("gml:name");
         FString Key = Attribute ? Attribute->StringValue : "Exterior";
         const auto Element = CreateWidget<UUserWidget>(GetWorld(), WidgetClass);
-        FString Label = Attribute ? Key.Left(Key.Len() - 1) : TEXT("外観");
+        FString Label = Attribute ? Key : TEXT("外観");
 
         Cast<UTwinLinkFloorViewElement>(Element)->ElementSetup(Label, this);
         LinkComponents.Add(Key, CityObject);
         ElementWidgets.Add(Key, Cast<UUserWidget>(Element));
-        SortFloorKeys.Add(Key);
+        const auto Height = Cast<UStaticMeshComponent>(CityObject)->Bounds.GetBox().Min.Z;
+        SortFloorKeys.Add(Key, Height);
     }
 
     //Sort
     for (const auto& SortFloorKey : SortFloorKeys) {
-        if (SortFloorKey.Equals("Exterior")) {
+        if (SortFloorKey.Key.Equals("Exterior")) {
             continue;
         }
 
         int Index = 0;
         for (int i = 0; i < FloorKeys.Num(); i++) {
-            const auto SortKey = SortFloorKey.Left(SortFloorKey.Len() - 2);
-            const auto Key = FloorKeys[i].Left(FloorKeys[i].Len() - 2);
-            if (FCString::Atoi(*SortKey) < FCString::Atoi(*Key)) {
+            if (SortFloorKey.Value > SortFloorKeys[FloorKeys[i]]) {
                 break;
             }
             Index++;
         }
 
-        FloorKeys.Insert(SortFloorKey, Index);
+        FloorKeys.Insert(SortFloorKey.Key, Index);
     }
 
     //Sort(Exterior)
     if (SortFloorKeys.Num() > FloorKeys.Num()) {
-        FloorKeys.Insert("Exterior", 0);
+        FloorKeys.Add("Exterior");
     }
 
     //ResetChild
@@ -70,6 +71,10 @@ void UTwinLinkFloorViewPanel::SetupTwinLinkFloorView() {
     for (const auto& FloorKey : FloorKeys) {
         FloorViewScrollBox->AddChild(Cast<UWidget>(ElementWidgets[FloorKey]));
     }
+
+    SelectedFloorKey = FloorKeys[FloorKeys.Num() - 1];
+
+    FloorViewChangeKey("Exterior");
 }
 
 void UTwinLinkFloorViewPanel::SetupTwinLinkFloorViewWithSwitcher(UTwinLinkFloorSwitcher* Switcher) {
@@ -79,7 +84,7 @@ void UTwinLinkFloorViewPanel::SetupTwinLinkFloorViewWithSwitcher(UTwinLinkFloorS
         return;
     }
 
-    SelectedFloorKey = FloorKeys[0];
+    SelectedFloorKey = FloorKeys[FloorKeys.Num() - 1];
 
     FloorViewChangeKey(SelectedFloorKey);
 
@@ -94,7 +99,7 @@ void UTwinLinkFloorViewPanel::FinalizeTwinLinkFloorView() {
 
 void UTwinLinkFloorViewPanel::FloorViewChange(TObjectPtr<UUserWidget> Element) {
     const auto Key = ElementWidgets.FindKey(Element);
-    bool IsVisible = true;
+    bool IsVisible = false;
 
     if (Key == nullptr) {
         return;
@@ -109,12 +114,13 @@ void UTwinLinkFloorViewPanel::FloorViewChange(TObjectPtr<UUserWidget> Element) {
         if (FloorKey.Equals("Exterior")) {
             continue;
         }
-        LinkComponents[*FloorKey]->SetVisibility(IsVisible);
-        LinkComponents[*FloorKey]->SetCollisionResponseToChannel(ECC_Visibility, IsVisible ? ECR_Block : ECR_Ignore);
 
         if (FloorKey.Equals(*Key)) {
-            IsVisible = false;
+            IsVisible = true;
         }
+
+        LinkComponents[*FloorKey]->SetVisibility(IsVisible);
+        LinkComponents[*FloorKey]->SetCollisionResponseToChannel(ECC_Visibility, IsVisible ? ECR_Block : ECR_Ignore);
     }
 
     // フロア情報システムに選択状況を保持する　　（フロア情報の設計的に対応できなかったのこの形で実装）
@@ -139,6 +145,32 @@ void UTwinLinkFloorViewPanel::FloorViewChange(TObjectPtr<UUserWidget> Element) {
 
     if (FloorSwitcher != nullptr) {
         FloorSwitcher->FloorSwitch();
+    }
+
+    //非表示階のアセットは非表示にする
+
+    auto AssetPlacementSys = TwinLinkSubSystemHelper::GetInstance<UTwinLinkAssetPlacementSystem>();
+    check(AssetPlacementSys.IsValid());
+
+    TArray<TObjectPtr<AActor>> Assets;
+    AssetPlacementSys.Get()->GetAssetPlacementActors(Assets);
+
+    for (const auto& Asset : Assets) {
+        Asset->SetActorHiddenInGame(false);
+    }
+
+    for (const auto& Component : LinkComponents) {
+        if (Component.Key.Equals("Exterior")) {
+            continue;
+        }
+        if (Cast<UStaticMeshComponent>(Component.Value)->IsVisible()) {
+            continue;
+        }
+        for (const auto& Asset : Assets) {
+            if (Cast<UStaticMeshComponent>(Component.Value)->Bounds.GetBox().IsInside(Asset->GetActorLocation())) {
+                Asset->SetActorHiddenInGame(true);
+            }
+        }
     }
 }
 
