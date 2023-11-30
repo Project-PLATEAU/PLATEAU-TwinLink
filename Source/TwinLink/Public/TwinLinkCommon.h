@@ -94,7 +94,7 @@ public:
      * @return
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
-    static float GetEmissiveBoostFromEnv(UWorld* World);
+        static float GetEmissiveBoostFromEnv(UWorld* World);
 
     /**
      * @brief 昼夜の状態を0 ~ 1の間で返す(1が夜)
@@ -102,5 +102,4 @@ public:
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
         static float GetNightIntensity(UWorld* World);
-
 };

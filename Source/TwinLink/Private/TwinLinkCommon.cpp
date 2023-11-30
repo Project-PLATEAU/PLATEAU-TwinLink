@@ -51,7 +51,6 @@ float TwinLinkGraphicsEnv::GetEmissiveBoostFromEnv(UWorld* World) {
 }
 
 float TwinLinkGraphicsEnv::GetNightIntensity(UWorld* World) {
-    //エミッシブ強度調整
     TArray<TObjectPtr<AActor>> Actors;
     UGameplayStatics::GetAllActorsOfClass(World, AActor::StaticClass(), Actors);
     for (const auto& Actor : Actors) {

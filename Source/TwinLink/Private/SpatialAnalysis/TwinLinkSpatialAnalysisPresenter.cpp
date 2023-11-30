@@ -29,9 +29,7 @@ void ATwinLinkSpatialAnalysisPresenter::BeginPlay() {
     if (const auto Mesh = GetComponentByClass<UStaticMeshComponent>()) {
         const auto BaseMat = Mesh->GetMaterial(0);
         DynamicMaterial = Mesh->CreateAndSetMaterialInstanceDynamicFromMaterial(0, BaseMat);
-
-        const auto bIsNight = TwinLinkGraphicsEnv::GetNightIntensity(GetWorld());
-        DynamicMaterial->SetScalarParameterValue(FName(TEXT("IsNight")), bIsNight ? 1.f : 0.f);
+        DynamicMaterial->SetScalarParameterValue(FName(TEXT("IsNight")), TwinLinkGraphicsEnv::GetNightIntensity(GetWorld()));
     }
 }
 
