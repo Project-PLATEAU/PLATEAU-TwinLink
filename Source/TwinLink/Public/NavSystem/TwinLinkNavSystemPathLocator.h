@@ -26,13 +26,13 @@ public:
 
     // 現在の状態
     UFUNCTION(BlueprintCallable)
-        NavSystemPathLocatorState GetNowState() const;
+        TwinLinkNavSystemPathLocatorState GetNowState() const;
 
     // 位置更新する
     bool UpdateLocation(const UNavigationSystemV1* NavSys, const FHitResult& HitResult);
 
     // 位置更新する
-    bool UpdateLocation(const UNavigationSystemV1* NavSys, const FVector& Location);
+    virtual bool UpdateLocation(const UNavigationSystemV1* NavSys, const FVector& Location);
 
     // 選択状態にする
     void Select();
@@ -42,11 +42,13 @@ public:
 
     // 最後の有効な位置を取得
     std::optional<FVector> GetLastValidLocation() const;
+
+    virtual ECollisionChannel GetCollisionChannel() const;
+
 protected:
     // 現在の状態
     UPROPERTY(EditAnywhere, Category = TwinLink_Base)
-        NavSystemPathLocatorState State = NavSystemPathLocatorState::Undefined;
-
+        TwinLinkNavSystemPathLocatorState State = TwinLinkNavSystemPathLocatorState::Undefined;
 
     // 現在の状態
     UPROPERTY(EditAnywhere, Category = TwinLink_Base)
@@ -54,4 +56,8 @@ protected:
 
     // 最後にValid状態になった位置
     std::optional<FVector> LastValidLocation = std::nullopt;
+
+    // デバッグで変更する夜係数(負数だと無視)
+    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
+        float DebugNightCoef = -1.f;
 };

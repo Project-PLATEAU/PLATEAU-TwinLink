@@ -137,6 +137,7 @@ void UTwinLinkFileDialogLib::OpenDirectoryDialog(EDialogResult& OutputPin, FStri
 FString UTwinLinkFileDialogLib::GetFileTypeString(EFileType FileType) {
     const TMap<EFileType, FString> FileTypeStringMap{
         { EFileType::LoadableTextures, TEXT("すべてのテクスチャ|*.bmp;*.dib;*.jpg;*.jpeg;*.jpe;*jfif;*.png")},
+        { EFileType::DownloadImageNodeLoadableTextures, TEXT("すべてのテクスチャ|*.bmp;*.dib;*.jpg;*.jpeg;*.jpe;*jfif;*.png")},  // DownloadImageノードで利用できる形式
         { EFileType::BMP, TEXT("ビットマップ ファイル|*.bmp;*.dib") },
         { EFileType::JPEG, TEXT("JPEG|*.jpg;*.jpeg;*.jpe;*jfif") },
         { EFileType::Png, TEXT("PNG|*.png") },

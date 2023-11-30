@@ -108,10 +108,6 @@ void UTwinLinkColorAdjustmentSystem::ImportColorAdjustmentParam() {
     const auto& BodyContents = CSVContents.GetBodyContents();
 
     for (const auto& BodyContentsElement : BodyContents) {
-        for (const auto& ErrorStrDataElement : BodyContentsElement) {
-            UE_TWINLINK_LOG(LogTemp, Log, TEXT("Log Contains: %s"), *ErrorStrDataElement);
-        }
-
         // データを解析する
         if (!Parse(BodyContentsElement)) {
             // エラーデータを出力する デバッグ用
@@ -154,7 +150,6 @@ bool UTwinLinkColorAdjustmentSystem::Parse(const TArray<FString>& StrInfo) {
     Transparency = FCString::Atof(*StrInfo[RefIdx++]);
 
     for (const auto& ExportData : MaterialExportData) {
-        UE_TWINLINK_LOG(LogTemp, Log, TEXT("Contains invalid data : %d %d %d"), ExportData.ActorName.Equals(Actor), ExportData.ComponentName.Equals(Component), ExportData.MaterialIndex.Equals(Index));
         if (ExportData.ActorName.Equals(Actor) && ExportData.ComponentName.Equals(Component) && ExportData.MaterialIndex.Equals(Index)) {
             MaterialParameterOrigin[ExportData.MaterialParamIndex].BaseColor = OriginBaseColor;
             MaterialParameterOrigin[ExportData.MaterialParamIndex].EmissiveColor = OriginEmissiveColor;

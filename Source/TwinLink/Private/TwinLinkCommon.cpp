@@ -50,8 +50,7 @@ float TwinLinkGraphicsEnv::GetEmissiveBoostFromEnv(UWorld* World) {
     return EmissiveBoost;
 }
 
-float TwinLinkGraphicsEnv::IsNight(UWorld* World) {
-    //エミッシブ強度調整
+float TwinLinkGraphicsEnv::GetNightIntensity(UWorld* World) {
     TArray<TObjectPtr<AActor>> Actors;
     UGameplayStatics::GetAllActorsOfClass(World, AActor::StaticClass(), Actors);
     for (const auto& Actor : Actors) {
@@ -59,8 +58,8 @@ float TwinLinkGraphicsEnv::IsNight(UWorld* World) {
         if (SkyLight != nullptr) {
             const auto Component = Cast<USceneComponent>(Actor->GetComponentByClass(UDirectionalLightComponent::StaticClass()));
             //ライトのYが+の場合は夜と判定
-            return  Component->GetRelativeRotation().Pitch > 0;
+            return Component->GetRelativeRotation().Pitch > 0 ? 1.0 : 0.0;
         }
     }
-    return false;
+    return 0.0;
 }

@@ -128,7 +128,7 @@ public:
      * @brief : モード切替
      */
     UFUNCTION(BlueprintCallable)
-        void ChangeMode(NavSystemMode Mode, bool bForce = false);
+        void ChangeMode(TwinLinkNavSystemMode Mode, bool bForce = false);
 
     /*
      * @brief : パス検索の結果を返す. nullptrの場合は検索していないか検索途中
@@ -267,7 +267,7 @@ private:
     // 建物の入り口設定用のロケーターブループリント
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
         TSubclassOf<ATwinLinkNavSystemEntranceLocator> EntranceLocatorBp;
-
+public:
     /*
      * @brief : ワールド座標 -> ハイト情報取得
      */
@@ -303,6 +303,11 @@ private:
      */
     bool TryDemHeightMapIndexToCell(int Index, int& OutX, int& OutY) const;
 
+    /*
+     * @brief : 最大ハイト
+     */
+    double GetDemHeightMax();
+
 private:
     // -----------------------
     // ランタイム系
@@ -310,7 +315,7 @@ private:
 
     // 現在どのポイントを編集しているかどうか
     UPROPERTY(EditAnywhere, Category = TwinLink_Runtime)
-        NavSystemMode NowSelectedMode = NavSystemMode::Undefined;
+        TwinLinkNavSystemMode NowSelectedMode = TwinLinkNavSystemMode::Undefined;
 
     // パス描画のアクター
     UPROPERTY(EditAnywhere, Category = TwinLink_Runtime)

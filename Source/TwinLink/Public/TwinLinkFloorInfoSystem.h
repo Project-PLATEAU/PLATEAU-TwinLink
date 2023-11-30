@@ -165,6 +165,14 @@ public:
         const FString& ImageFileName);
 
     /**
+     * @brief 設計情報の削除リクエスト
+     * @param Key GetKeyBySelectedFloor()の値
+     * @param BuidlingDesignInfoPtr データのポインターのポインター　Remove後にnullになる
+     * @return 
+    */
+    bool RemoveBuildingDesign(const FString& Key, const TWeakObjectPtr<UTwinLinkBuildingDesignInfo> BuidlingDesignInfoPtr);
+
+    /**
      * @brief 設計情報をエキスポートする
      * @return 
     */

@@ -5,7 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include <NavSystem/TwinLinkNavSystemPathLocator.h>
 #include "TwinLinkPlayerController.h"
-#include "TwinLinkWidgetEx.h"
+#include "Misc/TwinLinkWidgetEx.h"
 #include "Components/PanelWidget.h"
 #include "NavSystem/TwinLinkNavSystem.h"
 
@@ -36,9 +36,9 @@ std::optional<FVector> FTwinLinkEntranceLocatorNode::GetEntranceLocation() const
     return std::nullopt;
 }
 
-bool FTwinLinkEntranceLocatorNode::SetDefaultEntranceLocation(const FString& FeatureId) const {
+bool FTwinLinkEntranceLocatorNode::SetDefaultEntranceLocation(const FString& FeatureId, bool bForce) const {
     // 見える設定じゃないなら無視する
-    if (IsVisibleEntranceLocator() == false)
+    if (!bForce && IsVisibleEntranceLocator() == false)
         return false;
     if (const auto Locator = ATwinLinkNavSystem::GetEntranceLocator(GetWorld())) {
         Locator->SetDefaultEntranceLocation(FeatureId);
@@ -47,9 +47,9 @@ bool FTwinLinkEntranceLocatorNode::SetDefaultEntranceLocation(const FString& Fea
     return false;
 }
 
-bool FTwinLinkEntranceLocatorNode::SetEntranceLocation(const UTwinLinkFacilityInfo* Info) const {
+bool FTwinLinkEntranceLocatorNode::SetEntranceLocation(const UTwinLinkFacilityInfo* Info, bool bForce) const {
     // 見える設定じゃないなら無視する
-    if (IsVisibleEntranceLocator() == false)
+    if (!bForce && IsVisibleEntranceLocator() == false)
         return false;
     if (const auto Locator = ATwinLinkNavSystem::GetEntranceLocator(GetWorld())) {
         Locator->SetEntranceLocation(Info);
@@ -91,6 +91,12 @@ void ATwinLinkNavSystemEntranceLocator::BeginPlay() {
     EnableInput(controller);
     // マウスカーソルオンにする
     controller->SetShowMouseCursor(true);
+
+    if (auto NavSystem = ATwinLinkNavSystem::GetInstance(GetWorld())) {
+        if (auto Cmp = GetComponentByClass(UStaticMeshComponent::StaticClass())) {
+            Cast<UStaticMeshComponent>(Cmp)->SetCollisionResponseToChannel(NavSystem->GetDemCollisionChannel(), ECR_Block);
+        }
+    }
 }
 
 // Called every frame
@@ -111,12 +117,14 @@ void ATwinLinkNavSystemEntranceLocator::Tick(float DeltaTime) {
     auto MousePos = ATwinLinkPlayerController::GetMousePosition(PlayerController);
     if (MousePos.has_value() == false)
         return;
+
+    auto Channel = GetCollisionChannel();
     if (PlayerController->WasInputKeyJustPressed(EKeys::LeftMouseButton)) {
         auto Ray = ATwinLinkPlayerController::ScreenToWorldRayThroughBoundingBox(PlayerController, *MousePos, DemCollisionAabb, 100);
         if (Ray.has_value()) {
             TArray<FHitResult> HitResults;
             FCollisionQueryParams Params;
-            if (GetWorld()->LineTraceMultiByChannel(HitResults, Ray->Min, Ray->Max, ECC_WorldStatic)) {
+            if (GetWorld()->LineTraceMultiByChannel(HitResults, Ray->Min, Ray->Max, Channel)) {
                 auto bPickMe = false;
                 for (auto& HitResult : HitResults) {
                     bPickMe = HitResult.GetActor() == this;
@@ -147,7 +155,7 @@ void ATwinLinkNavSystemEntranceLocator::Tick(float DeltaTime) {
             const auto Ray = ATwinLinkPlayerController::ScreenToWorldRayThroughBoundingBox(PlayerController, ScreenPos, DemCollisionAabb, 100);
             if (Ray.has_value()) {
                 TArray<FHitResult> HitResults;
-                if (GetWorld()->LineTraceMultiByChannel(HitResults, Ray->Min, Ray->Max, ECollisionChannel::ECC_WorldStatic)) {
+                if (GetWorld()->LineTraceMultiByChannel(HitResults, Ray->Min, Ray->Max, Channel)) {
                     for (auto& HitResult : HitResults) {
                         if (HitResult.IsValidBlockingHit() == false)
                             continue;
@@ -202,4 +210,31 @@ void ATwinLinkNavSystemEntranceLocator::SetDefaultEntranceLocation(const FString
 
 bool ATwinLinkNavSystemEntranceLocator::IsValidLocation() const {
     return GetPathLocation().has_value();
+}
+
+ECollisionChannel ATwinLinkNavSystemEntranceLocator::GetCollisionChannel() const {
+    if (const auto NavSystem = ATwinLinkNavSystem::GetInstance(GetWorld()))
+        return NavSystem->GetDemCollisionChannel();
+    return Super::GetCollisionChannel();
+}
+
+bool ATwinLinkNavSystemEntranceLocator::UpdateLocation(const UNavigationSystemV1* NavSys, const FVector& Location)
+{
+    const auto TwinLinkNavSystem = ATwinLinkNavSystem::GetInstance(GetWorld());
+    const auto DemCollisionAabb = TwinLinkNavSystem->GetDemCollisionAabb();
+    const auto Channel = GetCollisionChannel();
+    FHitResult HitResult;
+    auto Start = Location;
+    auto End = Location;
+    Start.Z = DemCollisionAabb.Max.Z;
+    End.Z = DemCollisionAabb.Min.Z - 10;
+
+    if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, Channel)) {
+        if (HitResult.IsValidBlockingHit())
+        {
+            return Super::UpdateLocation(NavSys, HitResult.Location);
+        }
+    }
+
+    return Super::UpdateLocation(NavSys, Location);
 }

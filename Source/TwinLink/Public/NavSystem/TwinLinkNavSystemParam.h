@@ -41,7 +41,7 @@ public:
 
 
     UPROPERTY(EditAnywhere, meta = (Comment = "パス探索のBPアクターのBP"), Category = "Path")
-        TMap<NavSystemMode, TSubclassOf<ATwinLinkNavSystemPathFinder>> PathFinderBp;
+        TMap<TwinLinkNavSystemMode, TSubclassOf<ATwinLinkNavSystemPathFinder>> PathFinderBp;
 
     UPROPERTY(EditAnywhere, meta = (Comment = "カメラ補完時の係数"), Category = "Camera")
         float CameraLerpCoef = 1.f;

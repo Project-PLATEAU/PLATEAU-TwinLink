@@ -3,7 +3,7 @@
 
 #include "TwinLinkCityObjectTree.h"
 #include "TwinLinkCommon.h"
-#include "TwinLinkPLATEAUCityObjectGroupEx.h"
+#include "Misc/TwinLinkPLATEAUCityObjectGroupEx.h"
 #include "TwinLinkPOISubSystem.h"
 #include "TwinLinkWorldViewer.h"
 #include "NavSystem/TwinLinkNavSystem.h"
@@ -29,9 +29,7 @@ void ATwinLinkSpatialAnalysisPresenter::BeginPlay() {
     if (const auto Mesh = GetComponentByClass<UStaticMeshComponent>()) {
         const auto BaseMat = Mesh->GetMaterial(0);
         DynamicMaterial = Mesh->CreateAndSetMaterialInstanceDynamicFromMaterial(0, BaseMat);
-
-        const auto bIsNight = TwinLinkGraphicsEnv::IsNight(GetWorld());
-        DynamicMaterial->SetScalarParameterValue(FName(TEXT("IsNight")), bIsNight ? 1.f : 0.f);
+        DynamicMaterial->SetScalarParameterValue(FName(TEXT("IsNight")), TwinLinkGraphicsEnv::GetNightIntensity(GetWorld()));
     }
 }
 

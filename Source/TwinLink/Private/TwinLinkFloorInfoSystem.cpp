@@ -338,10 +338,32 @@ void UTwinLinkFloorInfoSystem::AddBuildingDesign(const FString& Key, const FStri
 
 bool UTwinLinkFloorInfoSystem::EditBuildingDesign(const FString& Key, const TWeakObjectPtr<UTwinLinkBuildingDesignInfo>& BuidlingDesignInfo, const FString& ImageFileName) {
     TObjectPtr<UTwinLinkBuildingDesignInfo>* DataPtr = BuidingDesingInfoMap.Find(Key);
-    check(DataPtr != nullptr);    // 存在しないデータにアクセス使用とした
-    check(*DataPtr == BuidlingDesignInfo.Get());
+    if (DataPtr == nullptr) // 存在しないデータにアクセス使用とした
+        return false;
+    if (*DataPtr != BuidlingDesignInfo.Get())   // キーとデータが紐づいていない
+        return false;
     
     (*DataPtr)->Setup(ImageFileName);
+
+    ExportBuildingDesign();
+    return true;
+}
+
+bool UTwinLinkFloorInfoSystem::RemoveBuildingDesign(const FString& Key, const TWeakObjectPtr<UTwinLinkBuildingDesignInfo> BuidlingDesignInfoPtr) {
+    if (BuidlingDesignInfoPtr == nullptr)
+        return false;
+
+    TObjectPtr<UTwinLinkBuildingDesignInfo>* DataPtr = BuidingDesingInfoMap.Find(Key);
+    if (DataPtr == nullptr) // 存在しないデータにアクセス使用とした
+        return false;
+    if (*DataPtr != BuidlingDesignInfoPtr)   // キーとデータが紐づいていない
+        return false;
+
+    BuidlingDesignInfoPtr->EvOnDeleted.Broadcast();
+    BuidingDesingInfoMap.Remove(Key);
+    
+    ExportBuildingDesign();
+
     return true;
 }
 

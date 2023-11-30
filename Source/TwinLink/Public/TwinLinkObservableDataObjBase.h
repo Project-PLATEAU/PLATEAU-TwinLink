@@ -8,6 +8,7 @@
 
 // データ更新時のイベント
 DECLARE_EVENT(UTwinLinkObservableDataObjBase, FDelOnChangedData);
+DECLARE_EVENT(UTwinLinkObservableDataObjBase, FDelOnDeleteData);
 
 /**
  * データの変更を感知できるデータ基底クラス
@@ -26,6 +27,10 @@ class TWINLINK_API UTwinLinkObservableDataObjBase : public UTwinLinkDataObjBase
 public:
     /** データが変更された **/
     FDelOnChangedData EvOnChanged;
+
+    /** データが削除される(削除される直前) **/
+    FDelOnChangedData EvOnDeleted;
+
 
 protected:
     /**

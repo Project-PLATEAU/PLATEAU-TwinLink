@@ -2,7 +2,7 @@
 
 #include "TwinLinkAddFacilityDialogBase.h"
 
-#include "TwinLinkActorEx.h"
+#include "Misc/TwinLinkActorEx.h"
 #include "Kismet/GameplayStatics.h"
 #include "TwinLinkCommon.h"
 
@@ -45,6 +45,14 @@ void UTwinLinkAddFacilityDialogBase::Setup() {
 const UPrimitiveComponent* UTwinLinkAddFacilityDialogBase::GetTargetFeatureComponent() const {
     const auto FacilityInfoSys = TwinLinkSubSystemHelper::GetInstance<UTwinLinkFacilityInfoSystem>();
     return FacilityInfoSys->FindFacility(FeatureID).Get();
+}
+
+void UTwinLinkAddFacilityDialogBase::OnShowDialog() {
+    // ダイアログ開く瞬間は自分が見えてないので強制で設定する
+    if (!EntranceLocatorNode)
+        EntranceLocatorNode = new FTwinLinkEntranceLocatorWidgetNode(this);
+    if (EntranceLocatorNode)
+        EntranceLocatorNode->SetDefaultEntranceLocation(FeatureID, true);
 }
 
 void UTwinLinkAddFacilityDialogBase::BeginDestroy() {

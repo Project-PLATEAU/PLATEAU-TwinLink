@@ -4,11 +4,13 @@
 #include "NavSystem/TwinLinkNavSystemPathDrawer.h"
 #include "NiagaraDataInterfaceArrayFunctionLibrary.h"
 #include "NiagaraComponent.h"
+#include "TwinLinkCommon.h"
 // Sets default values for this component's properties
 AUTwinLinkNavSystemPathDrawer::AUTwinLinkNavSystemPathDrawer() {
 }
 
 AUTwinLinkNavSystemPathDrawerNiagara::AUTwinLinkNavSystemPathDrawerNiagara() {
+    PrimaryActorTick.bCanEverTick = true;
 }
 
 void AUTwinLinkNavSystemPathDrawerNiagara::DrawPath(const TArray<FVector>& PathPoints, float DeltaSeconds) {
@@ -26,7 +28,18 @@ void AUTwinLinkNavSystemPathDrawerNiagara::DrawPath(const TArray<FVector>& PathP
     UNiagaraDataInterfaceArrayFunctionLibrary::SetNiagaraArrayVector(NiagaraComponent, "PathPoints", PathPoints);
     NiagaraComponent->SetNiagaraVariableInt("ParticleNum", ParticleNum);
     NiagaraComponent->SetNiagaraVariableVec3("Offset", FVector::UpVector * DrawPointHeightOffset);
-    //UNiagaraDataInterface::Set
+    NiagaraComponent->SetNiagaraVariableFloat("NightCoef", TwinLinkGraphicsEnv::GetNightIntensity(GetWorld()));
+}
+
+void AUTwinLinkNavSystemPathDrawerNiagara::Tick(float DeltaSeconds) {
+    Super::Tick(DeltaSeconds);
+#if WITH_EDITOR
+    if (DebugNightCoef >= 0.f) {
+        const auto NiagaraComponent = GetComponentByClass<UNiagaraComponent>();
+        NiagaraComponent->SetNiagaraVariableFloat("NightCoef", DebugNightCoef);
+        DebugNightCoef = -1.f;
+    }
+#endif
 }
 
 AUTwinLinkNavSystemPathDrawerArrow::AUTwinLinkNavSystemPathDrawerArrow() {
@@ -35,9 +48,15 @@ AUTwinLinkNavSystemPathDrawerArrow::AUTwinLinkNavSystemPathDrawerArrow() {
 
 void AUTwinLinkNavSystemPathDrawerArrow::BeginPlay() {
     Super::BeginPlay();
-    for (auto& P : GetComponentsByClass(UStaticMeshComponent::StaticClass())) {
-        if (auto StaMesh = Cast<UStaticMeshComponent>(P))
+    const auto NightIntensity = TwinLinkGraphicsEnv::GetNightIntensity(GetWorld());
+    TArray<UActorComponent*> Comps;
+    GetComponents(UStaticMeshComponent::StaticClass(), Comps);
+    for (const auto P : Comps) {
+        if (auto StaMesh = Cast<UStaticMeshComponent>(P)) {
             ArrowComps.Add(StaMesh);
+            const auto Mat = StaMesh->CreateAndSetMaterialInstanceDynamicFromMaterial(0, StaMesh->GetMaterial(0));
+            Mat->SetScalarParameterValue(FName(TEXT("NightCoef")), NightIntensity);
+        }
     }
 }
 
@@ -113,6 +132,15 @@ bool AUTwinLinkNavSystemPathDrawerArrow::UpdateMatrix(float DeltaSeconds, bool b
 void AUTwinLinkNavSystemPathDrawerArrow::Tick(float DeltaSeconds) {
     Super::Tick(DeltaSeconds);
     UpdateMatrix(DeltaSeconds, true);
+#if WITH_EDITOR
+    if (DebugNightCoef >= 0.f) {
+        for (const auto Arrow : ArrowComps) {
+            if (const auto Mat = Cast<UMaterialInstanceDynamic>(Arrow->GetMaterial(0)))
+                Mat->SetScalarParameterValue("NightCoef", DebugNightCoef);
+        }
+        DebugNightCoef = -1.f;
+    }
+#endif
 }
 
 UActorComponent* AUTwinLinkNavSystemPathDrawerArrow::CreateChildArrow() {

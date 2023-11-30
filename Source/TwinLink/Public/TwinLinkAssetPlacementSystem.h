@@ -142,6 +142,11 @@ public:
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
         AActor* TwinLinkAssetPlacementGetUnsettledActor() const { return AssetPlacementUnsettledActor; }
+
+    /**
+     * @brief 配置済みアクタを取得
+    */
+    void GetAssetPlacementActors(TArray<TObjectPtr<AActor>>& OutArray) { AssetPlacementActorCollection.GenerateValueArray(OutArray); }
 private:
 
     /**

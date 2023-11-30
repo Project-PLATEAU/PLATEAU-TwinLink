@@ -12,8 +12,8 @@
 #include "PLATEAUCityModelLoader.h"
 #include "StaticMeshAttributes.h"
 #include "TwinLink.h"
-#include "TwinLinkPLATEAUCityModelEx.h"
-#include "TwinLinkPLATEAUCityObjectGroupEx.h"
+#include "Misc/TwinLinkPLATEAUCityModelEx.h"
+#include "Misc/TwinLinkPLATEAUCityObjectGroupEx.h"
 #include "TwinLink/Public/NavSystem/TwinLinkNavSystem.h"
 namespace {
     /*
