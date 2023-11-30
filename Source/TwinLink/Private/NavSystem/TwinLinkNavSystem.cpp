@@ -332,6 +332,16 @@ bool ATwinLinkNavSystem::TryDemHeightMapIndexToCell(int Index, int& OutX, int& O
     return true;
 }
 
+double ATwinLinkNavSystem::GetDemHeightMax() {
+    auto ret = DemHeightMap[0];
+    for (const auto& Dem : DemHeightMap) {
+        if (Dem > ret) {
+            ret = Dem;
+        }
+    }
+    return ret;
+}
+
 void ATwinLinkNavSystem::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos) {
     Super::DisplayDebug(Canvas, DebugDisplay, YL, YPos);
 #ifdef WITH_EDITOR

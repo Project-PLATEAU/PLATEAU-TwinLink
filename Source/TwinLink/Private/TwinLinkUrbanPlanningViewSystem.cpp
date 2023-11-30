@@ -4,9 +4,11 @@
 #include "KismetProceduralMeshLibrary.h"
 #include "ProceduralMeshComponent.h"
 #include "TwinLink.h"
+#include "TwinLinkCommon.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "Kismet/GameplayStatics.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
+#include "NavSystem/TwinLinkNavSystem.h"
 
 void UTwinLinkUrbanPlanningViewSystem::TwinLinkShowUrbanPlanning() {
     const auto CityModel = FTwinLinkModule::Get().GetCityModel();
@@ -25,6 +27,10 @@ void UTwinLinkUrbanPlanningViewSystem::TwinLinkShowUrbanPlanning() {
     AttributeRates.Reset();
     AttributeUsages.Reset();
     GuideUsageColors.Reset();
+
+    auto NavSystem = ATwinLinkNavSystem::GetInstance(GetWorld());
+
+    double DemHeight = NavSystem->GetDemHeightMax();
 
     TArray<UPLATEAUCityObjectGroup*> CityObjects;
     CityModel->GetComponents<UPLATEAUCityObjectGroup>(CityObjects);
@@ -74,15 +80,21 @@ void UTwinLinkUrbanPlanningViewSystem::TwinLinkShowUrbanPlanning() {
         TArray<FProcMeshTangent> ProcedualTangents;
 
         for (const auto& Edge : Edges) {
-            const auto OffsetBase = FVector(0.0f, 0.0f, 10000.0f);
+            const auto OffsetBase = FVector(0.0f, 0.0f, DemHeight + 10000.0f);
             const auto OffsetRate = FVector(0.0f, 0.0f, Rate * 20.0f);
             const auto OffsetStartPoint = Edge.StartPoint + OffsetBase + OffsetRate;
             const auto OffsetEndPoint = Edge.EndPoint + OffsetBase + OffsetRate;
 
+            const auto StartPointZ = NavSystem->GetDemHeight(FVector2D(Edge.StartPoint)).value();
+            const auto EndPointZ = NavSystem->GetDemHeight(FVector2D(Edge.EndPoint)).value();
+
+            const auto StartPoint = FVector(Edge.StartPoint.X, Edge.StartPoint.Y, StartPointZ);
+            const auto EndPoint = FVector(Edge.EndPoint.X, Edge.EndPoint.Y, StartPointZ);
+
             const auto IndexV0 = ProcedualVertices.Add(OffsetStartPoint);
-            const auto IndexV1 = ProcedualVertices.Add(Edge.StartPoint);
+            const auto IndexV1 = ProcedualVertices.Add(StartPoint);
             const auto IndexV2 = ProcedualVertices.Add(OffsetEndPoint);
-            const auto IndexV3 = ProcedualVertices.Add(Edge.EndPoint);
+            const auto IndexV3 = ProcedualVertices.Add(EndPoint);
 
             ProcedualTriangles.Add(IndexV0);
             ProcedualTriangles.Add(IndexV1);
@@ -109,14 +121,19 @@ void UTwinLinkUrbanPlanningViewSystem::TwinLinkShowUrbanPlanning() {
         ProcedualMesh->SetupAttachment(Parent);
         ProcedualMesh->RegisterComponent();
 
-        int Height = (10000.0f + (Rate * 20.0f)) / 100.0f * 0.3f;
+        //マテリアルが設定されていなければ追加する
+        if (OriginMesh->GetStaticMaterials().Num() == 0) {
+            UMaterialInstanceDynamic* DefaultMaterial = NewObject<UMaterialInstanceDynamic>();
+            OriginMesh->AddMaterial(DefaultMaterial);
+        }
+
+        int Height = (DemHeight + 10000.0f + (Rate * 20.0f)) / 100.0f * 0.1f;
 
         for (int j = 0; j < Height; j++) {
             UStaticMeshComponent* StaticMesh = NewObject<UStaticMeshComponent>(ViewActor);
 
             StaticMesh->SetStaticMesh(Cast<UStaticMesh>(CityObjects[i]->GetStaticMesh()));
-            StaticMesh->AddLocalOffset(FVector(0.0f, 0.0f, 100.0f * j));
-            //StaticMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+            StaticMesh->AddLocalOffset(FVector(0.0f, 0.0f, DemHeight + (100.0f * j)));
             StaticMesh->SetMaterial(0, Cast<UMaterialInterface>(MaterialCollectionPlane.Find(Usage)->Get()));
             StaticMesh->SetupAttachment(Parent);
             StaticMesh->RegisterComponent();
@@ -179,11 +196,13 @@ void UTwinLinkUrbanPlanningViewSystem::AddMaterials(const FString& NewUsage) {
     const auto ParentMaterialPath = TEXT("/PLATEAU-TwinLink/Materials/M_UrbanPlanning");
     auto Material = UMaterialInstanceDynamic::Create(Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, ParentMaterialPath)), this);
     Material->SetVectorParameterValue("EmissiveColor", NewColor);
+    Material->SetScalarParameterValue("EmissveBoost", TwinLinkGraphicsEnv::GetEmissiveBoostFromEnv(GetWorld()));
     MaterialCollection.Add(NewUsage, Material);
 
     const auto ParentMaterialPathPlane = TEXT("/PLATEAU-TwinLink/Materials/M_UrbanPlanningPlane");
     auto MaterialPlane = UMaterialInstanceDynamic::Create(Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, ParentMaterialPathPlane)), this);
     MaterialPlane->SetVectorParameterValue("EmissiveColor", NewColor);
+    MaterialPlane->SetScalarParameterValue("EmissveBoost", TwinLinkGraphicsEnv::GetEmissiveBoostFromEnv(GetWorld()));
     MaterialCollectionPlane.Add(NewUsage, MaterialPlane);
 }
 

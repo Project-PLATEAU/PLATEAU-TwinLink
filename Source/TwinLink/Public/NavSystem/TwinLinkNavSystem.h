@@ -267,7 +267,7 @@ private:
     // 建物の入り口設定用のロケーターブループリント
     UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
         TSubclassOf<ATwinLinkNavSystemEntranceLocator> EntranceLocatorBp;
-
+public:
     /*
      * @brief : ワールド座標 -> ハイト情報取得
      */
@@ -302,6 +302,11 @@ private:
      * @brief : ハイトマップのインデックス -> セル変換
      */
     bool TryDemHeightMapIndexToCell(int Index, int& OutX, int& OutY) const;
+
+    /*
+     * @brief : 最大ハイト
+     */
+    double GetDemHeightMax();
 
 private:
     // -----------------------
