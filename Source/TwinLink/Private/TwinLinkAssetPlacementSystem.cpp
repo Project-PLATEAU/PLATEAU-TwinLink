@@ -224,11 +224,16 @@ bool UTwinLinkAssetPlacementSystem::IsWidgetUnderMouseCursor() {
     );
 
     if (WidgetsUnderCursor.IsValid()) {
-        const FArrangedChildren& Widgets = WidgetsUnderCursor.Widgets;
-        if (Widgets.Num() > 0) {
-            const TSharedPtr<SWidget> Widget2 = Widgets.Last().Widget;
-
-            return !Widget2.ToSharedRef().Get().IsHovered();
+        const FArrangedChildren::FArrangedWidgetArray& AllArrangedWidgets = WidgetsUnderCursor.Widgets.GetInternalArray();
+        bool FoundRoot = false;
+        for (const auto& AllArrangedWidget : AllArrangedWidgets) {
+            const TSharedRef<SWidget> Widget = AllArrangedWidget.Widget;
+            if (Widget->GetTypeAsString() == "SGameLayerManager") {
+                FoundRoot = true;
+            }
+            else if (FoundRoot) {
+                return true;
+            }
         }
     }
 
