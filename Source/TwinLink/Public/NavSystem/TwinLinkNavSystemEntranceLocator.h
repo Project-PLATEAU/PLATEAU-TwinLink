@@ -30,7 +30,7 @@ public:
 
     std::optional<FVector> GetEntranceLocation() const;
     bool SetDefaultEntranceLocation(const FString& FeatureId) const;
-    bool SetEntranceLocation(const UTwinLinkFacilityInfo* Info) const;
+    bool SetEntranceLocation(const UTwinLinkFacilityInfo* Info, bool bForce = false) const;
 };
 
 class TWINLINK_API FTwinLinkEntranceLocatorWidgetNode : public FTwinLinkEntranceLocatorNode {
@@ -68,6 +68,11 @@ public:
      */
     virtual bool IsValidLocation() const;
 
+    virtual ECollisionChannel GetCollisionChannel() const override;
+
+    using ATwinLinkNavSystemPathLocator::UpdateLocation;
+    // 位置更新する
+    virtual bool UpdateLocation(const UNavigationSystemV1* NavSys, const FVector& Location) override;
     /*
      * @brief : 指定したポイントの位置を取得
      */

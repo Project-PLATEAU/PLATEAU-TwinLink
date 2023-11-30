@@ -95,13 +95,13 @@ ATwinLinkNavSystemEntranceLocator* ATwinLinkNavSystem::GetEntranceLocator(const 
 bool ATwinLinkNavSystem::FindNavMeshPoint(const UNavigationSystemV1* NavSys, const UStaticMeshComponent* StaticMeshComp, FVector& OutPos) {
     if (!StaticMeshComp || !NavSys)
         return false;
-    auto Center = StaticMeshComp->Bounds.Origin;
-    auto Extent = StaticMeshComp->Bounds.BoxExtent;
+    const auto Center = StaticMeshComp->Bounds.Origin;
+    const auto Extent = StaticMeshComp->Bounds.BoxExtent;
 
     // ナビメッシュの範囲内かどうか
     auto Pos = Center;
+    // ナビメッシュは高さ情報が常に0なのでそれに合わせる
     Pos.Z = 0.f;
-    const auto Size = Extent * 2;
     FNavLocation OutLocation;
     if (NavSys->ProjectPointToNavigation(Pos, OutLocation, Extent + FVector::One() * 1000)) {
         OutPos = OutLocation.Location;
@@ -419,6 +419,7 @@ void ATwinLinkNavSystem::BeginPlay() {
     // 管理画面で使う入り口設定用のアクターを生成
     EntranceLocator = TwinLinkActorEx::SpawnChildActor(this, EntranceLocatorBp, TEXT("EntranceLocator"));
     EntranceLocator->SetActorHiddenInGame(true);
+
 
     // #TODO : 一時的にナビメッシュポイントは実行時に適当に設定する
     const UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());

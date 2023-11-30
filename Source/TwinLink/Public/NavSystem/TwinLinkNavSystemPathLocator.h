@@ -32,7 +32,7 @@ public:
     bool UpdateLocation(const UNavigationSystemV1* NavSys, const FHitResult& HitResult);
 
     // 位置更新する
-    bool UpdateLocation(const UNavigationSystemV1* NavSys, const FVector& Location);
+    virtual bool UpdateLocation(const UNavigationSystemV1* NavSys, const FVector& Location);
 
     // 選択状態にする
     void Select();
@@ -42,6 +42,9 @@ public:
 
     // 最後の有効な位置を取得
     std::optional<FVector> GetLastValidLocation() const;
+
+    virtual ECollisionChannel GetCollisionChannel() const;
+
 protected:
     // 現在の状態
     UPROPERTY(EditAnywhere, Category = TwinLink_Base)

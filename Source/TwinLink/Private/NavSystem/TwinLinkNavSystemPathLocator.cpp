@@ -79,3 +79,7 @@ void ATwinLinkNavSystemPathLocator::UnSelect() {
 std::optional<FVector> ATwinLinkNavSystemPathLocator::GetLastValidLocation() const {
     return LastValidLocation;
 }
+
+ECollisionChannel ATwinLinkNavSystemPathLocator::GetCollisionChannel() const {
+    return ECC_WorldStatic;
+}
