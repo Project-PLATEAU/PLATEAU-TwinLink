@@ -36,9 +36,9 @@ std::optional<FVector> FTwinLinkEntranceLocatorNode::GetEntranceLocation() const
     return std::nullopt;
 }
 
-bool FTwinLinkEntranceLocatorNode::SetDefaultEntranceLocation(const FString& FeatureId) const {
+bool FTwinLinkEntranceLocatorNode::SetDefaultEntranceLocation(const FString& FeatureId, bool bForce) const {
     // 見える設定じゃないなら無視する
-    if (IsVisibleEntranceLocator() == false)
+    if (!bForce && IsVisibleEntranceLocator() == false)
         return false;
     if (const auto Locator = ATwinLinkNavSystem::GetEntranceLocator(GetWorld())) {
         Locator->SetDefaultEntranceLocation(FeatureId);

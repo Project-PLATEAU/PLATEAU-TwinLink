@@ -29,7 +29,7 @@ public:
     virtual const UWorld* GetWorld() const = 0;
 
     std::optional<FVector> GetEntranceLocation() const;
-    bool SetDefaultEntranceLocation(const FString& FeatureId) const;
+    bool SetDefaultEntranceLocation(const FString& FeatureId, bool bForce = false) const;
     bool SetEntranceLocation(const UTwinLinkFacilityInfo* Info, bool bForce = false) const;
 };
 

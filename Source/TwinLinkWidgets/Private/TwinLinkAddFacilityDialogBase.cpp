@@ -47,6 +47,14 @@ const UPrimitiveComponent* UTwinLinkAddFacilityDialogBase::GetTargetFeatureCompo
     return FacilityInfoSys->FindFacility(FeatureID).Get();
 }
 
+void UTwinLinkAddFacilityDialogBase::OnShowDialog() {
+    // ダイアログ開く瞬間は自分が見えてないので強制で設定する
+    if (!EntranceLocatorNode)
+        EntranceLocatorNode = new FTwinLinkEntranceLocatorWidgetNode(this);
+    if (EntranceLocatorNode)
+        EntranceLocatorNode->SetDefaultEntranceLocation(FeatureID, true);
+}
+
 void UTwinLinkAddFacilityDialogBase::BeginDestroy() {
     Super::BeginDestroy();
     if (EntranceLocatorNode)
