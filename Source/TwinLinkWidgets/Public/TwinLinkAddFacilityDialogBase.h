@@ -77,6 +77,8 @@ public:
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
         const UPrimitiveComponent* GetTargetFeatureComponent() const;
 
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        void OnShowDialog();
     virtual void BeginDestroy() override;
 
 protected:

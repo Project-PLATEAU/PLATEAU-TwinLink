@@ -4,7 +4,8 @@
 #include "NavSystem/TwinLinkNavSystemPathLocator.h"
 
 #include "NavigationSystem.h"
-#include "TwinLinkMathEx.h"
+#include "TwinLinkCommon.h"
+#include "Misc/TwinLinkMathEx.h"
 #include "TwinLinkWorldViewer.h"
 #include "NavSystem/TwinLinkNavSystem.h"
 
@@ -15,6 +16,16 @@ ATwinLinkNavSystemPathLocator::ATwinLinkNavSystemPathLocator() {
 
 void ATwinLinkNavSystemPathLocator::BeginPlay() {
     Super::BeginPlay();
+
+    const auto NightIntensity = TwinLinkGraphicsEnv::GetNightIntensity(GetWorld());
+    TArray<UActorComponent*> Comps;
+    GetComponents(UStaticMeshComponent::StaticClass(), Comps);
+    for (const auto P : Comps) {
+        if (const auto StaMesh = Cast<UStaticMeshComponent>(P)) {
+            const auto Mat = StaMesh->CreateAndSetMaterialInstanceDynamicFromMaterial(0, StaMesh->GetMaterial(0));
+            Mat->SetScalarParameterValue(FName(TEXT("NightCoef")), NightIntensity);
+        }
+    }
 }
 
 void ATwinLinkNavSystemPathLocator::Tick(float DeltaSeconds) {
@@ -28,9 +39,22 @@ void ATwinLinkNavSystemPathLocator::Tick(float DeltaSeconds) {
         Rotation *= FQuat::MakeFromRotationVector(FVector(0.f, 0.f, FMath::DegreesToRadians(90)));
         SetActorRotation(Rotation);
     }
+#if WITH_EDITOR
+    if (DebugNightCoef >= 0.f) {
+        TArray<UActorComponent*> Comps;
+        GetComponents(UStaticMeshComponent::StaticClass(), Comps);
+        for (const auto P : Comps) {
+            if (const auto StaMesh = Cast<UStaticMeshComponent>(P)) {
+                const auto Mat = StaMesh->CreateAndSetMaterialInstanceDynamicFromMaterial(0, StaMesh->GetMaterial(0));
+                Mat->SetScalarParameterValue(FName(TEXT("NightCoef")), DebugNightCoef);
+            }
+        }
+        DebugNightCoef = -1.f;
+    }
+#endif
 }
 
-NavSystemPathLocatorState ATwinLinkNavSystemPathLocator::GetNowState() const {
+TwinLinkNavSystemPathLocatorState ATwinLinkNavSystemPathLocator::GetNowState() const {
     return State;
 }
 
@@ -39,7 +63,7 @@ bool ATwinLinkNavSystemPathLocator::UpdateLocation(const UNavigationSystemV1* Na
 
     // 壁についている
     if (FVector::DotProduct(HitResult.Normal, FVector::UpVector) < FMath::Cos(FMath::DegreesToRadians(70))) {
-        State = NavSystemPathLocatorState::OnWall;
+        State = TwinLinkNavSystemPathLocatorState::OnWall;
         return false;
     }
 
@@ -54,11 +78,11 @@ bool ATwinLinkNavSystemPathLocator::UpdateLocation(const UNavigationSystemV1* Na
     Pos.Z = 0.f;
     FNavLocation OutStart;
     if (NavSys->ProjectPointToNavigation(Pos, OutStart, FVector::One() * 100) == false) {
-        State = NavSystemPathLocatorState::OutsideNavMesh;
+        State = TwinLinkNavSystemPathLocatorState::OutsideNavMesh;
         return false;
     }
     OutStart.Location.Z = Location.Z;
-    State = NavSystemPathLocatorState::Valid;
+    State = TwinLinkNavSystemPathLocatorState::Valid;
     LastValidLocation = OutStart.Location;
     return true;
 }
@@ -70,7 +94,7 @@ void ATwinLinkNavSystemPathLocator::Select() {
 void ATwinLinkNavSystemPathLocator::UnSelect() {
     if (LastValidLocation.has_value()) {
         SetActorLocation(*LastValidLocation);
-        State = NavSystemPathLocatorState::Valid;
+        State = TwinLinkNavSystemPathLocatorState::Valid;
     }
     //LastValidLocation = std::nullopt;
     IsSelected = false;
@@ -78,4 +102,8 @@ void ATwinLinkNavSystemPathLocator::UnSelect() {
 
 std::optional<FVector> ATwinLinkNavSystemPathLocator::GetLastValidLocation() const {
     return LastValidLocation;
+}
+
+ECollisionChannel ATwinLinkNavSystemPathLocator::GetCollisionChannel() const {
+    return ECC_WorldStatic;
 }

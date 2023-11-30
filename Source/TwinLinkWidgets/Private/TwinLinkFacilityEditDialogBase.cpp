@@ -31,8 +31,9 @@ void UTwinLinkFacilityEditDialogBase::Setup(UTwinLinkFacilityInfo* Info) {
     if (!EntranceLocatorNode)
         EntranceLocatorNode = new FTwinLinkEntranceLocatorWidgetNode(this);
 
+    // この段階ではWidgetが見えてない場合もあるので強制にする
     if (EntranceLocatorNode)
-        EntranceLocatorNode->SetEntranceLocation(Info);
+        EntranceLocatorNode->SetEntranceLocation(Info, true);
 
     const auto FacilityInfoSys = TwinLinkSubSystemHelper::GetInstance<UTwinLinkFacilityInfoSystem>();
     check(FacilityInfoSys.IsValid());

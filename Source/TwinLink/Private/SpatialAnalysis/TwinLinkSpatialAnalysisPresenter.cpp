@@ -3,7 +3,7 @@
 
 #include "TwinLinkCityObjectTree.h"
 #include "TwinLinkCommon.h"
-#include "TwinLinkPLATEAUCityObjectGroupEx.h"
+#include "Misc/TwinLinkPLATEAUCityObjectGroupEx.h"
 #include "TwinLinkPOISubSystem.h"
 #include "TwinLinkWorldViewer.h"
 #include "NavSystem/TwinLinkNavSystem.h"
@@ -24,6 +24,15 @@ void ATwinLinkSpatialAnalysisPresenter::BeginPlay() {
     // 人流データ取得API構築
     PeopleFlowApi = NewObject<UTwinLinkPeopleFlowApi>();
     PeopleFlowApi->OnReceivedPeopleFlowResponse.AddDynamic(this, &ATwinLinkSpatialAnalysisPresenter::OnReceivedPeopleFlowResponse);
+
+    // Emissiveが差し替えられるようにDynamicMaterialに
+    if (const auto Mesh = GetComponentByClass<UStaticMeshComponent>()) {
+        const auto BaseMat = Mesh->GetMaterial(0);
+        DynamicMaterial = Mesh->CreateAndSetMaterialInstanceDynamicFromMaterial(0, BaseMat);
+
+        const auto bIsNight = TwinLinkGraphicsEnv::GetNightIntensity(GetWorld());
+        DynamicMaterial->SetScalarParameterValue(FName(TEXT("IsNight")), bIsNight ? 1.f : 0.f);
+    }
 }
 
 void ATwinLinkSpatialAnalysisPresenter::Tick(float DeltaTime) {
@@ -95,10 +104,6 @@ void ATwinLinkSpatialAnalysisPresenter::OnClicked(const FHitResult& HitResult) {
 }
 
 void ATwinLinkSpatialAnalysisPresenter::DrawUpdate(float DeltaTime) const {
-
-    
-
-    
     auto Bb = [&]()-> std::optional<FBox> {
         if (IsValidSpatialId() == false)
             return std::nullopt;
@@ -107,7 +112,7 @@ void ATwinLinkSpatialAnalysisPresenter::DrawUpdate(float DeltaTime) const {
         if (!NavSystem)
             return std::nullopt;
 
-        auto NowSelectedId = GetNowSpatialId();
+        const auto NowSelectedId = GetNowSpatialId();
         if (NowSelectedId.has_value() == false)
             return std::nullopt;
         const auto Tree = GetTree();
@@ -122,18 +127,12 @@ void ATwinLinkSpatialAnalysisPresenter::DrawUpdate(float DeltaTime) const {
     }();
    
 
-    if(auto Mesh = GetComponentByClass<UStaticMeshComponent>())
+    if(const auto Mesh = GetComponentByClass<UStaticMeshComponent>())
     {
         Mesh->SetVisibility(Bb.has_value());
-
         Mesh->SetWorldLocation(Bb->GetCenter());
         Mesh->SetWorldScale3D(Bb->GetSize() * 0.01f);
     }
-
-    
-    
-    //if(Bb.has_value())
-   //     DrawDebugBox(GetWorld(), Bb->GetCenter(), Bb->GetExtent(), FColor::Red);
 }
 
 void ATwinLinkSpatialAnalysisPresenter::DebugDrawUpdate(float DeltaTime) const {

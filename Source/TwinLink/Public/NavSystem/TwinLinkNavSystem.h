@@ -128,7 +128,7 @@ public:
      * @brief : モード切替
      */
     UFUNCTION(BlueprintCallable)
-        void ChangeMode(NavSystemMode Mode, bool bForce = false);
+        void ChangeMode(TwinLinkNavSystemMode Mode, bool bForce = false);
 
     /*
      * @brief : パス検索の結果を返す. nullptrの場合は検索していないか検索途中
@@ -310,7 +310,7 @@ private:
 
     // 現在どのポイントを編集しているかどうか
     UPROPERTY(EditAnywhere, Category = TwinLink_Runtime)
-        NavSystemMode NowSelectedMode = NavSystemMode::Undefined;
+        TwinLinkNavSystemMode NowSelectedMode = TwinLinkNavSystemMode::Undefined;
 
     // パス描画のアクター
     UPROPERTY(EditAnywhere, Category = TwinLink_Runtime)

@@ -3,10 +3,10 @@
 
 #include <chrono>
 
-#include "TwinLinkActorEx.h"
-#include "TwinLinkMathEx.h"
-#include "TwinLinkPLATEAUCityObjectGroupEx.h"
-#include "TwinLinkPLATEAUGeoReferenceEx.h"
+#include "Misc/TwinLinkActorEx.h"
+#include "Misc/TwinLinkMathEx.h"
+#include "Misc/TwinLinkPLATEAUCityObjectGroupEx.h"
+#include "Misc/TwinLinkPLATEAUGeoReferenceEx.h"
 #include "Kismet/GameplayStatics.h"
 
 namespace {

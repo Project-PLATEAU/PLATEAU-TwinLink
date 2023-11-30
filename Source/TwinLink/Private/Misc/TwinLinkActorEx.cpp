@@ -1,4 +1,4 @@
-#include "TwinLinkActorEx.h"
+#include "Misc/TwinLinkActorEx.h"
 
 USceneComponent* TwinLinkActorEx::GetChild(USceneComponent* Self,
     const std::initializer_list<int>& Indices) {

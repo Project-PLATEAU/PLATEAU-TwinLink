@@ -8,7 +8,7 @@
 
 #include "PLATEAUInstancedCityModel.h"
 #include "PLATEAUGeometry.h"
-#include "TwinLinkMathEx.h"
+#include "Misc/TwinLinkMathEx.h"
 
 static const int ZFXY_1M_ZOOM_BASE = 25;
 static const FIntVector ZFXY_ROOT_TILE(0);
