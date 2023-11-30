@@ -50,11 +50,14 @@ protected:
     UPROPERTY(EditAnywhere, Category = TwinLink_Base)
         TwinLinkNavSystemPathLocatorState State = TwinLinkNavSystemPathLocatorState::Undefined;
 
-
     // 現在の状態
     UPROPERTY(EditAnywhere, Category = TwinLink_Base)
         bool IsSelected = false;
 
     // 最後にValid状態になった位置
     std::optional<FVector> LastValidLocation = std::nullopt;
+
+    // デバッグで変更する夜係数(負数だと無視)
+    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
+        float DebugNightCoef = -1.f;
 };

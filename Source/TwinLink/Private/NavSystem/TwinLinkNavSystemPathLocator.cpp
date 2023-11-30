@@ -4,6 +4,7 @@
 #include "NavSystem/TwinLinkNavSystemPathLocator.h"
 
 #include "NavigationSystem.h"
+#include "TwinLinkCommon.h"
 #include "Misc/TwinLinkMathEx.h"
 #include "TwinLinkWorldViewer.h"
 #include "NavSystem/TwinLinkNavSystem.h"
@@ -15,6 +16,16 @@ ATwinLinkNavSystemPathLocator::ATwinLinkNavSystemPathLocator() {
 
 void ATwinLinkNavSystemPathLocator::BeginPlay() {
     Super::BeginPlay();
+
+    const auto NightIntensity = TwinLinkGraphicsEnv::GetNightIntensity(GetWorld());
+    TArray<UActorComponent*> Comps;
+    GetComponents(UStaticMeshComponent::StaticClass(), Comps);
+    for (const auto P : Comps) {
+        if (const auto StaMesh = Cast<UStaticMeshComponent>(P)) {
+            const auto Mat = StaMesh->CreateAndSetMaterialInstanceDynamicFromMaterial(0, StaMesh->GetMaterial(0));
+            Mat->SetScalarParameterValue(FName(TEXT("NightCoef")), NightIntensity);
+        }
+    }
 }
 
 void ATwinLinkNavSystemPathLocator::Tick(float DeltaSeconds) {
@@ -28,6 +39,19 @@ void ATwinLinkNavSystemPathLocator::Tick(float DeltaSeconds) {
         Rotation *= FQuat::MakeFromRotationVector(FVector(0.f, 0.f, FMath::DegreesToRadians(90)));
         SetActorRotation(Rotation);
     }
+#if WITH_EDITOR
+    if (DebugNightCoef >= 0.f) {
+        TArray<UActorComponent*> Comps;
+        GetComponents(UStaticMeshComponent::StaticClass(), Comps);
+        for (const auto P : Comps) {
+            if (const auto StaMesh = Cast<UStaticMeshComponent>(P)) {
+                const auto Mat = StaMesh->CreateAndSetMaterialInstanceDynamicFromMaterial(0, StaMesh->GetMaterial(0));
+                Mat->SetScalarParameterValue(FName(TEXT("NightCoef")), DebugNightCoef);
+            }
+        }
+        DebugNightCoef = -1.f;
+    }
+#endif
 }
 
 TwinLinkNavSystemPathLocatorState ATwinLinkNavSystemPathLocator::GetNowState() const {
