@@ -51,6 +51,7 @@ enum class EFileType : uint8 {
     Png,
     Shp,
     All,
+    DownloadImageNodeLoadableTextures,
 };
 ENUM_CLASS_FLAGS(EFileType);
 

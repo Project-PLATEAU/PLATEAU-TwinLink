@@ -45,6 +45,12 @@ public:
         const FString& ImageFileName);
 
     /**
+     * @brief 所持しているデータを削除する
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+    void RequestRemoveCurrentData();
+
+    /**
      * @brief ファイルパスを取得する
      * @return 
     */
@@ -78,5 +84,6 @@ private:
     TWeakObjectPtr<UTwinLinkBuildingDesignInfo> BuildingDesignInfo;
 
     FDelegateHandle EvOnChangedHnd;
+    FDelegateHandle EvOnDeletedHnd;
     FDelegateHandle EvOnAddedBuildingDesignInfoInstanceHnd;
 };

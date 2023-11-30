@@ -27,10 +27,15 @@ void UTwinLinkBuildingDesignPanelBase::Setup(/*UTwinLinkBuildingDesignInfo* Info
             });
     }
 
+    // 登録済みのイベントを取り除く
     if (BuildingDesignInfo.IsValid()) {
         check(EvOnChangedHnd.IsValid());
         BuildingDesignInfo->EvOnChanged.Remove(EvOnChangedHnd);
         EvOnChangedHnd.Reset();
+
+        check(EvOnDeletedHnd.IsValid());
+        BuildingDesignInfo->EvOnDeleted.Remove(EvOnDeletedHnd);
+        EvOnDeletedHnd.Reset();
     }
 
     BuildingDesignInfo = DataInfo;
@@ -47,6 +52,14 @@ void UTwinLinkBuildingDesignPanelBase::BindChangedEvent() {
             check(TwinLinkSubSystemHelper::GetInstance<UTwinLinkFloorInfoSystem>().IsValid());
             OnChangedInfo();
             });
+
+        // 無効になった際に呼び出す
+        EvOnDeletedHnd = BuildingDesignInfo->EvOnDeleted.AddLambda([this]() {
+            check(TwinLinkSubSystemHelper::GetInstance<UTwinLinkFloorInfoSystem>().IsValid());
+            BuildingDesignInfo = nullptr;
+            OnChangedInfo();
+            });
+
     }
 }
 
@@ -64,7 +77,23 @@ void UTwinLinkBuildingDesignPanelBase::RequestEdit(const FString& ImageFileName)
     }
     else {
         const auto bIsSuc = Sys->EditBuildingDesign(Key, BuildingDesignInfo, ImageFileName);
-        check(bIsSuc);
+        if (bIsSuc == false) {
+            UE_TWINLINK_C_LOG(LogTemp, Log, TEXT("Failed Edit BuildingDesignInfo"));
+        }
+    }
+}
+
+void UTwinLinkBuildingDesignPanelBase::RequestRemoveCurrentData() {
+    TWeakObjectPtr<UTwinLinkFloorInfoSystem> Sys = TwinLinkSubSystemHelper::GetInstance<UTwinLinkFloorInfoSystem>();
+    check(Sys.IsValid());
+    const auto Key = Sys->GetKeyBySelectedFloor();
+    if (Key.IsEmpty()) {
+        UE_TWINLINK_C_LOG(LogTemp, Log, TEXT("Not selected floor"));
+        return;
+    }
+
+    if (Sys->RemoveBuildingDesign(Key, BuildingDesignInfo) == false) {
+        UE_TWINLINK_C_LOG(LogTemp, Log, TEXT("Failed Remove BuildingDesignInfo"));
     }
 }
 
