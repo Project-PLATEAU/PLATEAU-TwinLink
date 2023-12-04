@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #include "TwinLinkCSVContents.h"
 
@@ -32,11 +32,27 @@ bool TwinLinkCSVContents::Standard::Parse(TArray<FString> RowElements) {
 
     // Headerの情報を取り除く
     RowElements.RemoveAt(0, 2);
-
+ 
     // Bodyの情報を保存する
     TArray<FString> TempBuffer;
     for (const auto& Elements : RowElements) {
-        Elements.ParseIntoArray(TempBuffer, TEXT(","), false);
+        // データの改行コードを復元する
+        const auto Converted = Elements.Replace(TEXT("~n"), TEXT("\n"), ESearchCase::CaseSensitive);
+
+        // 行を分解
+        Converted.ParseIntoArray(TempBuffer, TEXT(","), false);
+
+        // データのカンマを復元する
+        for (FString& Temp : TempBuffer) {
+            Temp = Temp.Replace(TEXT("~c"), TEXT(","), ESearchCase::CaseSensitive);
+        }
+
+        // データのチルダを復元する
+        for (FString& Temp : TempBuffer) {
+            Temp = Temp.Replace(TEXT("0TiLdE0"), TEXT("~"), ESearchCase::CaseSensitive);
+        }
+
+        // データ追加
         MainContents.Add(TempBuffer);
     }
 
@@ -73,4 +89,17 @@ FString TwinLinkCSVContents::Standard::CreateHeaderContents(FString HeaderConten
 
 FString TwinLinkCSVContents::Standard::CreateBodyContents(FString BodyContents) const {
     return FString::Printf(TEXT("%s"), *BodyContents);
+}
+
+FString TwinLinkCSVContents::Standard::CreateBodyContents(const TArray<FString>& Contents) const {
+    FString Str;
+    for (const auto Content : Contents) {
+        FString Converted;
+        Converted = Content.Replace(TEXT("~"), TEXT("0TiLdE0"), ESearchCase::CaseSensitive);
+        Converted = Content.Replace(TEXT(","), TEXT("~c"), ESearchCase::CaseSensitive);
+
+        Str.Append(FString::Printf(TEXT("%s,"), *Converted));
+    }
+    Str.RemoveAt(Str.Len() - 1);
+    return Str;
 }

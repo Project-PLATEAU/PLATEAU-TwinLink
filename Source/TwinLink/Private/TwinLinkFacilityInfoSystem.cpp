@@ -101,10 +101,10 @@ void UTwinLinkFacilityInfoSystem::ExportFacilityInfo() {
         }
         StringBuf =
             CSVContents.CreateBodyContents(
-                FString::Printf(TEXT("%s,%s,%s,%s,%s,%s,%s"),
-                    *(Name),
-                    *Category, *FeatureID, *ImageFileName,
-                    *Description, *SpotInfo, *EntranceStr));
+                TArray<FString>{
+                *(Name),
+                *Category, *FeatureID, *ImageFileName,
+                *Description, *SpotInfo, *EntranceStr});
 
         CSVExporter.AddBodyContents(StringBuf);
     }

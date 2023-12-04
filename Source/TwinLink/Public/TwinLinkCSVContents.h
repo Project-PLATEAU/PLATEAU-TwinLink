@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -61,6 +61,7 @@ public:
          * \return
          */
         FString CreateBodyContents(FString BodyContents) const;
+        FString CreateBodyContents(const TArray<FString>& Contents) const;
 
         /**
          * バージョンの取得.
