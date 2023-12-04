@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -17,6 +17,22 @@ class TWINLINK_API UTwinLinkFacilityInfo : public UTwinLinkObservableDataObjBase
     GENERATED_BODY()
 
 public:
+    /**
+     * @brief 正常な値かチェックする
+     * @param InName 
+     * @param InCategory 
+     * @param InFeatureID 
+     * @param InImageFileName 
+     * @param InDescription 
+     * @param InSpotInfo 
+     * @param Entrance 
+     * @return 
+    */
+    static bool IsValid(
+        const FString& InName, const FString& InCategory,
+        const FString& InFeatureID, const FString& InImageFileName,
+        const FString& InDescription, const FString& InSpotInfo, const TArray<FVector>& Entrance);
+
     /**
      * @brief 初期化
      * @param _BuildingGuide

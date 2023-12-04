@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
 #include "TwinLinkFacilityEditDialogBase.h"
@@ -62,6 +62,21 @@ void UTwinLinkFacilityEditDialogBase::RequestEdit(const FString& Name, const FSt
     std::optional<FVector> Entrance;
     if (EntranceLocatorNode)
         Entrance = EntranceLocatorNode->GetEntranceLocation();
+
+    bool bIsValid = UTwinLinkFacilityInfo::IsValid(
+        Name, 
+        Category, 
+        FacilityInfo->GetFeatureID(), 
+        ImageFileName, 
+        Guide, 
+        SpotInfo, 
+        Entrance.has_value() ? TArray<FVector>{ Entrance.value() } : TArray<FVector>());
+
+    if (IsValid == false) {
+        UE_TWINLINK_LOG(LogTemp, Log, TEXT("Failed RequestEdit()"));
+        OnFailedRequestEdit();
+        return;
+    }
 
     const auto IsSuc = FacilityInfoSys->EditFacilityInfo(
         FacilityInfo,
