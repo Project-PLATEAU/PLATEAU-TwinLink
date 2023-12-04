@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
 #include "TwinLinkFacilityInfoSystem.h"
@@ -37,30 +37,6 @@ void UTwinLinkFacilityInfoSystem::Initialize(FSubsystemCollectionBase& Collectio
 }
 
 void UTwinLinkFacilityInfoSystem::Deinitialize() {
-}
-
-bool UTwinLinkFacilityInfoSystem::CheckAddableFacilityInfo(const FString& Name, const FString& FeatureID) {
-    const auto isValid = CheckValidFacilityInfo(Name, FeatureID);
-    if (IsValid == false) {
-        return false;
-    }
-
-    return true;
-
-}
-
-bool UTwinLinkFacilityInfoSystem::CheckValidFacilityInfo(const FString& Name, const FString& FeatureID) {
-    if (Name.IsEmpty()) {
-        UE_TWINLINK_LOG(LogTemp, Log, TEXT("TwinLink Cant add empty name : %s"), *Name);
-        return false;
-    }
-
-    if (FeatureID.IsEmpty()) {
-        UE_TWINLINK_LOG(LogTemp, Log, TEXT("TwinLink Cant add empty feature id : %s"), *FeatureID);
-        return false;
-    }
-
-    return true;
 }
 
 void UTwinLinkFacilityInfoSystem::AddFacilityInfo(
@@ -125,10 +101,10 @@ void UTwinLinkFacilityInfoSystem::ExportFacilityInfo() {
         }
         StringBuf =
             CSVContents.CreateBodyContents(
-                FString::Printf(TEXT("%s,%s,%s,%s,%s,%s,%s"),
-                    *(Name),
-                    *Category, *FeatureID, *ImageFileName,
-                    *Description, *SpotInfo, *EntranceStr));
+                TArray<FString>{
+                *(Name),
+                *Category, *FeatureID, *ImageFileName,
+                *Description, *SpotInfo, *EntranceStr});
 
         CSVExporter.AddBodyContents(StringBuf);
     }
@@ -183,11 +159,6 @@ bool UTwinLinkFacilityInfoSystem::EditFacilityInfo(
     }
 
     const auto FeatureID = FacilityInfo->GetFeatureID();
-    const auto isValid = CheckValidFacilityInfo(Name, FeatureID);
-    if (isValid == false) {
-        UE_TWINLINK_LOG(LogTemp, Log, TEXT("Invalid Facility Info: %s"), *FacilityInfo->GetName());
-        return false;
-    }
 
     const auto Facility = FindFacility(FacilityInfo);
     if (Facility.IsValid() == false) {

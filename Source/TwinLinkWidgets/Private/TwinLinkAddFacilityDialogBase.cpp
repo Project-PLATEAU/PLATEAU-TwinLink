@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #include "TwinLinkAddFacilityDialogBase.h"
 
@@ -64,14 +64,23 @@ void UTwinLinkAddFacilityDialogBase::BeginDestroy() {
 void UTwinLinkAddFacilityDialogBase::AddFacilityInfo(const FString& InName, const FString& InCategory, const FString& InImageFileName, const FString& InDescription, const FString& InSpotInfo) {
     const auto FacilityInfoSys = TwinLinkSubSystemHelper::GetInstance<UTwinLinkFacilityInfoSystem>();
 
-    if (FacilityInfoSys->CheckAddableFacilityInfo(InName, FeatureID) == false) {
-        OnFailedFacilityInfo();
-        return;
-    }
-
     std::optional<FVector> Entrance;
     if (EntranceLocatorNode)
         Entrance = EntranceLocatorNode->GetEntranceLocation();
+
+    bool bIsValid = UTwinLinkFacilityInfo::IsValid(
+        InName, 
+        InCategory, 
+        FeatureID, 
+        InImageFileName, 
+        InDescription,
+        InSpotInfo,
+        Entrance.has_value() ? TArray<FVector>{ Entrance.value() } : TArray<FVector>());
+
+    if (IsValid == false) {
+        OnFailedFacilityInfo();
+        return;
+    }
 
     FacilityInfoSys->AddFacilityInfo(InName, InCategory, FeatureID, InImageFileName, InDescription, InSpotInfo, Entrance);
     FacilityInfoSys->ExportFacilityInfo();

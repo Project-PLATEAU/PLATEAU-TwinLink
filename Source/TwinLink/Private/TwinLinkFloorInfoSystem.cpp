@@ -186,11 +186,11 @@ void UTwinLinkFloorInfoSystem::ExportFloorInfo() {
             const auto OpningHoursText = Val->GetOpningHoursText();
             StringBuf =
                 CSVContents.CreateBodyContents(
-                    FString::Printf(TEXT("%s,%s,%f,%f,%f,%s,%s,%s"),
-                        *Name, *Category,
-                        Location.X, Location.Y, Location.Z,
-                        *ImageFileName,
-                        *GuideText, *OpningHoursText));
+                    TArray<FString> {
+                    *Name, *Category,
+                    FString::SanitizeFloat(Location.X), FString::SanitizeFloat(Location.Y), FString::SanitizeFloat(Location.Z),
+                    *ImageFileName,
+                    *GuideText, *OpningHoursText});
 
             CSVExporter.AddBodyContents(StringBuf);
         }

@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -42,20 +42,6 @@ public:
     virtual void Deinitialize() override;
 
 public:
-    /**
-     * @brief 追加可能な施設情報かチェックする
-     * @param Name
-     * @return
-    */
-    bool CheckAddableFacilityInfo(const FString& Name, const FString& FeatureID);
-
-    /**
-     * @brief 正常な施設情報かチェックする
-     * @param Name
-     * @return
-    */
-    bool CheckValidFacilityInfo(const FString& Name, const FString& FeatureID);
-
     /**
      * @brief 施設情報を追加する
      * @param _Name

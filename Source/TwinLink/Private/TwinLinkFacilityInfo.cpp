@@ -1,12 +1,28 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
 #include "TwinLinkFacilityInfo.h"
+
+bool UTwinLinkFacilityInfo::IsValid(const FString& InName, const FString& InCategory, const FString& InFeatureID, const FString& InImageFileName, const FString& InDescription, const FString& InSpotInfo, const TArray<FVector>& Entrance) {
+    if (InName.IsEmpty()) return false;
+    if (InCategory.IsEmpty()) return false;
+    if (InFeatureID.IsEmpty()) return false;
+    return true;
+}
 
 bool UTwinLinkFacilityInfo::Setup(
     const FString& InName, const FString& InCategory,
     const FString& InFeatureID, const FString& InImageFileName,
     const FString& InDescription, const FString& InSpotInfo, const TArray<FVector>& Entrance) {
+
+    check(IsValid(
+        InName, 
+        InCategory, 
+        InFeatureID, 
+        InImageFileName, 
+        InDescription, 
+        InSpotInfo, 
+        Entrance));
 
     Name = InName;
     Category = InCategory;
@@ -15,10 +31,6 @@ bool UTwinLinkFacilityInfo::Setup(
     Description = InDescription;
     SpotInfo = InSpotInfo;
     Entrances = Entrance;
-
-    check(!Name.IsEmpty());
-    check(!Category.IsEmpty());
-    check(!FeatureID.IsEmpty());
 
     BroadcastEvOnChanged();
 

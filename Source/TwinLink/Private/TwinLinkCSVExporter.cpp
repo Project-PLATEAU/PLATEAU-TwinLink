@@ -26,13 +26,17 @@ void TwinLinkCSVExporter::SetHeaderContents(const TArray<FString> Header) {
 }
 
 void TwinLinkCSVExporter::AddBodyContents(const FString Contents) {
-    BodyContents.Append(Contents);
+    // データの改行コードをcsv保持用のデータに変換する
+    FString Converted;
+    Converted = Contents.Replace(TEXT("\r\n"), TEXT("~n"), ESearchCase::CaseSensitive);
+    Converted = Converted.Replace(TEXT("\n"), TEXT("~n"), ESearchCase::CaseSensitive);
+    BodyContents.Append(Converted);
     BodyContents.Append(TEXT("\n"));
 }
 
 bool TwinLinkCSVExporter::ExportCSV(const TCHAR* Filepath) {
     BodyContents.RemoveFromEnd(TEXT("\n"));
-    const FString CSVContents = HeaderContents + FString("\n") + BodyContents;
+    const FString CSVContents = HeaderContents + FString(TEXT("\n")) + BodyContents;
     return FFileHelper::SaveStringToFile(CSVContents, Filepath);
 }
 

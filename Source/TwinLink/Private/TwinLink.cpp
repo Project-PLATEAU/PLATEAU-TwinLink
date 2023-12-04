@@ -4,6 +4,7 @@
 
 #include "Misc/TwinLinkPLATEAUCityModelEx.h"
 #include "Interfaces/IPluginManager.h"
+#include "TwinLinkCommon.h"
 void FTwinLinkModule::StartupModule() {
     bAdminMode = false;
 }
@@ -40,8 +41,7 @@ bool FTwinLinkModule::IsAdminModeEnabled() const {
     return bAdminMode;
 }
 
-TWeakObjectPtr<UPLATEAUCityObjectGroup> FTwinLinkModule::GetFacilityModelBuildingComponent() const
-{
+TWeakObjectPtr<UPLATEAUCityObjectGroup> FTwinLinkModule::GetFacilityModelBuildingComponent() const {
     const auto ModelActor = Cast<APLATEAUInstancedCityModel>(GetFacilityModel());
     if (!ModelActor)
         return nullptr;
@@ -81,9 +81,15 @@ AActor* UTwinLinkBlueprintLibrary::TwinLinkGetCityModel() {
     return FTwinLinkModule::Get().GetCityModel();
 }
 
-ESlateVisibility UTwinLinkBlueprintLibrary::AsSlateVisibility(bool visibility)
-{
+ESlateVisibility UTwinLinkBlueprintLibrary::AsSlateVisibility(bool visibility) {
     return visibility ? ESlateVisibility::Visible : ESlateVisibility::Collapsed;
+}
+
+float UTwinLinkBlueprintLibrary::GetEmissiveBoostFromEnv(UObject* WorldContextObject) {
+    if (UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull)) {
+        return TwinLinkGraphicsEnv::GetEmissiveBoostFromEnv(World);
+    }
+    return 1.0f;
 }
 
 IMPLEMENT_MODULE(FTwinLinkModule, TwinLink)
