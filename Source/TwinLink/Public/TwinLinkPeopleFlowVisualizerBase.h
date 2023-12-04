@@ -215,7 +215,7 @@ private:
         TArray<FTwinLinkSpatialID> RequestSpatialIDs;
 
         // 密度を格納した配列　ヒートマップ作成に使う
-        TArray<double> PopulationDensityArray;
+        TArray<double> PopulationArray;
 
         // ヒートレベル用
         TArray<float> HeatLevels;
@@ -310,11 +310,11 @@ private:
     int HeatmapDepth;
 
     /** 人流データの密度の最大値と最小値が設定済みであるか **/
-    bool bIsInitedMaxMinPopulationDensity;
+    bool bIsInitedMaxMinPopulation;
     /** 人流データの密度の最大値(人/m2) **/
-    double MaxPopulationDensity;
+    double MaxPopulation;
     /** 人流データの密度の最小値 **/
-    double MinPopulationDensity;
+    double MinPopulation;
 
     /** ズームレベルを引き上げるかの閾値 **/
     double ThresholdForSubdivision;

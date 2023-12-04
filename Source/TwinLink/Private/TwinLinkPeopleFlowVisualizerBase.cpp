@@ -19,8 +19,8 @@
 
 
 namespace {
-    /** cm2をkm2に変換する **/
-    const auto CM2ToKM2 = 1000000.0;
+    ///** cm2をkm2に変換する **/
+    //const auto CM2ToKM2 = 1000000.0;
 
     // デバッグ描画生存時間
     const float DRAW_DEBUG_LIFE_TIME = 0.1f;
@@ -153,13 +153,13 @@ UTwinLinkPeopleFlowVisualizerBase::UTwinLinkPeopleFlowVisualizerBase() {
     bIsRequestActiveState = bIsCurrentActiveState = true;
     bIsWaitingRequestResult = false;
 
-    bIsInitedMaxMinPopulationDensity = false;
+    bIsInitedMaxMinPopulation = false;
 
     // 東京都の市区町村別面積・人口・人口密度【2023年8月】
     // https://tisikijikan.com/tokyoto-area-population-matome/
     // 6425 人/km2
-    MaxPopulationDensity = 6425;                            // 数値は仮
-    MinPopulationDensity = MaxPopulationDensity * 0.01;     // 最大値の1％を最小値とする
+    MaxPopulation = 6425;                            // 数値は仮
+    MinPopulation = MaxPopulation * 0.01;     // 最大値の1％を最小値とする
 }
 
 
@@ -347,29 +347,29 @@ void UTwinLinkPeopleFlowVisualizerBase::OnSetMaximumAndMinimumAutomatically(cons
 
     const auto VoxelVolume = 
         VoxelHelper.SamplingVoxelOnBaseLevel.GetExtent().X * VoxelHelper.SamplingVoxelOnBaseLevel.GetExtent().Y;    // Zは無効値なので
-    MaxPopulationDensity = Max / VoxelVolume * CM2ToKM2;
-    MinPopulationDensity = Min / VoxelVolume * CM2ToKM2;
+    MaxPopulation = Max;
+    MinPopulation = Min;
 
     // 最大値が最小値以下の時 最大値を最小値よりも大きくする(システム動作のため)
-    if (MaxPopulationDensity <= MinPopulationDensity)
-        MaxPopulationDensity = MinPopulationDensity + 1.0;
+    if (MaxPopulation <= MinPopulation)
+        MaxPopulation = MinPopulation + 1.0;
 
-    UE_TWINLINK_LOG(LogTemp, Log, TEXT("MaxPopulationDensity %f"), MaxPopulationDensity);
-    UE_TWINLINK_LOG(LogTemp, Log, TEXT("MinPopulationDensity %f"), MinPopulationDensity);
+    UE_TWINLINK_LOG(LogTemp, Log, TEXT("MaxPopulation %f"), MaxPopulation);
+    UE_TWINLINK_LOG(LogTemp, Log, TEXT("MinPopulation %f"), MinPopulation);
 
 
     const auto Sys = TwinLinkSubSystemHelper::GetInstance<UTwinLinkPeopleFlowSystem>();
     Sys->OnReceivedPeopleFlowResponse.Remove(OnSetMaximumAndMinimumAutomaticallyDelegate);
 
     // 初期化済みフラグを立てる
-    bIsInitedMaxMinPopulationDensity = true;
+    bIsInitedMaxMinPopulation = true;
 
     bIsWaitingRequestResult = false;
 }
 
 void UTwinLinkPeopleFlowVisualizerBase::RequestInfoFromSpatialID() {
     // 最大値、最小値が計算されていなかったら先に最大値、最小値の計算を行う
-    if (bIsInitedMaxMinPopulationDensity == false) {
+    if (bIsInitedMaxMinPopulation == false) {
         SetMaximumAndMinimumAutomatically();
         return;
     }
@@ -451,9 +451,18 @@ void UTwinLinkPeopleFlowVisualizerBase::OnUpdatePeopleFlow(const FTWinLinkPeople
         const auto Len = FMath::Pow(2.0, ZoomDiff);
         for (int Y = 0; Y < Len; Y++) {
             for (int X = 0; X < Len; X++) {
+                //const auto& NewPopulationVal = FTwinLinkPopulationValue{
+                //PopulationVal.TimeStamp, PopulationVal.Unit,
+                //(int)(PopulationVal.PeopleFlow / FMath::Pow(4.0, ZoomDiff)) };  // 人口が少なすぎると0になる  ZoomDiffが5の時 1024
+
+                //PrimDataAry.Add(PrimPopulationData{
+                //    (int)(SpatialID.GetX() * FMath::Pow(2.0, ZoomDiff)) + X,
+                //    (int)(SpatialID.GetY() * FMath::Pow(2.0, ZoomDiff)) + Y,
+                //    NewPopulationVal.PeopleFlow });
+
                 const auto& NewPopulationVal = FTwinLinkPopulationValue{
                     PopulationVal.TimeStamp, PopulationVal.Unit,
-                    (int)(PopulationVal.PeopleFlow / FMath::Pow(4.0, ZoomDiff)) };  // 人口が少なすぎると0になる  ZoomDiffが5の時 1024
+                    (int)(PopulationVal.PeopleFlow) };
 
                 PrimDataAry.Add(PrimPopulationData{
                     (int)(SpatialID.GetX() * FMath::Pow(2.0, ZoomDiff)) + X,
@@ -471,28 +480,28 @@ void UTwinLinkPeopleFlowVisualizerBase::OnUpdatePeopleFlow(const FTWinLinkPeople
         return;
 
     // 量
-    Cache.PopulationDensityArray.Reset();
-    TArray<double>& PopulationDensityArray = Cache.PopulationDensityArray;
-    PopulationDensityArray.Reserve(PrimDataAry.Num());
-    PopulationDensityArray.AddZeroed(HeatmapWidth * HeatmapDepth);
+    Cache.PopulationArray.Reset();
+    TArray<double>& PopulationArray = Cache.PopulationArray;
+    PopulationArray.Reserve(PrimDataAry.Num());
+    PopulationArray.AddZeroed(HeatmapWidth * HeatmapDepth);
 
     // データ配列の生成
     for (const auto& Data : PrimDataAry) {
         const auto X = Data.X - (VoxelHelper.SpatialIDXMin);
         const auto Y = Data.Y - (VoxelHelper.SpatialIDYMin);
         const auto Index = X + Y * HeatmapWidth;
-        if (Index >= PopulationDensityArray.Num() || Index < 0) {
+        if (Index >= PopulationArray.Num() || Index < 0) {
             continue;
         }
 
-        PopulationDensityArray[Index] =
-            FMath::Max(Data.PeopleFlow * CM2ToKM2 / VoxelHelper.MinmumVoxelArea, DBL_MIN); // km2の密度に変換 データが0じゃない時は小さい値を入れる
+        PopulationArray[Index] =
+            FMath::Max(Data.PeopleFlow, DBL_MIN); // データが0じゃない時は小さい値を入れる
         if (Data.PeopleFlow == 0)
-            PopulationDensityArray[Index] = 0.0;
+            PopulationArray[Index] = 0.0;
     }
 
     // ヒートマップテクスチャを作成する
-    UTexture* Tex = CreateHeatmapTextureByAmount(HeatmapWidth, HeatmapDepth, MinPopulationDensity, MaxPopulationDensity, PopulationDensityArray);
+    UTexture* Tex = CreateHeatmapTextureByAmount(HeatmapWidth, HeatmapDepth, MinPopulation, MaxPopulation, PopulationArray);
 
     // エミッシブの強化値を取得する
     const auto EmissiveBoost = TwinLinkGraphicsEnv::GetEmissiveBoostFromEnv(GetWorld());
@@ -879,7 +888,7 @@ void UTwinLinkPeopleFlowVisualizerBase::FCache::Clear() {
     PrimDataAry.Reset();
     LocationsWithZoomMap.Reset();
     RequestSpatialIDs.Reset();
-    PopulationDensityArray.Reset();
+    PopulationArray.Reset();
     HeatLevels.Reset();
     HeatmapTexture = nullptr;
 }
