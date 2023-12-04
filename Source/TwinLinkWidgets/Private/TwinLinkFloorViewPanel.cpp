@@ -12,6 +12,8 @@
 #include "Components/ScrollBox.h"
 
 #include "TwinLinkAssetPlacementSystem.h"
+#include "Misc/TwinLinkActorEx.h"
+#include "TwinLinkWorldViewer.h"
 
 void UTwinLinkFloorViewPanel::SetupTwinLinkFloorView() {
     const auto CityModel = FTwinLinkModule::Get().GetFacilityModel();
@@ -172,6 +174,33 @@ void UTwinLinkFloorViewPanel::FloorViewChange(TObjectPtr<UUserWidget> Element) {
             }
         }
     }
+
+    //階層にフォーカス
+
+    const auto WorldViewer = TwinLinkActorEx::FindFirstActorInWorld<ATwinLinkWorldViewer>(GetWorld());
+    const auto Box = Cast<UStaticMeshComponent>(LinkComponents[*Key])->Bounds.GetBox();
+    const auto Distance = FMath::Abs(Box.Max.Z + 10000.0f - Box.GetCenter().Z);
+    const auto Dir = FVector(WorldViewer->GetActorForwardVector().X, WorldViewer->GetActorForwardVector().Y, 0.0f).GetSafeNormal();
+
+    FVector V0 = Box.GetCenter();
+    FVector V1 = V0 + (-Dir * Distance);
+    FVector V2 = FVector(V0.X, V0.Y, V0.Z + Distance);
+
+    //対象からのベクトル
+    const auto V01 = V1 - V0;
+    const auto V02 = V2 - V0;
+
+    //軸を求める
+    auto RotationAxis = FVector::CrossProduct(V01, V02).GetSafeNormal();
+
+    //回転
+    const auto V2Primed = FQuat(RotationAxis, FMath::DegreesToRadians(60.0f)) * V01;
+
+    //位置を求める
+    const auto v3PrimedFinal = V0 + V2Primed;
+
+    //WorldViewerを移動（対象に向く）
+    WorldViewer->SetLocationLookAt(v3PrimedFinal, V0, 0.5f);
 }
 
 void UTwinLinkFloorViewPanel::FloorViewChangeKey(const FString& Key) {
