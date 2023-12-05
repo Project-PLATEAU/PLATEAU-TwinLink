@@ -45,8 +45,8 @@ void ATwinLinkNavSystemPathLocator::Tick(float DeltaSeconds) {
     {
         FVector2D ScreenPos;
         TwinLinkNavSystemPathLocatorState S;
-        auto WarTextVisible = TryGetShowWarnText(ScreenPos, S);
-        if (WarTextVisible) {
+        const auto WarnTextVisible = TryGetShowWarnText(ScreenPos, S);
+        if (WarnTextVisible) {
             if (!WarnTextWidget && WarnTextWidgetBp) {
                 APlayerController* Controller = UGameplayStatics::GetPlayerController(GetWorld(), 0);
                 WarnTextWidget = CreateWidget(GetWorld(), WarnTextWidgetBp);
@@ -55,9 +55,19 @@ void ATwinLinkNavSystemPathLocator::Tick(float DeltaSeconds) {
         }
 
         if (WarnTextWidget) {
-            WarnTextWidget->SetVisibility(UTwinLinkBlueprintLibrary::AsSlateVisibility(WarTextVisible));
-            if (WarTextVisible)
+            WarnTextWidget->SetVisibility(UTwinLinkBlueprintLibrary::AsSlateVisibility(WarnTextVisible));
+            if (WarnTextVisible)
                 WarnTextWidget->SetPositionInViewport(ScreenPos);
+        }
+
+        // 警告状態かどうかをマテリアルに渡す
+        TArray<UActorComponent*> Comps;
+        GetComponents(UStaticMeshComponent::StaticClass(), Comps);
+        for (const auto P : Comps) {
+            if (const auto StaMesh = Cast<UStaticMeshComponent>(P)) {
+                const auto Mat = StaMesh->CreateAndSetMaterialInstanceDynamicFromMaterial(0, StaMesh->GetMaterial(0));
+                Mat->SetScalarParameterValue(FName(TEXT("WarnCoef")), WarnTextVisible ? 1.f : 0.f);
+            }
         }
     }
 
