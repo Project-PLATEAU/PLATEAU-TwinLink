@@ -8,6 +8,7 @@
 #include "Misc/TwinLinkPLATEAUCityObjectGroupEx.h"
 #include "Misc/TwinLinkPLATEAUGeoReferenceEx.h"
 #include "Kismet/GameplayStatics.h"
+#include "Misc/TwinLinkPLATEAUCityModelEx.h"
 
 namespace {
 }
