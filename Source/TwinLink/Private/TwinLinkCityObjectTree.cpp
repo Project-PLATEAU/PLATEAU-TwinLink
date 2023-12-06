@@ -1,10 +1,11 @@
-#pragma once
+﻿#pragma once
 #include "TwinLinkCityObjectTree.h"
 
 #include <chrono>
 
 #include "Misc/TwinLinkActorEx.h"
 #include "Misc/TwinLinkMathEx.h"
+#include "Misc/TwinLinkPLATEAUCityModelEx.h"
 #include "Misc/TwinLinkPLATEAUCityObjectGroupEx.h"
 #include "Misc/TwinLinkPLATEAUGeoReferenceEx.h"
 #include "Kismet/GameplayStatics.h"
