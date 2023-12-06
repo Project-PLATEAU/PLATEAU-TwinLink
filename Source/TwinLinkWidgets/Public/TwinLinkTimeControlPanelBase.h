@@ -74,14 +74,29 @@ public:
      * @return 
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
-    FDateTime GetCurrentDateTime() const;
+    FDateTime GetSelectedDateTime() const;
+
+    /**
+     * @brief 現在の設定時刻を取得する
+     * @return
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+    float GetOffsetDateAsNormalized() const;
+
+    /**
+     * @brief 現在の設定時刻を取得する
+     * @return
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+    float GetOffsetTimeAsNormalized() const;
 
     /**
      * @brief 設定時刻が変更された時に呼び出される
      * @param InDateTime 
+     * @param bIsRealTime
     */
     UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
-    void OnChangedSelectDateTime(const FDateTime& InDateTime);
+    void OnChangedSelectDateTime(const FDateTime& InDateTime, bool bIsRealTime = false);
 
     /**
      * @brief リアルタイムモードが変更された
@@ -89,6 +104,13 @@ public:
     */
     UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
     void OnChangedRealtimeMode(bool bIsActive);
+
+    /**
+     * @brief スライダーの値を変更する
+     * @param bIsActive
+    */
+    UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
+    void ChangedSlideValue(float DayStep, float TimeStep);
 
     /**
      * @brief 基準の日時からを1週間の範囲を取得する
@@ -107,7 +129,23 @@ private:
     */
     double NormalizeDateTimeAsDay(const FTimespan& Date) const;
 
-private:
+    /**
+     * @brief 指定時間の設定
+     * @param Offset 
+     * @param Step 
+    */
+    void SetRealTime();
+
+    /**
+     * @brief OffsetDateTime, SlideTimespanを指定した時間から計算する
+     * @param InTime 
+    */
+    void CalcTimeParamter(const FDateTime& InTime);
+
+private:    
+    /** リアルタイムの時間による更新頻度 **/
+    const float RealtimeUpdateRate = 60.0f;
+
     /** 表示される期間の最初の地点 **/
     FDateTime StartDateTime;
 

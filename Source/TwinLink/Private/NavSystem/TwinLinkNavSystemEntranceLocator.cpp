@@ -7,6 +7,7 @@
 #include "TwinLinkPlayerController.h"
 #include "Misc/TwinLinkWidgetEx.h"
 #include "Components/PanelWidget.h"
+#include "Misc/TwinLinkActorEx.h"
 #include "NavSystem/TwinLinkNavSystem.h"
 
 TArray<FTwinLinkEntranceLocatorNode*>& FTwinLinkEntranceLocatorNode::AllNodes() {
@@ -103,6 +104,12 @@ void ATwinLinkNavSystemEntranceLocator::BeginPlay() {
 void ATwinLinkNavSystemEntranceLocator::Tick(float DeltaTime) {
     Super::Tick(DeltaTime);
 
+    // 見えていない時は何もしない
+    if (IsHidden()) {
+        if(IsSelected)
+            UnSelect();
+        return;
+    }
     const auto TwinLinkNavSystem = ATwinLinkNavSystem::GetInstance(GetWorld());
     const auto DemCollisionAabb = TwinLinkNavSystem->GetDemCollisionAabb();
 

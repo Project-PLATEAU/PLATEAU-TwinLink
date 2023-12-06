@@ -21,7 +21,7 @@ public:
      * @param RotationEuler
      * @return 成否
     */
-    bool Setup(const int PlacementPresetID, const FVector& PlacementPosition, const FVector& PlacementRotationEuler);
+    bool Setup(const int PlacementPresetID, const FVector& PlacementPosition, const FVector& PlacementRotationEuler, const FVector& PlacementScale);
 
     /**
      * @brief 初期化
@@ -51,6 +51,13 @@ public:
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
         FVector GetRotationEuler() const { return RotationEuler; }
 
+    /**
+     * @brief 拡縮情報の取得
+     * @return
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        FVector GetScale() const { return Scale; }
+
 private:
     /** プリセットID **/
     int PresetID;
@@ -58,4 +65,6 @@ private:
     FVector Position;
     /** 回転情報 **/
     FVector RotationEuler;
+    /** 拡縮情報 **/
+    FVector Scale;
 };

@@ -746,7 +746,7 @@ void ATwinLinkNavSystem::OnFacilityClick(FHitResult Info) const {
 void ATwinLinkNavSystem::Clear() {
     if (NowPathFinder) {
         NowPathFinder->Clear();
-        NowPathFinder->Destroy();
+        NowPathFinder->Destroy(true);
     }
     NowPathFinder = nullptr;
     // 既存のパス描画クラスを削除

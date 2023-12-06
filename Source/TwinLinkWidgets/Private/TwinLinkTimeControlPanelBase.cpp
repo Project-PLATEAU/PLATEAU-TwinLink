@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
 #include "TwinLinkTimeControlPanelBase.h"
@@ -25,22 +25,39 @@ void UTwinLinkTimeControlPanelBase::Setup() {
     const auto Now = FDateTime::Now();
     const auto T = Now - FTimespan((SelectableDaySpan - 1), 0, 0, 0, 0);  // SelectableDaySpanが7の時  Now-6, Now-5,... ,Now-1,Now
     StartDateTime = FDateTime(T.GetYear(), T.GetMonth(), T.GetDay());
-    OffsetDateTime = StartDateTime;
+    CalcTimeParamter(Now);  // OffsetDateTime, SlideTimespan
     SetupWBP();
 }
 
 void UTwinLinkTimeControlPanelBase::SetSlideTimespan(float Step) {
-    //// 24時間以内
+    // 24時間以内
     const auto HoursF = FMath::Lerp(0.0, 24.0, Step); // 小数付き
     const auto Hours = FMath::FloorToInt(HoursF);
-    //const auto MinutesF = (HoursF - Hours) * 60.0;      // 小数付き
-    //const auto Minutes = FMath::FloorToInt(MinutesF);
-    //const auto SecondsF = (MinutesF - Minutes) * 60.0; // 小数付き
-    //const auto Seconds = FMath::FloorToInt(SecondsF);
 
     SlideTimespan = FTimespan(Hours, 0, 0);
     
-    OnChangedSelectDateTime(GetCurrentDateTime());
+    OnChangedSelectDateTime(GetSelectedDateTime());
+
+}
+
+void UTwinLinkTimeControlPanelBase::SetRealTime() {
+    const auto Now = FDateTime::Now();
+    CalcTimeParamter(Now);
+    OnChangedSelectDateTime(GetSelectedDateTime(), true);
+
+}
+
+void UTwinLinkTimeControlPanelBase::CalcTimeParamter(const FDateTime& InTime) {
+    const auto Offset = FDateTime(InTime.GetYear(), InTime.GetMonth(), InTime.GetDay());
+    const auto Step = NormalizeDateTimeAsDay(FTimespan(InTime.GetHour(), InTime.GetMinute(), InTime.GetSecond()));
+
+    OffsetDateTime = Offset;
+
+    // 24時間以内
+    const auto HoursF = FMath::Lerp(0.0, 24.0, Step); // 小数付き
+    const auto Hours = FMath::FloorToInt(HoursF);
+
+    SlideTimespan = FTimespan(Hours, 0, 0);
 
 }
 
@@ -52,16 +69,13 @@ void UTwinLinkTimeControlPanelBase::ActivateRealtimeMode(bool bIsActive) {
         return;
 
     if (bIsActive) {
-        const float Rate = 0.05f;
         const bool bLoop = true;
         const float FirstDelay = 0.0f;
         const auto UpdateDateTimeFromNow = [this]() {
-            const auto Now = FDateTime::Now();
-            SetOffsetDateTime(FDateTime(Now.GetYear(), Now.GetMonth(), Now.GetDay()));
-            const auto Step = NormalizeDateTimeAsDay(FTimespan(Now.GetHour(), Now.GetMinute(), Now.GetSecond()));
-            SetSlideTimespan(Step);
+            SetRealTime();
             };
-        TimerManager.SetTimer(RealTimeModeUpdateTimerHnd, UpdateDateTimeFromNow, Rate, bLoop, FirstDelay);
+        TimerManager.SetTimer(RealTimeModeUpdateTimerHnd, UpdateDateTimeFromNow, RealtimeUpdateRate, bLoop, FirstDelay);
+        SetRealTime();
     }
     else {
         TimerManager.ClearTimer(RealTimeModeUpdateTimerHnd);
@@ -73,23 +87,39 @@ void UTwinLinkTimeControlPanelBase::ActivateRealtimeMode(bool bIsActive) {
 void UTwinLinkTimeControlPanelBase::SetOffsetDateTime(const FDateTime& Offset) {
     OffsetDateTime = Offset;
 
-    OnChangedSelectDateTime(GetCurrentDateTime());
+    OnChangedSelectDateTime(GetSelectedDateTime());
 }
 
 void UTwinLinkTimeControlPanelBase::SetOffsetDateTimeFromStep(const float& Step) {
     const auto PassedDay = (int)(Step * (SelectableDaySpan - 1));   // 当日に合わせるため 
     OffsetDateTime = StartDateTime + FTimespan(PassedDay, 0, 0, 0);
 
-    OnChangedSelectDateTime(GetCurrentDateTime());
+    OnChangedSelectDateTime(GetSelectedDateTime());
 }
 
-FDateTime UTwinLinkTimeControlPanelBase::GetCurrentDateTime() const {
+FDateTime UTwinLinkTimeControlPanelBase::GetSelectedDateTime() const {
     FDateTime Ret = OffsetDateTime + SlideTimespan;
     const auto Now = FDateTime::Now();
     if (Ret >= Now) {
         Ret = FDateTime(Now.GetYear(), Now.GetMonth(), Now.GetDay(), Now.GetHour());
     }
     return Ret;
+}
+
+float UTwinLinkTimeControlPanelBase::GetOffsetDateAsNormalized() const {
+    const auto Now = FDateTime::Now();
+    const auto NowOffset = Now - StartDateTime;
+    const auto OffsetDateFromStart = OffsetDateTime - (StartDateTime - FTimespan(1, 0, 0));
+    const auto TimeSpan = FTimespan(SelectableDaySpan - 1, 0, 0, 0);
+    const auto Step = (float)OffsetDateFromStart.GetTicks() / TimeSpan.GetTicks();
+    return Step;
+}
+
+float UTwinLinkTimeControlPanelBase::GetOffsetTimeAsNormalized() const {
+    const auto TimeSpan = FTimespan(24, 0, 0);
+    const auto Step = (float)SlideTimespan.GetTicks() / TimeSpan.GetTicks();
+    return Step;
+
 }
 
 const TArray<FDateTime> UTwinLinkTimeControlPanelBase::GetWeekCollection() const {

@@ -167,6 +167,7 @@ UTwinLinkPeopleFlowVisualizerBase::UTwinLinkPeopleFlowVisualizerBase() {
 void UTwinLinkPeopleFlowVisualizerBase::BeginPlay() {
     Super::BeginPlay();
 
+    PeopleFlowApi = NewObject<UTwinLinkPeopleFlowApi>();
     // ...
 
     UpdatePeopleFlowDelegate.BindUFunction(this, FName("OnUpdatePeopleFlow"));
@@ -217,7 +218,7 @@ void UTwinLinkPeopleFlowVisualizerBase::InitVisualizer(APLATEAUInstancedCityMode
     MaxZoomLevel = InMaxZoomLevel;
 
     // 時間の設定
-    CurrentVisualizeTime = FDateTime::Now();
+    CurrentVisualizeTime = std::nullopt;
 
     // ヒートマップのエリアを算出
     FVector Center = CityModelHelper.DemCenter;
@@ -308,16 +309,19 @@ void UTwinLinkPeopleFlowVisualizerBase::SetMaximumAndMinimumAutomatically() {
     // データを要求する
     //...
 
-    const auto Sys = TwinLinkSubSystemHelper::GetInstance<UTwinLinkPeopleFlowSystem>();
-    Sys->OnReceivedPeopleFlowResponse.AddUnique(OnSetMaximumAndMinimumAutomaticallyDelegate);
+    PeopleFlowApi->OnReceivedPeopleFlowResponse.AddUnique(OnSetMaximumAndMinimumAutomaticallyDelegate);
 
-    FTwinLinkPeopleFlowApiRequest Req{ RequestIDs, CurrentVisualizeTime };
-    Sys->Request(Req);
+    FTwinLinkPeopleFlowApiRequest Req{ RequestIDs, CurrentVisualizeTime.value_or(FDateTime()), CurrentVisualizeTime.has_value()};
+    PeopleFlowApi->Request(Req);
     //OnSetMaximumAndMinimumAutomatically(TestCreateTestData(Req.SpatialIds, MaxZoomLevel));
 }
 
 void UTwinLinkPeopleFlowVisualizerBase::SetVisualizeTime(const FDateTime& Time) {
     CurrentVisualizeTime = Time;
+}
+
+void UTwinLinkPeopleFlowVisualizerBase::SetVisualizeRealTime() {
+    CurrentVisualizeTime = std::nullopt;
 }
 
 void UTwinLinkPeopleFlowVisualizerBase::OnSetMaximumAndMinimumAutomatically(const FTWinLinkPeopleFlowApiResult& DataArray) {
@@ -326,8 +330,7 @@ void UTwinLinkPeopleFlowVisualizerBase::OnSetMaximumAndMinimumAutomatically(cons
     if (DataArray.bSuccess == false) {
         UE_TWINLINK_LOG(LogTemp, Log, TEXT("Request failed : UTwinLinkPeopleFlowVisualizerBase"));
         // リクエスト結果を待たない
-        const auto Sys = TwinLinkSubSystemHelper::GetInstance<UTwinLinkPeopleFlowSystem>();
-        Sys->OnReceivedPeopleFlowResponse.Remove(OnSetMaximumAndMinimumAutomaticallyDelegate);
+        PeopleFlowApi->OnReceivedPeopleFlowResponse.Remove(OnSetMaximumAndMinimumAutomaticallyDelegate);
         bIsWaitingRequestResult = false;
 
         return;
@@ -357,9 +360,7 @@ void UTwinLinkPeopleFlowVisualizerBase::OnSetMaximumAndMinimumAutomatically(cons
     UE_TWINLINK_LOG(LogTemp, Log, TEXT("MaxPopulation %f"), MaxPopulation);
     UE_TWINLINK_LOG(LogTemp, Log, TEXT("MinPopulation %f"), MinPopulation);
 
-
-    const auto Sys = TwinLinkSubSystemHelper::GetInstance<UTwinLinkPeopleFlowSystem>();
-    Sys->OnReceivedPeopleFlowResponse.Remove(OnSetMaximumAndMinimumAutomaticallyDelegate);
+    PeopleFlowApi->OnReceivedPeopleFlowResponse.Remove(OnSetMaximumAndMinimumAutomaticallyDelegate);
 
     // 初期化済みフラグを立てる
     bIsInitedMaxMinPopulation = true;
@@ -404,11 +405,10 @@ void UTwinLinkPeopleFlowVisualizerBase::RequestInfoFromSpatialID() {
 
     bIsWaitingRequestResult = true;
 
-    const auto Sys = TwinLinkSubSystemHelper::GetInstance<UTwinLinkPeopleFlowSystem>();
-    Sys->OnReceivedPeopleFlowResponse.AddUnique(UpdatePeopleFlowDelegate);
+    PeopleFlowApi->OnReceivedPeopleFlowResponse.AddUnique(UpdatePeopleFlowDelegate);
 
-    FTwinLinkPeopleFlowApiRequest Req{ RequestSpatialIDs, CurrentVisualizeTime };
-    Sys->Request(Req);
+    FTwinLinkPeopleFlowApiRequest Req{ RequestSpatialIDs, CurrentVisualizeTime.value_or(FDateTime()), CurrentVisualizeTime.has_value() };
+    PeopleFlowApi->Request(Req);
     //OnUpdatePeopleFlow(TestCreateTestData(Req.SpatialIds, MaxZoomLevel));
 }
 
@@ -421,8 +421,7 @@ void UTwinLinkPeopleFlowVisualizerBase::OnUpdatePeopleFlow(const FTWinLinkPeople
     if (Result.bSuccess == false) {
         UE_TWINLINK_LOG(LogTemp, Log, TEXT("Request failed : UTwinLinkPeopleFlowVisualizerBase"));
         // リクエスト結果を待たない
-        const auto Sys = TwinLinkSubSystemHelper::GetInstance<UTwinLinkPeopleFlowSystem>();
-        Sys->OnReceivedPeopleFlowResponse.Remove(UpdatePeopleFlowDelegate);
+        PeopleFlowApi->OnReceivedPeopleFlowResponse.Remove(UpdatePeopleFlowDelegate);
         bIsWaitingRequestResult = false;
         return;
     }
@@ -515,8 +514,7 @@ void UTwinLinkPeopleFlowVisualizerBase::OnUpdatePeopleFlow(const FTWinLinkPeople
     // 
     UpdateActiveState();
 
-    const auto Sys = TwinLinkSubSystemHelper::GetInstance<UTwinLinkPeopleFlowSystem>();
-    Sys->OnReceivedPeopleFlowResponse.Remove(UpdatePeopleFlowDelegate);
+    PeopleFlowApi->OnReceivedPeopleFlowResponse.Remove(UpdatePeopleFlowDelegate);
 
     // リクエスト結果を待たない
     bIsWaitingRequestResult = false;

@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/SceneComponent.h"
 #include "Misc/DateTime.h"
-#include "TwinLinkPeopleFlowSystem.h"
+#include "TwinLinkPeopleFlowApi.h"
 #include "TwinLinkPeopleFlowVisualizerBase.generated.h"
 
 class FPLATEAUGeoReference;
@@ -63,6 +63,11 @@ public:
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
     void SetVisualizeTime(const FDateTime& Time);
+    /**
+     * @brief 現在の時間帯を指定する
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+    void SetVisualizeRealTime();
 
 
     /**
@@ -280,12 +285,15 @@ private:
         double Altitude);
 
 private:
+    UPROPERTY()
+    TObjectPtr<UTwinLinkPeopleFlowApi> PeopleFlowApi;
+
     /** 都市モデルデータ関係の補助構造体 **/
     FCityModelHelper CityModelHelper;
     /** 空間IDボクセル関係の補助構造体 **/
     FVoxelHelper VoxelHelper;
     /** 表示中の時間 **/
-    FDateTime CurrentVisualizeTime;
+    std::optional<FDateTime> CurrentVisualizeTime;
 
     // 基準のズームレベル 20~24 (サーバーが負荷に耐えられないので一時的に17-19を推奨)
     int BaseZoomLevel;        // BASE_ZOOM_LEVEL < LIMIT_MAX_ZOOM_LEVEL
