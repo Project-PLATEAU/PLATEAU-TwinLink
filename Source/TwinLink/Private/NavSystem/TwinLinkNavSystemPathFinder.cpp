@@ -63,7 +63,6 @@ bool ATwinLinkNavSystemPathFinder::TryGetCameraLocationAndLookAt(const FVector& 
     const auto HasStart = TryGetPathLocation(TwinLinkNavSystemPathPointType::Start, Start);
     FVector Dest;
     const auto HasDest = TryGetPathLocation(TwinLinkNavSystemPathPointType::Dest, Dest);
-
     const auto NavSystem = ATwinLinkNavSystem::GetInstance(GetWorld());
     if (!NavSystem)
         return false;
@@ -72,16 +71,26 @@ bool ATwinLinkNavSystemPathFinder::TryGetCameraLocationAndLookAt(const FVector& 
         return false;
     if (HasStart && HasDest) {
         const auto Center = (Start + Dest) * 0.5f;
-        // Start -> Destの法線を求める
+
+        // Start/Destが対象になるような位置/方向にカメラを置いたときに
+        // その二つがスクリーン上のRangeの位置に来るような距離Depthを求める
+        const auto PlayerController = GetWorld()->GetFirstPlayerController();
+        FMinimalViewInfo ViewInfo;
+        PlayerController->GetViewTarget()->CalcCamera(0.f, ViewInfo);
+        const auto Near = FMath::Tan(FMath::DegreesToRadians(ViewInfo.FOV) * 0.5f);
+        const auto Range = FMath::Max(1e-4f, Param->RouteGuideStartCameraScreenRange);
+        // Start -> Destの法線を求める (#NOTE : Start/Destの高さにあまり差がない前提)
         auto Dir = (Dest - Start);
+        const auto Len = Dir.Length() * 0.5f;
+        const auto Depth = FMath::Max(Param->RouteGuideStartCameraMinDist, Len / Range * Near);
+
         Dir = FVector(Dir.Y, -Dir.X, 0).GetSafeNormal();
         // 現在のカメラ位置に近いほうにする
         if (Dir.Dot(NowCameraLocation - Center) < 0)
             Dir = -Dir;
         double PhiSi, PhiCo;
         FMath::SinCos(&PhiSi, &PhiCo, FMath::DegreesToRadians(Param->RouteGuideStartCameraRotDist.Y));
-        const auto R = Param->RouteGuideStartCameraRotDist.Z;
-        OutLocation = Center + R * (PhiCo * Dir + PhiSi * FVector::UpVector);
+        OutLocation = Center + Depth * (PhiCo * Dir + PhiSi * FVector::UpVector);
         OutLookAt = Center;
         return true;
     }
