@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "TwinLinkWidgetBase.h"
+#include "TwinLinkAssetPlacementElement.h"
 #include "TwinLinkAssetPlacementPanel.generated.h"
 
 // コレクションへの参照
@@ -23,7 +24,16 @@ public:
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
         void SetupOnTwinLink();
 
+    /**
+     * @brief アセット配置を抜ける
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        void TwinLinkAssetPlacementExit();
 private:
     /** システム層が保持するコレクションへの参照 **/
     TWeakObjectPtr<UTwinLinkObservableCollection> ObservableCollection;
+
+public:
+    /** 選択中エレメント **/
+    TObjectPtr<UTwinLinkAssetPlacementElement> CurrentElement;
 };

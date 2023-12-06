@@ -77,7 +77,7 @@ public:
      * @param Rotation
      * @return
     */
-    AActor* SpawnAssetPlacementActor(const TObjectPtr<UStaticMesh> Soil, const FVector& Location, const FRotator& Rotation);
+    AActor* SpawnAssetPlacementActor(const TObjectPtr<UStaticMesh> Soil, const FVector& Location, const FRotator& Rotation, const FVector& Scale);
 
     /**
      * @brief アセットの配置情報を削除する
@@ -129,7 +129,8 @@ public:
      * @brief マウスカーソルがWidgetに乗っているか
      * @return
     */
-    bool IsWidgetUnderMouseCursor();
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        bool TwinLinkAssetPlacementIsWidgetUnderMouseCursor();
 
     /**
      * @brief 配置未確定アクタの位置を確定
@@ -147,6 +148,18 @@ public:
      * @brief 配置済みアクタを取得
     */
     void GetAssetPlacementActors(TArray<TObjectPtr<AActor>>& OutArray) { AssetPlacementActorCollection.GenerateValueArray(OutArray); }
+
+    /**
+     * @brief 配置未確定アクタを破棄
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        void TwinLinkAssetPlacementClearUnsettledActor();
+
+    /**
+     * @brief 配置済みアクタかどうか判定
+    */
+    UFUNCTION(BlueprintPure, Category = "TwinLink")
+        bool TwinLinkAssetPlacementIsPresetActor(AActor* Actor);
 private:
 
     /**

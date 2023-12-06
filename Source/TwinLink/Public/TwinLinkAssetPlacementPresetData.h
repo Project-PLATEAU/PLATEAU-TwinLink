@@ -21,7 +21,7 @@ public:
         TObjectPtr<UTexture2D> WidgetTexture;
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
         /** スタティックメッシュ **/
-        TObjectPtr<UObject> AssetSils;
+        TSoftObjectPtr<UObject> AssetSils;
 public:
     FTwinLinkAssetPlacementPresetData() {
         PresetID = 0;
