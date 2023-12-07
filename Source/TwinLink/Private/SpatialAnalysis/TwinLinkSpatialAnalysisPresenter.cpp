@@ -72,11 +72,11 @@ void ATwinLinkSpatialAnalysisPresenter::CheckSpatialIdChanged(const std::optiona
 }
 
 bool ATwinLinkSpatialAnalysisPresenter::IsValidSpatialId() const {
-    auto NowSelectedId = GetNowSpatialId();
+    const auto NowSelectedId = GetNowSpatialId();
     if (NowSelectedId.has_value() == false)
         return false;
     if (const auto Tree = GetTree()) {
-        return Tree->GetRangeVoxelSpace().IsInsideXY((*NowSelectedId).ZoomChanged(FTwinLinkSpatialID::MAX_ZOOM_LEVEL).ToVector());
+        return Tree->ContainsXYVoxelSpace(*NowSelectedId);
     }
     return false;
 }

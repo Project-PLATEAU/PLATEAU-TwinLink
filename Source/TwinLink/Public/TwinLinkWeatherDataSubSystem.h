@@ -49,7 +49,7 @@ public:
     /**
      * @brief スマートポールデータをインポート
     */
-    void ImportSmartPole(const FString& Directory);
+    int ImportSmartPole(const FString& Directory);
     /**
      * @brief スマートポールデータをパース
     */

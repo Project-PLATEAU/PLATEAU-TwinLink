@@ -333,7 +333,7 @@ bool ATwinLinkNavSystem::TryDemHeightMapIndexToCell(int Index, int& OutX, int& O
 }
 
 double ATwinLinkNavSystem::GetDemHeightMax() {
-    auto ret = DemHeightMap[0];
+    auto ret = DemHeightMap.IsEmpty() ? 0.0l : DemHeightMap[0];
     for (const auto& Dem : DemHeightMap) {
         if (Dem > ret) {
             ret = Dem;

@@ -202,6 +202,11 @@ public:
     TArray<FCityObjectFindInfo> FindCityObjectGroups(const FTwinLinkSpatialID& SpatialId) const;
 
     /*
+     * @brief : 全体領域とSpatialIdで指定させる領域がかぶっているかどうか
+     */
+    bool ContainsXYVoxelSpace(const FTwinLinkSpatialID& SpatialId) const;
+
+    /*
      * @brief : この領域の最小ズーム/最大ズームを返す
      */
     UFUNCTION(BlueprintPure)

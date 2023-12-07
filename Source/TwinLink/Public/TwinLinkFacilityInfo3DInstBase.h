@@ -61,6 +61,14 @@ public:
     UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
     void OnPostReset();
 
+
+
+protected:
+    /* 表示位置の高さオフセット */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "TwinLink", meta = (ClampMin = "0", UIMin = "0", ForceUnits = "cm"))
+    float HeightOffset = 2500.0f;
+
+
 private:
     /**
     * @brief システム層が保持するコレクションへの参照

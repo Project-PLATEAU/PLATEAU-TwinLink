@@ -191,6 +191,10 @@ std::optional<FVector> ATwinLinkNavSystemEntranceLocator::GetPathLocation() cons
 void ATwinLinkNavSystemEntranceLocator::SetEntranceLocation(const UTwinLinkFacilityInfo* Info) {
     if (Info->GetEntrances().Num() > 0) {
         UpdateLocation(FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld()), Info->GetEntrances()[0]);
+
+        // 外部から直接書き換えたときは選択状態解除する(たまたま移動先でマウスプレス状態だった時のことを考えて)
+        if (IsSelected)
+            UnSelect();
     }
     // 設定されていない場合は建物のBbからデフォルト位置を設定する
     else {
@@ -205,14 +209,21 @@ void ATwinLinkNavSystemEntranceLocator::SetDefaultEntranceLocation(const FString
             const auto Facility = FacilitySystem->FindFacility(FeatureId);
             if (Facility.IsValid()) {
                 FVector OutPos;
-                if (ATwinLinkNavSystem::GetInstance(GetWorld())->FindNavMeshPoint(NavSys, Cast<UStaticMeshComponent>(Facility), OutPos))
+                if (ATwinLinkNavSystem::GetInstance(GetWorld())->FindNavMeshPoint(NavSys, Cast<UStaticMeshComponent>(Facility), OutPos)) {
                     Location = OutPos;
-                else
-                    Location = Facility->GetComponentLocation();
+                }
+                else {
+                    // #NOTE : GetComponentLocationだとZeroが返るのでBoundsにする
+                    Location = Facility->Bounds.Origin;
+                }
             }
         }
     }
     UpdateLocation(FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld()), Location);
+
+    // 外部から直接書き換えたときは選択状態解除する
+    if (IsSelected)
+        UnSelect();
 }
 
 bool ATwinLinkNavSystemEntranceLocator::IsValidLocation() const {

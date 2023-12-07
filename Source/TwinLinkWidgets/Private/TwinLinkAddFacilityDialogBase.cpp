@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #include "TwinLinkAddFacilityDialogBase.h"
 
@@ -9,6 +9,7 @@
 #include "TwinLinkPersistentPaths.h"
 #include "TwinLinkWorldViewer.h"
 #include "TwinLinkFacilityInfoSystem.h"
+#include "Misc/TwinLinkWidgetEx.h"
 #include "NavSystem/TwinLinkNavSystem.h"
 #include "NavSystem/TwinLinkNavSystemEntranceLocator.h"
 #include "NavSystem/TwinLinkNavSystemPathFinder.h"
@@ -22,6 +23,10 @@ void UTwinLinkAddFacilityDialogBase::Setup() {
     check(WorldViewer.IsValid());
     // クリック時にイベントを追加する
     WorldViewer->EvOnClickedFacility.AddLambda([this](FHitResult HitResult) {
+        // #NOTE : 追加ダイアログが出ているときはクリックしても選択建物変更しない
+        if (TwinLinkWidgetEx::IsVisibleIncludeOuter(this))
+            return;
+
         FeatureID = HitResult.Component->GetName();
         UE_TWINLINK_LOG(LogTemp, Log, TEXT("FeatureID %s"), *FeatureID);
 
