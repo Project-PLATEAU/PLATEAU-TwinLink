@@ -24,11 +24,13 @@ void UTwinLinkFacilityInfo3DPanelBase::Setup(UObject* Info, float MinimumHeightT
 
     const auto NavigationBounds = Facility.Get()->GetNavigationBounds();
     const auto Center = NavigationBounds.GetCenter();
-    const auto ExtentY = NavigationBounds.GetExtent().Y;
+    const auto ExtentZ = NavigationBounds.GetExtent().Z;
 
-    const auto PosZ = FMath::Max(Center.Z + ExtentY, MinimumHeightToDisplay);
+    const auto PosZ = FMath::Max(Center.Z + ExtentZ, MinimumHeightToDisplay);
     DisplayPosition = FVector(Center.X, Center.Y, PosZ);
 
+    //DrawDebugBox(GetWorld(), Center, NavigationBounds.GetExtent(), FColor::Blue, true);
+    //DrawDebugSphere(GetWorld(), DisplayPosition, 2000, 16, FColor::Green, true);
 }
 
 FVector3d UTwinLinkFacilityInfo3DPanelBase::GetDisplayPosition() const {
