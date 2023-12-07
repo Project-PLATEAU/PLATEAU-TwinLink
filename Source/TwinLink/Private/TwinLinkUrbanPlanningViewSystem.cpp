@@ -30,7 +30,7 @@ void UTwinLinkUrbanPlanningViewSystem::TwinLinkShowUrbanPlanning() {
 
     auto NavSystem = ATwinLinkNavSystem::GetInstance(GetWorld());
 
-    double DemHeight = NavSystem->GetDemHeightMax();
+    double DemHeight = NavSystem != nullptr ? NavSystem->GetDemHeightMax() : 0;
 
     TArray<UPLATEAUCityObjectGroup*> CityObjects;
     CityModel->GetComponents<UPLATEAUCityObjectGroup>(CityObjects);
@@ -85,8 +85,8 @@ void UTwinLinkUrbanPlanningViewSystem::TwinLinkShowUrbanPlanning() {
             const auto OffsetStartPoint = Edge.StartPoint + OffsetBase + OffsetRate;
             const auto OffsetEndPoint = Edge.EndPoint + OffsetBase + OffsetRate;
 
-            const auto StartPointZ = NavSystem->GetDemHeight(FVector2D(Edge.StartPoint)).value();
-            const auto EndPointZ = NavSystem->GetDemHeight(FVector2D(Edge.EndPoint)).value();
+            const auto StartPointZ = NavSystem != nullptr ? NavSystem->GetDemHeight(FVector2D(Edge.StartPoint)).value() : Edge.StartPoint.Z;
+            const auto EndPointZ = NavSystem != nullptr ? NavSystem->GetDemHeight(FVector2D(Edge.EndPoint)).value() : Edge.EndPoint.Z;
 
             const auto StartPoint = FVector(Edge.StartPoint.X, Edge.StartPoint.Y, StartPointZ);
             const auto EndPoint = FVector(Edge.EndPoint.X, Edge.EndPoint.Y, StartPointZ);

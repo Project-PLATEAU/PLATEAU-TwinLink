@@ -158,6 +158,9 @@ void UTwinLinkFloorViewPanel::FloorViewChange(TObjectPtr<UUserWidget> Element) {
     AssetPlacementSys.Get()->GetAssetPlacementActors(Assets);
 
     for (const auto& Asset : Assets) {
+        if (Asset == nullptr) {
+            continue;
+        }
         Asset->SetActorHiddenInGame(false);
     }
 

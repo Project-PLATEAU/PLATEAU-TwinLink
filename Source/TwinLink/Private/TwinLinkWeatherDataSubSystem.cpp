@@ -9,7 +9,9 @@
 #include "PLATEAUInstancedCityModel.h"
 #include "PLATEAUGeometry.h"
 
-void UTwinLinkWeatherDataSubSystem::ImportSmartPole(const FString& Directory) {
+int UTwinLinkWeatherDataSubSystem::ImportSmartPole(const FString& Directory) {
+    int FileCount = 0;
+
     //相対パスを絶対パスに変換
     const auto AbsoluteDirectory = FPaths::ConvertRelativePathToFull(Directory);
 
@@ -58,11 +60,15 @@ void UTwinLinkWeatherDataSubSystem::ImportSmartPole(const FString& Directory) {
         }
 
         FileNames.Add(File);
+
+        FileCount++;
     }
 
     LoadSmartPoleDefine();
 
     LoadSmartPolePair();
+
+    return FileCount;
 }
 
 void UTwinLinkWeatherDataSubSystem::Parse(const TArray<FString>& StrData) {

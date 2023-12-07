@@ -14,7 +14,9 @@ void UTwinLinkWeatherDataPanel::TwinLinkWeatherDataGetSource(const FString& Dire
         return;
     }
 
-    WeatherDataSubSystem.Get()->ImportSmartPole(Directory);
+    if (WeatherDataSubSystem.Get()->ImportSmartPole(Directory) == 0) {
+        return;
+    }
 
     TwinLinkShowWeatherData();
 
