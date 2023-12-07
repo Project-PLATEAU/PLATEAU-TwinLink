@@ -32,6 +32,12 @@ public:
     UPROPERTY(EditAnywhere, meta = (Comment = "経路探索時開始時の開始地点からのオフセット(X:Θ, Y:φ, Z:距離)"), Category = "Path")
         FVector RouteGuideStartCameraRotDist = FVector(30, 85, 10000);
 
+    UPROPERTY(EditAnywhere, meta = (Comment = "経路探索時開始時にピンを画面のこの範囲に収めるようにする. 0.5で画面の半分"), Category = "Path")
+        float RouteGuideStartCameraScreenRange = 0.5f;
+
+    UPROPERTY(EditAnywhere, meta = (Comment = "経路探索時開始時に最低でもこの距離は離す(カメラがビルに埋まらないようにする対応)"), Category = "Path")
+        float RouteGuideStartCameraMinDist = 10000.f;
+
     UPROPERTY(EditAnywhere, meta = (Comment = "パスの点線描画の間隔"), Category = "Path")
         float PathPointInterval = 1000;
 

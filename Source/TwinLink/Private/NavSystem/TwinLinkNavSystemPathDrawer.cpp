@@ -48,16 +48,6 @@ AUTwinLinkNavSystemPathDrawerArrow::AUTwinLinkNavSystemPathDrawerArrow() {
 
 void AUTwinLinkNavSystemPathDrawerArrow::BeginPlay() {
     Super::BeginPlay();
-    const auto NightIntensity = TwinLinkGraphicsEnv::GetNightIntensity(GetWorld());
-    TArray<UActorComponent*> Comps;
-    GetComponents(UStaticMeshComponent::StaticClass(), Comps);
-    for (const auto P : Comps) {
-        if (auto StaMesh = Cast<UStaticMeshComponent>(P)) {
-            ArrowComps.Add(StaMesh);
-            const auto Mat = StaMesh->CreateAndSetMaterialInstanceDynamicFromMaterial(0, StaMesh->GetMaterial(0));
-            Mat->SetScalarParameterValue(FName(TEXT("NightCoef")), NightIntensity);
-        }
-    }
 }
 
 void AUTwinLinkNavSystemPathDrawerArrow::DrawPath(const TArray<FVector>& PathPoints, float DeltaSeconds) {
@@ -154,6 +144,11 @@ UActorComponent* AUTwinLinkNavSystemPathDrawerArrow::CreateChildArrow() {
         return nullptr;
     StaMesh->RegisterComponent();
     StaMesh->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+
+    const auto NightIntensity = TwinLinkGraphicsEnv::GetNightIntensity(GetWorld());
+    const auto Mat = StaMesh->CreateAndSetMaterialInstanceDynamicFromMaterial(0, StaMesh->GetMaterial(0));
+    Mat->SetScalarParameterValue(FName(TEXT("NightCoef")), NightIntensity);
+
     ArrowComps.Add(StaMesh);
     return StaMesh;
 }

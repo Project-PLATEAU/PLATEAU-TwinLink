@@ -9,6 +9,7 @@
 #include "Misc/TwinLinkPLATEAUCityObjectGroupEx.h"
 #include "Misc/TwinLinkPLATEAUGeoReferenceEx.h"
 #include "Kismet/GameplayStatics.h"
+#include "Misc/TwinLinkPLATEAUCityModelEx.h"
 
 namespace {
 }
@@ -141,6 +142,19 @@ int ATwinLinkCityObjectTree::BuildIndexCache(int I) {
         I = BuildIndexCache(I);
     N.SpaceSize = I - StartIndex;
     return I;
+}
+
+bool ATwinLinkCityObjectTree::ContainsXYVoxelSpace(const FTwinLinkSpatialID& SpatialId) const {
+    const auto EntireBox = GetRangeVoxelSpace();
+    const auto MinId = SpatialId.ZoomChanged(MAX_ZOOM_LEVEL);
+    const auto MaxId = SpatialId.SouthEast().ZoomChanged(MAX_ZOOM_LEVEL);
+    // SpatialIdがEntireBoxを完全に包括するのは×
+    // そのうえでかぶっているかを見る
+    const auto Min = FVector(MinId.GetX(), MinId.GetY(), 0);
+    const auto Max = FVector(MaxId.GetX(), MaxId.GetY(), 0);
+
+    const auto Box = FBox(Min, Max);
+    return Box.IntersectXY(EntireBox);
 }
 
 ATwinLinkCityObjectTree::ATwinLinkCityObjectTree() {
@@ -360,8 +374,11 @@ TArray<ATwinLinkCityObjectTree::FCityObjectFindInfo> ATwinLinkCityObjectTree::Fi
     return Ret;
 }
 
-void ATwinLinkCityObjectTree::GetZoomRange(int& MinZoom, int& MaxZoom) const {
-    MinZoom = EntireSpaceKey.Zoom;
+void ATwinLinkCityObjectTree::GetZoomRange(int& MinZoom, int& MaxZoom) const {    
+    const auto Size = GetRangeVoxelSpace().GetSize();
+    const auto X = 64 - TwinLinkMathEx::Nlz((uint64)Size.X);
+    const auto Y = 64 - TwinLinkMathEx::Nlz((uint64)Size.Y);   
+    MinZoom = MAX_ZOOM_LEVEL - FMath::Min(MAX_ZOOM_LEVEL - 1, FMath::Max(X, Y));
     MaxZoom = MAX_ZOOM_LEVEL;
 }
 
