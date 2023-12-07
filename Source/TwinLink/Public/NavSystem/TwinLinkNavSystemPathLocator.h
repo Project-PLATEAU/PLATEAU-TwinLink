@@ -6,6 +6,7 @@
 
 #include "CoreMinimal.h"
 #include "TwinLinkNavSystemDef.h"
+#include "Components/Widget.h"
 #include "GameFramework/Actor.h"
 #include "TwinLinkNavSystemPathLocator.generated.h"
 
@@ -28,6 +29,15 @@ public:
     UFUNCTION(BlueprintCallable)
         TwinLinkNavSystemPathLocatorState GetNowState() const;
 
+    UFUNCTION(BlueprintCallable)
+        bool TryGetShowWarnText(FVector2D& OutScreenPos, TwinLinkNavSystemPathLocatorState& OutState);
+
+    /*
+     * @brief : 警告テキストを表示する座標を取得する
+     */
+    UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "TwinLink")
+        FVector GetWarnTextWorldLocation() const;
+
     // 位置更新する
     bool UpdateLocation(const UNavigationSystemV1* NavSys, const FHitResult& HitResult);
 
@@ -44,6 +54,8 @@ public:
     std::optional<FVector> GetLastValidLocation() const;
 
     virtual ECollisionChannel GetCollisionChannel() const;
+    virtual void BeginDestroy() override;
+    virtual void Destroyed() override;
 
 protected:
     // 現在の状態
@@ -54,10 +66,19 @@ protected:
     UPROPERTY(EditAnywhere, Category = TwinLink_Base)
         bool IsSelected = false;
 
+    // ピンが置けない場所にあるときに表示する警告ウィジット
+    UPROPERTY(VisibleAnywhere, Category = TwinLink_Base)
+        UUserWidget* WarnTextWidget = nullptr;
+
+    // ピンが置けない場所にあるときに表示する警告ウィジットテンプレート
+    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
+        TSubclassOf<UUserWidget> WarnTextWidgetBp = nullptr;
+
     // 最後にValid状態になった位置
     std::optional<FVector> LastValidLocation = std::nullopt;
 
     // デバッグで変更する夜係数(負数だと無視)
-    UPROPERTY(EditAnywhere, Category = TwinLink_Editor)
+    UPROPERTY(EditAnywhere, Category = TwinLink_Debug)
         float DebugNightCoef = -1.f;
+
 };

@@ -310,7 +310,7 @@ void ATwinLinkNavSystemPathFinderAnyLocation::SetPathLocation(TwinLinkNavSystemP
 
 void ATwinLinkNavSystemPathFinderAnyLocation::Clear() {
     for (auto& Item : PathLocatorActors)
-        Item.Value->Destroy();
+        Item.Value->Destroy(true);
 }
 
 std::optional<FBox> ATwinLinkNavSystemPathFinderAnyLocation::GetPathLocationBox(
