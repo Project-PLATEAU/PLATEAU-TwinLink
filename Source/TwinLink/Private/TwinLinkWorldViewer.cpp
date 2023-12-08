@@ -168,12 +168,12 @@ void ATwinLinkWorldViewer::SetupPlayerInputComponent(UInputComponent* PlayerInpu
     // 下記のURLに倣って記述したがバインド出来なかったため
     // https://docs.unrealengine.com/5.2/ja/enhanced-input-in-unreal-engine/
 
-    // 空を飛べるようにする
-    ClientCheatFly();
-
     // 移動コンポーネントを利用する前に取得
     CharMovementComponent = GetCharacterMovement();
     check(CharMovementComponent);
+    
+    // 空を飛べるようにする
+    CharMovementComponent->SetMovementMode(EMovementMode::MOVE_Flying);
 }
 
 void ATwinLinkWorldViewer::SetCityModel(AActor* Actor) {
