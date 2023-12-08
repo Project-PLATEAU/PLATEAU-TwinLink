@@ -3,8 +3,6 @@
 #include "TwinLinkAssetPlacementElement.h"
 #include "TwinLinkCommon.h"
 #include "TwinLinkAssetPlacementSystem.h"
-#include "Components/Button.h"
-#include "Components/Image.h"
 #include "Styling/SlateBrush.h"
 #include "TwinLinkAssetPlacementPanel.h"
 
@@ -14,10 +12,8 @@ void UTwinLinkAssetPlacementElement::TwinLinkAssetPlacementElementSetup(const in
 
     PresetID = AssetPresetID;
 
-    const auto Button = Cast<UButton>(GetRootWidget());
-
-    if (Button) {
-        auto Style = Button->GetStyle();
+    if (IsValid(AssetPlacementButton)) {
+        auto Style = AssetPlacementButton->GetStyle();
 
         Style.Normal.SetResourceObject(AssetPlacementSys.Get()->PresetTextures[PresetID]);
         Style.Normal.ImageSize = FVector2D(100, 100);
@@ -26,7 +22,7 @@ void UTwinLinkAssetPlacementElement::TwinLinkAssetPlacementElementSetup(const in
         Style.Pressed.SetResourceObject(AssetPlacementSys.Get()->PresetTextures[PresetID]);
         Style.Pressed.ImageSize = FVector2D(100, 100);
 
-        Button->SetStyle(Style);
+        AssetPlacementButton->SetStyle(Style);
     }
 
     Parent = ParentPanel;
@@ -38,7 +34,7 @@ void UTwinLinkAssetPlacementElement::TwinLinkAssetPlacementAddPresetAsset() {
 
     AssetPlacementSys.Get()->TwinLinkAssetPlacementClearUnsettledActor();
 
-    if (Parent->CurrentElement != nullptr) {
+    if (IsValid(Parent->CurrentElement)) {
         Parent->CurrentElement->Deselect();
     }
 
@@ -48,12 +44,8 @@ void UTwinLinkAssetPlacementElement::TwinLinkAssetPlacementAddPresetAsset() {
     AssetPlacementSys.Get()->SpawnUnsettledActor(AssetPlacementInfo);
 
     //選択中の枠を表示
-    const auto Button = Cast<UButton>(GetRootWidget());
-
-    const auto Image = Cast<UImage>(Button->GetChildAt(0));
-
-    if (Image) {
-        Image->SetVisibility(ESlateVisibility::Visible);
+    if (IsValid(AssetPlacementButtonFrameImage)) {
+        AssetPlacementButtonFrameImage->SetVisibility(ESlateVisibility::Visible);
     }
 
     Parent->CurrentElement = this;
@@ -61,11 +53,9 @@ void UTwinLinkAssetPlacementElement::TwinLinkAssetPlacementAddPresetAsset() {
 
 void UTwinLinkAssetPlacementElement::Deselect() {
     //選択中の枠を非表示
-    const auto Button = Cast<UButton>(GetRootWidget());
-
-    const auto Image = Cast<UImage>(Button->GetChildAt(0));
-
-    if (Image) {
-        Image->SetVisibility(ESlateVisibility::Hidden);
+    if (IsValid(AssetPlacementButtonFrameImage)) {
+        AssetPlacementButtonFrameImage->SetVisibility(ESlateVisibility::Hidden);
     }
+
+    Parent->CurrentElement = nullptr;
 }

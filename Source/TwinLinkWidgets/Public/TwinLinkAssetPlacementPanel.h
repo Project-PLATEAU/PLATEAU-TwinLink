@@ -29,11 +29,19 @@ public:
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
         void TwinLinkAssetPlacementExit();
+
+    /**
+     * @brief アセット配置を抜ける（破棄）
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        void TwinLinkAssetPlacementClearSelect();
 private:
     /** システム層が保持するコレクションへの参照 **/
-    TWeakObjectPtr<UTwinLinkObservableCollection> ObservableCollection;
+    UPROPERTY()
+        TWeakObjectPtr<UTwinLinkObservableCollection> ObservableCollection;
 
 public:
     /** 選択中エレメント **/
-    TObjectPtr<UTwinLinkAssetPlacementElement> CurrentElement;
+    UPROPERTY()
+        TObjectPtr<UTwinLinkAssetPlacementElement> CurrentElement;
 };

@@ -171,6 +171,9 @@ void UTwinLinkAssetPlacementSystem::TwinLinkAssetPlacementRemoveActor(AActor* Ta
     if (!Key) {
         return;
     }
+
+    AssetPlacementActorCollection.Remove(*Key);
+
     const auto AssetPlacementInfoOrg = AssetPlacementInfoCollection->GetFromKey(*Key);
 
     AssetPlacementInfoCollection->RemoveFromKey(*Key);

@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "TwinLinkWidgetBase.h"
+#include "Components/Button.h"
+#include "Components/Image.h"
 #include "TwinLinkAssetPlacementElement.generated.h"
 
 class UTwinLinkAssetPlacementPanel;
@@ -36,8 +38,14 @@ public:
     /** プリセットID **/
     UPROPERTY()
         int PresetID;
-
+    /** ボタン **/
+    UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
+        TObjectPtr<UButton> AssetPlacementButton;
+    /** 枠 **/
+    UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
+        TObjectPtr<UImage> AssetPlacementButtonFrameImage;
 private:
     /** アセット配置パネルへの参照 **/
-    TObjectPtr<UTwinLinkAssetPlacementPanel> Parent;
+    UPROPERTY()
+        TObjectPtr<UTwinLinkAssetPlacementPanel> Parent;
 };

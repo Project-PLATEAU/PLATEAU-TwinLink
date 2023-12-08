@@ -15,7 +15,11 @@ void UTwinLinkAssetPlacementPanel::TwinLinkAssetPlacementExit() {
     check(AssetPlacementSys.IsValid());
     AssetPlacementSys.Get()->TwinLinkAssetPlacementClearUnsettledActor();
 
-    if (CurrentElement != nullptr) {
+    if (IsValid(CurrentElement)) {
         CurrentElement->Deselect();
     }
+}
+
+void UTwinLinkAssetPlacementPanel::TwinLinkAssetPlacementClearSelect() {
+    CurrentElement = nullptr;
 }
