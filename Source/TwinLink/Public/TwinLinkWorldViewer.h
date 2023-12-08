@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -18,6 +18,20 @@ DECLARE_EVENT_OneParam(ATwinLinkWorldViewer, FDelClicked);
 
 // 任意のオブジェクトをクリックしたときのイベント
 DECLARE_EVENT_OneParam(ATwinLinkWorldViewer, FOnAnyObjectClicked, const FHitResult&);
+
+/**
+ * @brief 自動閲覧モードの種類
+*/
+UENUM(BlueprintType)
+enum class ETwinLinkViewMode : uint8 {
+    Undefind = 0,
+    FreeAutoView = 0x01,       // 放置していていたらこれになる　待機画面的なところ
+    LimitedAutoView = 0x02,    // 自動回転ボタンを押したらこれになる　望んだ注視点を中心に動く
+    Manual = 0x04,             // 自動閲覧を行っていない 
+};
+
+
+
 /**
  * @brief 視点操作機能を提供するカメラを搭載したキャラクタークラス
 */
@@ -43,7 +57,12 @@ public:
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 public:
-
+    /**
+     * @brief CityModelの設定を行う
+     * @param Actor 
+    */
+    UFUNCTION(BlueprintCallable, Category = "Movement")
+    void SetCityModel(AActor* Actor);
 
     /**
      * @brief 移動先の設定
@@ -72,6 +91,18 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Movement")
         FRotator GetNowCameraRotationOrDefault() const;
 
+    UFUNCTION(BlueprintCallable, Category = "Movement")
+        void AddFocusPoint();
+
+    UFUNCTION(BlueprintCallable, Category = "Movement")
+        void ClearFocusPoint();
+
+    /**
+     * @brief 自動回転ボタンを有効にする
+    */
+    UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
+        void ActivateAutoViewControlButton(ETwinLinkViewMode Mode);
+
 private:
     void ATwinLinkWorldViewer::SetLocationImpl(const FVector& Position, const FRotator& Rotation);
 public:
@@ -97,16 +128,33 @@ private:
         void MoveUp(const float Value);
 
     UFUNCTION(BlueprintCallable, Category = "Movement")
-        void Turn(const float Value);
-
-    UFUNCTION(BlueprintCallable, Category = "Movement")
-        void LookUp(const float Value);
+        void TurnXY(const FVector2D Value);
 
     UFUNCTION(BlueprintCallable, Category = "Movement")
         void Click();
 
+
+    UFUNCTION(BlueprintCallable, Category = "TwinLink Auto")
+        void InputedAny(bool bIsActive);
+
+
+    UFUNCTION(BlueprintCallable, Category = "TwinLink Auto")
+        void ActivateAutoViewControl(ETwinLinkViewMode ViewMode);
+
+
 public:
     virtual void DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos) override;
+
+private:
+    ETwinLinkViewMode Or(ETwinLinkViewMode a, ETwinLinkViewMode b) {
+        return static_cast<ETwinLinkViewMode>(static_cast<int>(a) | static_cast<int>(b));
+    }
+    ETwinLinkViewMode And(ETwinLinkViewMode a, ETwinLinkViewMode b) {
+        return static_cast<ETwinLinkViewMode>(static_cast<int>(a) & static_cast<int>(b));
+    }
+    bool IsZero(ETwinLinkViewMode a) {
+        return static_cast<int>(a) == 0;
+    }
 
 private:
     /* カメラの移動速度 */
@@ -125,12 +173,29 @@ private:
     UPROPERTY(EditAnywhere, Category = "TwinLink View Movement", meta = (ClampMin = "0", UIMin = "0", ForceUnits = "cm/s"))
         float MaxFlySpeed = 50000.0f;
 
-
     /* このプロパティ値で他のシステムの値を上書きする */
     UPROPERTY(EditAnywhere, AdvancedDisplay, Category = "TwinLink View Movement")
         bool bOverrideOtherSystemValues = true;
 
+    /*  */
 
+    /* 自動閲覧モードの回転の速度 */
+    UPROPERTY(EditAnywhere, Category = "TwinLink Auto")
+        float AutoRotationSpeed = 0.5f;
+
+    /* 自動閲覧モードの開始するまでの時間　秒 */
+    UPROPERTY(EditAnywhere, Category = "TwinLink Auto")
+        float LimitBeginAutoViewControlModeTime = 60.0 * 5.0;
+
+    /* 注視点回転時の角度の制限　地面との平行を0として下方向を向くほど数値が小さくなる */
+    UPROPERTY(EditAnywhere, Category = "TwinLink View Movement", meta = (ClampMin = "0", UIMin = "0", ForceUnits = "cm/s"))
+        float LimitDegressFocusRotate = -10.0f;
+
+    /* 注視点回転時の距離の制限 */
+    UPROPERTY(EditAnywhere, Category = "TwinLink View Movement", meta = (ClampMin = "0", UIMin = "0", ForceUnits = "cm/s"))
+        float LimitDistanceFocusPointToSelf = 400000.0f;
+
+    UPROPERTY()
     UCharacterMovementComponent* CharMovementComponent;
 
     bool bIsSelectingFacility;
@@ -150,10 +215,55 @@ private:
         // 現在の経過時間
         float PassSec = 0.f;
         bool Update(float DeltaSec, FVector& OutLocation, FRotator& OutRotation);
+        bool IsCompleted();
     };
 
     std::optional<MoveInfo> TargetTransform;
 
     FVector PreLocation;
     FRotator PreRotation;
+
+    /** 次に適用する自動閲覧モード **/
+    ETwinLinkViewMode CurrentAutoViewMode;
+
+    /** 注視点 **/
+    std::optional<FVector> SingleFocusPoint;
+
+    FRotator OffsetRotation;
+    double OffsetLength;
+
+    /** 自動回転機能の経過時間 **/
+    float AutoRotateViewProcessTime;
+
+    /** 何の入力もない時間 **/
+    float NoInputProcessTime;
+
+    /** 放置状態関係のメンバーや処理をまとめた構造体 **/
+    struct FAutoFreeViewControl {
+        void Init(const FVector& InFocusPoint, 
+            const FVector& InOffsetLocation,
+            const FRotator& InOffsetRotator);
+        void Update(ATwinLinkWorldViewer* WorldViewer, float DeltaTime);
+
+        /** 0,1... Update()で行う処理 **/
+        int SwitchIdxInUpdate; 
+        FVector FocusPoint;
+        FVector OffsetLocation;
+        double OffsetDistance;
+        FRotator OffsetRotator;
+        float TimeCnt;
+        const float MoveSec = 3.0f;
+    } AutoFreeViewControl;
+
+private:
+    /**
+     * @brief 注視点を中心に回転する
+    */
+    void RotateAroundFocusPoints();
+
+    /**
+     * @brief プレイヤーの入力を受け付けるか
+     * @return 
+    */
+    bool CanReceivePlayerInput();
 };

@@ -661,13 +661,13 @@ void UTwinLinkPeopleFlowVisualizerBase::ExtractVoxelLocationsInView(
     for (const auto Location : SubdiviveLocations) {
         const auto SpatialID = FTwinLinkSpatialID::Create(*GeoReference, Location, Zoom, false);
         const auto SpatialIDVoxel = SpatialID.GetSpatialIDArea(*GeoReference);
-        const auto RequestStartPosition = SpatialIDVoxel.GetCenter() - SpatialIDVoxel.GetExtent() * 0.5;
+        const auto _RequestStartPosition = SpatialIDVoxel.GetCenter() - SpatialIDVoxel.GetExtent() * 0.5;
 
         const auto DivNum = 2;  // Zoomレベルを1上げると １辺２つに分割されるので2
         ExtractVoxelLocationsInView(
             OutLocationsMap, ThresholdForSubdivision, GeoReference, ViewLocation, ViewFrustumBounds, Altitude,
-            Zoom + 1, InMaxZoomLevel,
-            RequestStartPosition,
+            Zoom + 1, InMaxZoomLevel, 
+            _RequestStartPosition,
             DivNum, DivNum,
             SpatialIDVoxel.GetCenter(), FVector2D(SpatialIDVoxel.GetExtent()), World);
     }

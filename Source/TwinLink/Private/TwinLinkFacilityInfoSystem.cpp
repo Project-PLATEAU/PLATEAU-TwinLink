@@ -225,7 +225,7 @@ void UTwinLinkFacilityInfoSystem::MoveCharactersNearTheFacility(const TWeakObjec
         UKismetMathLibrary::FindLookAtRotation(
             NewPosition, FacilityCenter);
 
-    WorldViewer->SetLocation(NewPosition, NewRotation);
+    WorldViewer->SetLocation(NewPosition, NewRotation, 2.0f);
 
 }
 
