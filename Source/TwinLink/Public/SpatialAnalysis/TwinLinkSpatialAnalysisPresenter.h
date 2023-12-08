@@ -77,7 +77,7 @@ public:
         bool TryGetNowSpatialId(FTwinLinkSpatialID& Out) const;
 
     UFUNCTION(BlueprintCallable)
-        bool RequestPeopleFlow(FDateTime DateTime);
+        bool RequestPeopleFlow();
 
 private:
     // マウスヒット位置

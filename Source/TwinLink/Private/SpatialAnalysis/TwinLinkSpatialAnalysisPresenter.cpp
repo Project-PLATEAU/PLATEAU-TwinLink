@@ -172,14 +172,15 @@ bool ATwinLinkSpatialAnalysisPresenter::TryGetNowSpatialId(FTwinLinkSpatialID& O
     return true;
 }
 
-bool ATwinLinkSpatialAnalysisPresenter::RequestPeopleFlow(FDateTime DateTime) {
+bool ATwinLinkSpatialAnalysisPresenter::RequestPeopleFlow() {
     const auto SpacialId = GetNowSpatialId();
     if (SpacialId.has_value() == false)
         return false;
     if (PeopleFlowApi) {
         FTwinLinkPeopleFlowApiRequest Req;
         Req.SpatialIds.Add(*SpacialId);
-        Req.DateTime = DateTime;
+        Req.DateTime = FDateTime();
+        Req.bUseDateTime = false;
         PeopleFlowApi->Request(Req);
         return true;
     }

@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
 #include "TwinLinkPeopleFlowVisualizerBase.h"
@@ -130,7 +130,7 @@ namespace {
         for (const auto ReqSpatialID : Req) {
             const auto ZoomLevelDiff = InMaxZoomLevel - ReqSpatialID.GetZ();
             const auto PeopleFlow =
-                (ReqSpatialID.GetX() + ReqSpatialID.GetY()) % 8 * 
+                (ReqSpatialID.GetX() + ReqSpatialID.GetY()) % 8 *
                 ((int)(6420 * FMath::Pow(4.0, ZoomLevelDiff)) / 8);
 
             Result.Populations.Add(FTwinLinkPopulationData{
@@ -191,7 +191,12 @@ void UTwinLinkPeopleFlowVisualizerBase::BeginPlay() {
 void UTwinLinkPeopleFlowVisualizerBase::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-    // ...
+    // 自動遷移時等カメラ移動に更新されないケースに対応するため定期的に更新
+    if (PeriodicUpdateWaitTime -= DeltaTime <= 0.0)
+    {
+        PeriodicUpdateWaitTime = 5.0;
+        RequestInfoFromSpatialID();
+    }
 }
 
 void UTwinLinkPeopleFlowVisualizerBase::SetThresholdForSubdivision(double Distance) {
@@ -244,7 +249,7 @@ void UTwinLinkPeopleFlowVisualizerBase::InitVisualizer(APLATEAUInstancedCityMode
 
     // ヒートマップに必 要な解像度を求める
     HeatmapWidth = VoxelHelper.SpatialIDXRange;
-    HeatmapDepth = VoxelHelper.SpatialIDYRange;   
+    HeatmapDepth = VoxelHelper.SpatialIDYRange;
 
     // 
     const FVector VoxelBaseCenter =
@@ -311,9 +316,7 @@ void UTwinLinkPeopleFlowVisualizerBase::SetMaximumAndMinimumAutomatically() {
 
     PeopleFlowApi->OnReceivedPeopleFlowResponse.AddUnique(OnSetMaximumAndMinimumAutomaticallyDelegate);
 
-    FTwinLinkPeopleFlowApiRequest Req{ RequestIDs, CurrentVisualizeTime.value_or(FDateTime()), CurrentVisualizeTime.has_value()};
-    PeopleFlowApi->Request(Req);
-    //OnSetMaximumAndMinimumAutomatically(TestCreateTestData(Req.SpatialIds, MaxZoomLevel));
+    RequestToServer(RequestIDs, CurrentVisualizeTime);
 }
 
 void UTwinLinkPeopleFlowVisualizerBase::SetVisualizeTime(const FDateTime& Time) {
@@ -327,7 +330,7 @@ void UTwinLinkPeopleFlowVisualizerBase::SetVisualizeRealTime() {
 void UTwinLinkPeopleFlowVisualizerBase::OnSetMaximumAndMinimumAutomatically(const FTWinLinkPeopleFlowApiResult& DataArray) {
     check(bIsWaitingRequestResult);
 
-    if (DataArray.bSuccess == false) {
+    if (DataArray.bSuccess == false || DataArray.Populations.IsEmpty()) {
         UE_TWINLINK_LOG(LogTemp, Log, TEXT("Request failed : UTwinLinkPeopleFlowVisualizerBase"));
         // リクエスト結果を待たない
         PeopleFlowApi->OnReceivedPeopleFlowResponse.Remove(OnSetMaximumAndMinimumAutomaticallyDelegate);
@@ -348,7 +351,7 @@ void UTwinLinkPeopleFlowVisualizerBase::OnSetMaximumAndMinimumAutomatically(cons
         Min = FMath::Min(PopulationVal.PeopleFlow, Min);
     }
 
-    const auto VoxelVolume = 
+    const auto VoxelVolume =
         VoxelHelper.SamplingVoxelOnBaseLevel.GetExtent().X * VoxelHelper.SamplingVoxelOnBaseLevel.GetExtent().Y;    // Zは無効値なので
     MaxPopulation = Max;
     MinPopulation = Min;
@@ -407,8 +410,7 @@ void UTwinLinkPeopleFlowVisualizerBase::RequestInfoFromSpatialID() {
 
     PeopleFlowApi->OnReceivedPeopleFlowResponse.AddUnique(UpdatePeopleFlowDelegate);
 
-    FTwinLinkPeopleFlowApiRequest Req{ RequestSpatialIDs, CurrentVisualizeTime.value_or(FDateTime()), CurrentVisualizeTime.has_value() };
-    PeopleFlowApi->Request(Req);
+    RequestToServer(RequestSpatialIDs, CurrentVisualizeTime);
     //OnUpdatePeopleFlow(TestCreateTestData(Req.SpatialIds, MaxZoomLevel));
 }
 
@@ -418,11 +420,13 @@ void UTwinLinkPeopleFlowVisualizerBase::OnUpdatePeopleFlow(const FTWinLinkPeople
         return;
     }
 
+    // リクエスト結果を待たない
+    bIsWaitingRequestResult = false;
+
     if (Result.bSuccess == false) {
         UE_TWINLINK_LOG(LogTemp, Log, TEXT("Request failed : UTwinLinkPeopleFlowVisualizerBase"));
         // リクエスト結果を待たない
         PeopleFlowApi->OnReceivedPeopleFlowResponse.Remove(UpdatePeopleFlowDelegate);
-        bIsWaitingRequestResult = false;
         return;
     }
 
@@ -515,10 +519,6 @@ void UTwinLinkPeopleFlowVisualizerBase::OnUpdatePeopleFlow(const FTWinLinkPeople
     UpdateActiveState();
 
     PeopleFlowApi->OnReceivedPeopleFlowResponse.Remove(UpdatePeopleFlowDelegate);
-
-    // リクエスト結果を待たない
-    bIsWaitingRequestResult = false;
-
 }
 
 void UTwinLinkPeopleFlowVisualizerBase::UpdateActiveState() {
@@ -567,9 +567,9 @@ TArray<FTwinLinkSpatialID> UTwinLinkPeopleFlowVisualizerBase::ExtractRequestSpat
     TMap<int, TArray<FVector>>& LocationsWithZoomMap = Cache.LocationsWithZoomMap;
 
     // VoxelHelperに移植したい
-    const auto RequestStartPosition = 
+    const auto RequestStartPosition =
         FTwinLinkSpatialID::Create(
-            *GeoReference, VoxelHelper.SamplingEdgeVoxelOnMaxLevel.GetCenter(), 
+            *GeoReference, VoxelHelper.SamplingEdgeVoxelOnMaxLevel.GetCenter(),
             BaseZoomLevel, false).GetSpatialIDArea(*GeoReference).GetCenter();
 
     const auto ZoomLevelFactor = (int)(FMath::Pow(2.0, MaxZoomLevel - BaseZoomLevel));
@@ -580,7 +580,7 @@ TArray<FTwinLinkSpatialID> UTwinLinkPeopleFlowVisualizerBase::ExtractRequestSpat
     ExtractVoxelLocationsInView(
         &LocationsWithZoomMap, ThresholdForSubdivision,
         GeoReference, ProjectionData.ViewOrigin, ViewFrustumBounds, Altitude,
-        Zoom, MaxZoomLevel, 
+        Zoom, MaxZoomLevel,
         RequestStartPosition,
         Width, Depth,
         AreaCenter, FVector2D(AreaExtent), bIsEnableDrawDebug ? World : nullptr);
@@ -666,7 +666,7 @@ void UTwinLinkPeopleFlowVisualizerBase::ExtractVoxelLocationsInView(
         const auto DivNum = 2;  // Zoomレベルを1上げると １辺２つに分割されるので2
         ExtractVoxelLocationsInView(
             OutLocationsMap, ThresholdForSubdivision, GeoReference, ViewLocation, ViewFrustumBounds, Altitude,
-            Zoom + 1, InMaxZoomLevel, 
+            Zoom + 1, InMaxZoomLevel,
             RequestStartPosition,
             DivNum, DivNum,
             SpatialIDVoxel.GetCenter(), FVector2D(SpatialIDVoxel.GetExtent()), World);
@@ -700,6 +700,16 @@ void UTwinLinkPeopleFlowVisualizerBase::ExtractVoxelLocationsInView(TArray<FVect
         }
     }
 
+}
+
+void UTwinLinkPeopleFlowVisualizerBase::RequestToServer(const TArray<FTwinLinkSpatialID>& RequestIDs,
+    const std::optional<FDateTime>& VisualizeTime) const {
+    // 現在時刻に近い場合サーバー側が更新されていない可能性があるためその場合は存在する最新のデータを取得
+    const auto bUseDateTime =
+        VisualizeTime.has_value() &&
+        VisualizeTime < FDateTime::Now() - FTimespan(2, 0, 0);
+    FTwinLinkPeopleFlowApiRequest Req{ RequestIDs, VisualizeTime.value_or(FDateTime()), bUseDateTime };
+    PeopleFlowApi->Request(Req);
 }
 
 UTexture* UTwinLinkPeopleFlowVisualizerBase::CreateSampleHeatmapTexture() {
@@ -782,7 +792,7 @@ UTexture* UTwinLinkPeopleFlowVisualizerBase::CreateHeatmapTextureByAmount(int Wi
                 FMath::Min(Amounts[Index] - MinAmount, DiffMaxBetweenMin);    // 0<MinAmountToAmount<=DiffMaxBetweenMin
 
             double Level =
-                FMath::Clamp(MinAmountToAmount / DiffMaxBetweenMin, (1.0 / 255.0), 1.0); // 0<Level<=1  正しAmounts[Index]が0の時は0になる
+                FMath::Pow(FMath::Clamp(MinAmountToAmount / DiffMaxBetweenMin, (1.0 / 255.0), 1.0), 0.5); // 0<Level<=1  正しAmounts[Index]が0の時は0になる
             if (Amounts[Index] == 0)
                 Level = 0.0;
             HeatLevels.Add(Level);

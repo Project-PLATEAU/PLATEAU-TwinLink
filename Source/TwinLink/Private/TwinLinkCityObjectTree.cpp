@@ -2,6 +2,7 @@
 #include "TwinLinkCityObjectTree.h"
 
 #include <chrono>
+#include <Misc/TwinLinkPLATEAUCityModelEx.h>
 
 #include "Misc/TwinLinkActorEx.h"
 #include "Misc/TwinLinkMathEx.h"

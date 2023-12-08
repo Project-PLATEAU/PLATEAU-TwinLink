@@ -14,11 +14,11 @@ FTWinLinkPeopleFlowApiResult FTWinLinkPeopleFlowApiResult::Error() {
 
 void UTwinLinkPeopleFlowApi::Request(const FTwinLinkPeopleFlowApiRequest& Req) {
     // https://dev.classmethod.jp/articles/unrealengine5-http-api-call/
-    const FString Url = "https://plateau-spatialid-bim-api-3xfxdvazpa-an.a.run.app/population";
+    const FString Url = "https://plateau-spatialid-bim-api-prod-3xfxdvazpa-an.a.run.app/population";
 
     const FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
     Request->OnProcessRequestComplete().BindUObject(this, &UTwinLinkPeopleFlowApi::OnResponseReceived);
-
+    Request->SetTimeout(5);
     FJsonObject Json;
     // https://synesthesias.atlassian.net/wiki/spaces/plateaubimkukanid/pages/174751754
     // https://eukarya.notion.site/API-5587dd0c756c44d6bd697b4089bc366b

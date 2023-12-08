@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -306,7 +306,7 @@ private:
     bool bIsCurrentActiveState;
 
     /** 空間情報のリクエストの待機状態 **/
-    bool bIsWaitingRequestResult;
+    TAtomic<bool> bIsWaitingRequestResult;
 
     /** ヒートマップの中心座標 **/
     FVector HeatmapCenter;
@@ -334,4 +334,12 @@ private:
 
     /** キャッシュデータ **/
     FCache Cache;
+
+    float PeriodicUpdateWaitTime = 10.0;
+
+    /**
+     * サーバー側にデータをリクエストする
+     **/
+    void RequestToServer(const TArray<FTwinLinkSpatialID>& RequestIDs, const std::optional<FDateTime>& VisualizeTime) const;
+
 };
