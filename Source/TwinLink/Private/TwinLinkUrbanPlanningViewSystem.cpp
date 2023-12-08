@@ -9,6 +9,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "NavSystem/TwinLinkNavSystem.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 
 void UTwinLinkUrbanPlanningViewSystem::TwinLinkShowUrbanPlanning() {
     const auto CityModel = FTwinLinkModule::Get().GetCityModel();
@@ -28,6 +29,8 @@ void UTwinLinkUrbanPlanningViewSystem::TwinLinkShowUrbanPlanning() {
     AttributeUsages.Reset();
     GuideUsageColors.Reset();
 
+    LoadUrbanPlanningFunctionDefine();
+
     auto NavSystem = ATwinLinkNavSystem::GetInstance(GetWorld());
 
     double DemHeight = NavSystem != nullptr ? NavSystem->GetDemHeightMax() : 0;
@@ -44,6 +47,10 @@ void UTwinLinkUrbanPlanningViewSystem::TwinLinkShowUrbanPlanning() {
         const auto Rate = AttributeRate != nullptr ? FCString::Atoi(*AttributeRate->StringValue) * 100 : 50;
         const auto AttributUsage = Obj.Attributes.AttributeMap.Find("urf:function");
         const auto Usage = AttributUsage != nullptr ? AttributUsage->StringValue : TEXT("UNKOWN");//UsageKeys[0];
+
+        if (GetUrbanPlanningFunction(Usage) == nullptr) {
+            continue;
+        }
 
         AddMaterials(Usage);
 
@@ -187,10 +194,18 @@ void UTwinLinkUrbanPlanningViewSystem::AddMaterials(const FString& NewUsage) {
     if (MaterialCollection.Contains(NewUsage)) {
         return;
     }
-    int NewColorSub = MaterialCollection.Num() / OriginColors.Num();
-    int NewColorMod = MaterialCollection.Num() % OriginColors.Num();
-    FColor NewColor = OriginColors[NewColorMod];
-    NewColor += FColor(0x08 * NewColorSub, 0x08 * NewColorSub, 0x08 * NewColorSub, 0xFF);
+    if (UrbanPlanningFunctionDefines == nullptr) {
+        return;
+    }
+
+    auto UrbanPlanningFunction = GetUrbanPlanningFunction(NewUsage);
+
+    if (UrbanPlanningFunction == nullptr) {
+        return;
+    }
+
+    FColor NewColor = UrbanPlanningFunction->FunctionColor;
+
     GuideUsageColors.Add(NewUsage, NewColor);
 
     const auto ParentMaterialPath = TEXT("/PLATEAU-TwinLink/Materials/M_UrbanPlanning");
@@ -237,4 +252,27 @@ TArray<FTwinLinkEdge> UTwinLinkUrbanPlanningViewSystem::RemoveOverlapLinePath(TM
         RetArray.Add(TmpArray[i]);
     }
     return RetArray;
+}
+
+void UTwinLinkUrbanPlanningViewSystem::LoadUrbanPlanningFunctionDefine() {
+    FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+    const auto Path = TEXT("/PLATEAU-TwinLink/DataAssets/DA_UrbanPlanningFunction.DA_UrbanPlanningFunction");
+    FAssetData AssetData = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(Path));
+    if (!AssetData.IsValid()) {
+        UE_TWINLINK_LOG(LogTemp, Log, TEXT("Failed LoadUrbanPlanningFunctionDefine : %s"), *Path);
+        return;
+    }
+    UrbanPlanningFunctionDefines = Cast<UTwinLinkUrbanPlanningDataAsset>(AssetData.GetAsset());
+}
+
+FTwinLinkUrbanPlanningFunction* UTwinLinkUrbanPlanningViewSystem::GetUrbanPlanningFunction(const FString& NewUsage) {
+    if (UrbanPlanningFunctionDefines == nullptr) {
+        return nullptr;
+    }
+    for (int i = 0; i < UrbanPlanningFunctionDefines->UrbanPlanningFunctions.Num(); i++) {
+        if (UrbanPlanningFunctionDefines->UrbanPlanningFunctions[i].FunctionName.Equals(NewUsage)) {
+            return &UrbanPlanningFunctionDefines->UrbanPlanningFunctions[i];
+        }
+    }
+    return nullptr;
 }

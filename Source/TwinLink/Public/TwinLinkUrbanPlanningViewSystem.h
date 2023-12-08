@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "TwinLinkSubSystemBase.h"
 #include "Engine/DataTable.h"
+#include "TwinLinkUrbanPlanningDataAsset.h"
 #include "TwinLinkUrbanPlanningViewSystem.generated.h"
 
 /**
@@ -58,19 +59,23 @@ public:
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
         void TwinLinkSelectUrbanPlanning();
     /**
-     * @brief
+     * @brief 容積率を取得
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
         FString TwinLinkGetUrbanPlanningRate();
     /**
-     * @brief
+     * @brief 用途を取得
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
         FString TwinLinkGetUrbanPlanningUsage();
     /**
-     * @brief
+     * @brief 用途色マップを取得
     */
     TMap<FString, FColor> GetGuideUsageColors();
+    /**
+     * @brief 用途定義を取得
+    */
+    TObjectPtr<UTwinLinkUrbanPlanningDataAsset> GetFunctionDefines() { return UrbanPlanningFunctionDefines; }
 protected:
     /** マテリアルへ適用するカラー **/
     UPROPERTY()
@@ -102,6 +107,9 @@ private:
     int SelectAttributesIndex = -1;
     /** 凡例用途カラー **/
     TMap<FString, FColor> GuideUsageColors;
+    /** 用途カラー定義 **/
+    UPROPERTY()
+        TObjectPtr<UTwinLinkUrbanPlanningDataAsset> UrbanPlanningFunctionDefines;
 private:
     /**
      * @brief マテリアルインスタンスを生成する
@@ -111,4 +119,12 @@ private:
      * @brief 重複ラインを削除する
     */
     TArray<FTwinLinkEdge> RemoveOverlapLinePath(TMap<FString, int> Maps, TArray<FVector>Points);
+    /**
+     * @brief 都市計画決定情報の定義をロードする
+    */
+    void LoadUrbanPlanningFunctionDefine();
+    /**
+     * @brief 都市計画決定情報の定義をロードする
+    */
+    FTwinLinkUrbanPlanningFunction* GetUrbanPlanningFunction(const FString& NewUsage);
 };

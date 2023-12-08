@@ -15,10 +15,13 @@ void UTwinLinkUrbanPlanningPanel::TwinLinkUrbanPlanningUpdateGuide() {
     GuidesParent->ClearChildren();
     const FString Path = "/PLATEAU-TwinLink/Widgets/FacilityAttribute/WBP_TwinLinkUrbanPlanningElement.WBP_TwinLinkUrbanPlanningElement_C";
     TSubclassOf<class UUserWidget> WidgetClass = TSoftClassPtr<UUserWidget>(FSoftObjectPath(*Path)).LoadSynchronous();
-    for (const auto& Guide : Guides) {
+    for (const auto& Function : UrbanPlanningViewSys.Get()->GetFunctionDefines()->UrbanPlanningFunctions) {
+        if (!Guides.Contains(Function.FunctionName)) {
+            continue;
+        }
         auto Element = CreateWidget<UTwinLinkUrbanPlanningElement>(GetWorld(), WidgetClass);
-        Element->GuidesColor->SetColorAndOpacity(Guide.Value);
-        Element->GuidesText->SetText(FText::FromString(Guide.Key));
+        Element->GuidesColor->SetColorAndOpacity(Guides[Function.FunctionName]);
+        Element->GuidesText->SetText(FText::FromString(Function.FunctionName));
         GuidesParent->AddChild(Cast<UWidget>(Element));
     }
 }

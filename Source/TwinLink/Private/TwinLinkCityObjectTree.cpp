@@ -9,6 +9,7 @@
 #include "Misc/TwinLinkPLATEAUCityModelEx.h"
 #include "Misc/TwinLinkPLATEAUCityObjectGroupEx.h"
 #include "Misc/TwinLinkPLATEAUGeoReferenceEx.h"
+#include "Misc/TwinLinkPLATEAUCityModelEx.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/TwinLinkPLATEAUCityModelEx.h"
 
@@ -79,7 +80,6 @@ void ATwinLinkCityObjectTree::Init(APLATEAUInstancedCityModel* BaseCityModel) {
         OffsetKey = EntireSpaceKey.ZoomChanged(MAX_ZOOM_LEVEL);
     }
 
-
     using ArrayType = TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>>;
     TMap<FTwinLinkCityObjectQuadTreeKey, ArrayType> Map;
 
@@ -103,7 +103,6 @@ void ATwinLinkCityObjectTree::Init(APLATEAUInstancedCityModel* BaseCityModel) {
             }
         }
     };
-
 
     // 管理対象建物も入れるために、配置されている全InstancedCityModelをとってくる
     {
@@ -174,7 +173,6 @@ void ATwinLinkCityObjectTree::Tick(float DeltaSeconds) {
 }
 
 void ATwinLinkCityObjectTree::DebugDraw(float DeltaSeconds) {
-
 #if WITH_EDITOR
     if (DebugCheckAllVoxel) {
         DebugCheckAllVoxel = false;
@@ -197,7 +195,6 @@ void ATwinLinkCityObjectTree::DebugDraw(float DeltaSeconds) {
                 }
             }
         }
-
     }
     if (DebugShowSpace) {
         auto& GeoRef = InstancedCityModel->GeoReference;
@@ -231,7 +228,6 @@ void ATwinLinkCityObjectTree::DebugDraw(float DeltaSeconds) {
                 }
             }
         }
-
 
         // 8分木探索表示
         TArray<FCityObjectFindInfo> TreeFindResult;
@@ -443,7 +439,6 @@ TArray<ATwinLinkCityObjectTree::FCityObjectFindInfo> ATwinLinkCityObjectTree::De
                 }
             }
         }
-
     }
     return Ret;
 }
