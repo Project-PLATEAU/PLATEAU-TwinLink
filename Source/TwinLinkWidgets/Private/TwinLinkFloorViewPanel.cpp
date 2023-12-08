@@ -76,6 +76,18 @@ void UTwinLinkFloorViewPanel::SetupTwinLinkFloorView() {
 
     SelectedFloorKey = FloorKeys[FloorKeys.Num() - 1];
 
+    //グレーアウトマテリアル準備
+    const auto ParentMaterialPath = TEXT("/PLATEAU-TwinLink/Materials/M_FloorGrayedOut");
+    if (GrayedOutMaterial == nullptr) {
+        GrayedOutMaterial = UMaterialInstanceDynamic::Create(Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, ParentMaterialPath)), this);
+    }
+    //ブランクマテリアル準備
+
+    const auto BlankParentMaterialPath = TEXT("/PLATEAU-TwinLink/Materials/M_OverlayBlank");
+    if (OverlayBlankMaterial == nullptr) {
+        OverlayBlankMaterial = UMaterialInstanceDynamic::Create(Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, BlankParentMaterialPath)), this);
+    }
+
     FloorViewChangeKey("Exterior");
 }
 
@@ -123,6 +135,7 @@ void UTwinLinkFloorViewPanel::FloorViewChange(TObjectPtr<UUserWidget> Element) {
 
         LinkComponents[*FloorKey]->SetVisibility(IsVisible);
         LinkComponents[*FloorKey]->SetCollisionResponseToChannel(ECC_Visibility, IsVisible ? ECR_Block : ECR_Ignore);
+        LinkComponents[*FloorKey]->SetOverlayMaterial(IsVisible ? FloorKey.Equals(*Key) ? OverlayBlankMaterial : GrayedOutMaterial : OverlayBlankMaterial);
     }
 
     // フロア情報システムに選択状況を保持する　　（フロア情報の設計的に対応できなかったのこの形で実装）

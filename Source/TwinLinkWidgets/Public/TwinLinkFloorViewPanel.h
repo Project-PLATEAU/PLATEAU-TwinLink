@@ -89,6 +89,14 @@ private:
     /** 選択中階層キー **/
     FString SelectedFloorKey;
 
-    /**  **/
+    /** 階層移動ウィジェット **/
     TObjectPtr<UTwinLinkFloorSwitcher> FloorSwitcher;
+
+    /** グレーアウトマテリアル **/
+    UPROPERTY()
+        TObjectPtr<UMaterialInstanceDynamic> GrayedOutMaterial;
+
+    /** グレーアウトマテリアル（ブランク） **/
+    UPROPERTY()
+        TObjectPtr<UMaterialInstanceDynamic> OverlayBlankMaterial;
 };
