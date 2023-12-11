@@ -121,6 +121,7 @@ void ATwinLinkWorldViewer::Tick(float DeltaTime) {
     if (bOverrideOtherSystemValues) {
         CharMovementComponent->MaxFlySpeed = MaxFlySpeed;
         CharMovementComponent->MaxAcceleration = MaxAcceleration;
+        CharMovementComponent->BrakingDecelerationFlying = BrakingDecelerationFlying;
     }
 
     if (TargetTransform) {
@@ -267,7 +268,7 @@ void ATwinLinkWorldViewer::MoveForward(const float Value) {
     if (Controller && Value != 0.0f) {
         const auto Rotation = Controller->GetControlRotation();
         const auto Direction = FRotationMatrix(Rotation).GetScaledAxis(EAxis::X);
-        AddMovementInput(Direction, 10000000.0 * Value * CameraMovementSpeed * GetWorld()->GetDeltaSeconds());
+        AddMovementInput(Direction, Value * CameraMovementSpeed * GetWorld()->GetDeltaSeconds());
     }
 }
 

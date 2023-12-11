@@ -173,6 +173,12 @@ private:
     UPROPERTY(EditAnywhere, Category = "TwinLink View Movement", meta = (ClampMin = "0", UIMin = "0", ForceUnits = "cm/s"))
         float MaxFlySpeed = 50000.0f;
 
+        /* 飛行中の減速率 */
+    UPROPERTY(EditAnywhere, Category = "TwinLink View Movement", meta = (ClampMin = "0", UIMin = "0"))
+        float BrakingDecelerationFlying = 81920.0f;
+
+
+
     /* このプロパティ値で他のシステムの値を上書きする */
     UPROPERTY(EditAnywhere, AdvancedDisplay, Category = "TwinLink View Movement")
         bool bOverrideOtherSystemValues = true;
