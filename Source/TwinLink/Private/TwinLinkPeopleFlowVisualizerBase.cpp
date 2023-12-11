@@ -368,6 +368,8 @@ void UTwinLinkPeopleFlowVisualizerBase::OnSetMaximumAndMinimumAutomatically(cons
     // 初期化済みフラグを立てる
     bIsInitedMaxMinPopulation = true;
 
+    OnChangedMaximumAndMinimumAutomatically(MinPopulation, MaxPopulation);
+
     bIsWaitingRequestResult = false;
 }
 

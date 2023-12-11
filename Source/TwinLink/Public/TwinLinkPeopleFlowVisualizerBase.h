@@ -128,6 +128,12 @@ public:
     UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
     void ChangeActiveState(bool bIsActiveState);
 
+    /**
+     * @brief 最大値、最小値が計算された
+    */
+    UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
+        void OnChangedMaximumAndMinimumAutomatically(int Min, int Max);
+
 private:
     /**
      * @brief CityModel関係のメンバー変数をまとめた構造体
