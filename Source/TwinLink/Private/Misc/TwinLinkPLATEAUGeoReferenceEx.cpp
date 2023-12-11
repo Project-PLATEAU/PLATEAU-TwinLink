@@ -3,7 +3,7 @@
 #include "Misc/TwinLinkPLATEAUCityModelEx.h"
 #include "Misc/TwinLinkPLATEAUCityObjectGroupEx.h"
 
-inline FBox FTwinLinkPLATEAUGeoReferenceEx::GetSpatialBox(FPLATEAUGeoReference& Self,
+FBox FTwinLinkPLATEAUGeoReferenceEx::GetSpatialBox(FPLATEAUGeoReference& Self,
     const UPLATEAUCityObjectGroup* CityModel, int Zoom) {
     FBox Bb;
     if (FTwinLinkPLATEAUCityObjectGroupEx::TryBoundingBox(CityModel, Bb) == false)
