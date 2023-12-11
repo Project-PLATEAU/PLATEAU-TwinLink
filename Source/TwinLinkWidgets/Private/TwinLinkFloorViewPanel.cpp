@@ -177,18 +177,22 @@ void UTwinLinkFloorViewPanel::FloorViewChange(TObjectPtr<UUserWidget> Element) {
         Asset->SetActorHiddenInGame(false);
     }
 
-    for (const auto& Component : LinkComponents) {
-        if (Component.Key.Equals("Exterior")) {
-            continue;
-        }
-        if (Cast<UStaticMeshComponent>(Component.Value)->IsVisible()) {
-            continue;
-        }
-        for (const auto& Asset : Assets) {
-            if (Cast<UStaticMeshComponent>(Component.Value)->Bounds.GetBox().IsInside(Asset->GetActorLocation())) {
-                Asset->SetActorHiddenInGame(true);
+    //外観表示中はアセット非表示処理しない
+    if (! Key->Equals("Exterior")) {
+        for (const auto& Component : LinkComponents) {
+            if (Component.Key.Equals("Exterior")) {
+                continue;
+            }
+            if (Cast<UStaticMeshComponent>(Component.Value)->IsVisible()) {
+                continue;
+            }
+            for (const auto& Asset : Assets) {
+                if (Cast<UStaticMeshComponent>(Component.Value)->Bounds.GetBox().IsInside(Asset->GetActorLocation())) {
+                    Asset->SetActorHiddenInGame(true);
+                }
             }
         }
+
     }
 
     //階層にフォーカス
