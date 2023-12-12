@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -135,6 +135,13 @@ public:
      * @brief : 地物IDからUTwinLinkFacilityInfoを取得する. 全探索するので重い
      */
     TWeakObjectPtr<UTwinLinkFacilityInfo> FindFacilityInfoByFeatureId(const FString& FeatureId) const;
+
+    /*
+     * @brief : 地物IDからスタティックメッシュコンポーネントを取得
+     */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        TArray<UStaticMeshComponent*> GetStaticMeshComponents(const FString& Key);
+
 private:
     /** 施設情報機能のバージョン　永続化時に組み込む **/
     const TwinLinkSystemVersionInfo VersionInfo = TwinLinkSystemVersionInfo(0, 0, 0);
@@ -144,18 +151,19 @@ private:
 
     /** 施設情報群 **/
     UPROPERTY()
-    TObjectPtr<UTwinLinkFacilityInfoCollection> FacilityInfoCollection;
+        TObjectPtr<UTwinLinkFacilityInfoCollection> FacilityInfoCollection;
 
     /** カテゴリ名をキー、カテゴリ表示名を値としたマップ **/
     UPROPERTY()
-    TMap<FString, FString> CategoryDisplayNameMap;
+        TMap<FString, FString> CategoryDisplayNameMap;
     UPROPERTY()
-    TMap<FString, FString> ReverseCategoryDisplayNameMap;
-
+        TMap<FString, FString> ReverseCategoryDisplayNameMap;
 private:
     /**
      * @brief カテゴリ名変換用のマップを初期化する
     */
     void InitializeCategoryMap();
 
+    /** 地物IDに対応したスタティックメッシュコンポーネント **/
+    TMap<FString, TArray<UStaticMeshComponent*>> StaticMeshComponentMap;
 };

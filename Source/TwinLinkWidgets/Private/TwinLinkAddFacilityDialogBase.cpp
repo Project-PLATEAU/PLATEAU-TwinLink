@@ -66,6 +66,13 @@ void UTwinLinkAddFacilityDialogBase::BeginDestroy() {
         delete EntranceLocatorNode;
 }
 
+const UObject* UTwinLinkAddFacilityDialogBase::GetSelectedObjectIfVisible() {
+    if (TwinLinkWidgetEx::IsVisibleIncludeOuter(this) == false)
+        return nullptr;
+
+    return GetTargetFeatureComponent();
+}
+
 void UTwinLinkAddFacilityDialogBase::AddFacilityInfo(const FString& InName, const FString& InCategory, const FString& InImageFileName, const FString& InDescription, const FString& InSpotInfo) {
     const auto FacilityInfoSys = TwinLinkSubSystemHelper::GetInstance<UTwinLinkFacilityInfoSystem>();
 
@@ -74,10 +81,10 @@ void UTwinLinkAddFacilityDialogBase::AddFacilityInfo(const FString& InName, cons
         Entrance = EntranceLocatorNode->GetEntranceLocation();
 
     bool bIsValid = UTwinLinkFacilityInfo::IsValid(
-        InName, 
-        InCategory, 
-        FeatureID, 
-        InImageFileName, 
+        InName,
+        InCategory,
+        FeatureID,
+        InImageFileName,
         InDescription,
         InSpotInfo,
         Entrance.has_value() ? TArray<FVector>{ Entrance.value() } : TArray<FVector>());

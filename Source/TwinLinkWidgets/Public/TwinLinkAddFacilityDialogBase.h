@@ -16,8 +16,8 @@ class ATwinLinkWorldViewer;
  */
 UCLASS(Abstract, Blueprintable, BlueprintType, ClassGroup = TwinLink)
 class TWINLINKWIDGETS_API UTwinLinkAddFacilityDialogBase
-    : public UTwinLinkWidgetBase
-{
+    : public UTwinLinkWidgetBase {
+    GENERATED_BODY()
     GENERATED_BODY()
 
 public:
@@ -45,10 +45,10 @@ public:
     /**
      * @brief イメージファイルのパスを作成する
      * @param InFileName 拡張子付きファイル名
-     * @return 
+     * @return
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
-    FString CreateImageFilePath(const FString& InFileName);
+        FString CreateImageFilePath(const FString& InFileName);
 
     /**
      * @brief 施設情報が追加されたときに呼び出される
@@ -81,6 +81,11 @@ public:
         void OnShowDialog();
     virtual void BeginDestroy() override;
 
+    /*
+     * @brief : 自身が表示されていたら, 現在見ている建物のポインタを返す
+     */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        const UObject* GetSelectedObjectIfVisible();
 protected:
     FString FeatureID;
     FTwinLinkEntranceLocatorWidgetNode* EntranceLocatorNode = nullptr;

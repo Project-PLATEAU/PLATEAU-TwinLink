@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
 #include "TwinLinkFacilityEditDialogBase.h"
@@ -7,6 +7,7 @@
 #include "TwinLinkPersistentPaths.h"
 #include "TwinLinkFacilityInfoSystem.h"
 #include "TwinLinkFacilityInfo.h"
+#include "Misc/TwinLinkWidgetEx.h"
 #include "NavSystem/TwinLinkNavSystem.h"
 #include "NavSystem/TwinLinkNavSystemEntranceLocator.h"
 
@@ -54,6 +55,14 @@ void UTwinLinkFacilityEditDialogBase::BeginDestroy() {
     if (EntranceLocatorNode)
         delete EntranceLocatorNode;
 }
+const UObject* UTwinLinkFacilityEditDialogBase::GetSelectedObjectIfVisible() {
+    if (TwinLinkWidgetEx::IsVisibleIncludeOuter(this) == false)
+        return nullptr;
+    if (FacilityInfo.IsValid() == false)
+        return nullptr;
+    const auto FacilityInfoSys = TwinLinkSubSystemHelper::GetInstance<UTwinLinkFacilityInfoSystem>();
+    return FacilityInfoSys->FindFacility(FacilityInfo->GetFeatureID()).Get();
+}
 
 void UTwinLinkFacilityEditDialogBase::RequestEdit(const FString& Name, const FString& Category, const FString& ImageFileName, const FString& Guide, const FString& SpotInfo) {
     auto FacilityInfoSys = TwinLinkSubSystemHelper::GetInstance<UTwinLinkFacilityInfoSystem>();
@@ -64,12 +73,12 @@ void UTwinLinkFacilityEditDialogBase::RequestEdit(const FString& Name, const FSt
         Entrance = EntranceLocatorNode->GetEntranceLocation();
 
     bool bIsValid = UTwinLinkFacilityInfo::IsValid(
-        Name, 
-        Category, 
-        FacilityInfo->GetFeatureID(), 
-        ImageFileName, 
-        Guide, 
-        SpotInfo, 
+        Name,
+        Category,
+        FacilityInfo->GetFeatureID(),
+        ImageFileName,
+        Guide,
+        SpotInfo,
         Entrance.has_value() ? TArray<FVector>{ Entrance.value() } : TArray<FVector>());
 
     if (IsValid == false) {

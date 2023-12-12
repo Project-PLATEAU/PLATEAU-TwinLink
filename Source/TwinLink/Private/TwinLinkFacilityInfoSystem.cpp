@@ -1,10 +1,10 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
-
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #include "TwinLinkFacilityInfoSystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 
+#include "TwinLink.h"
 #include "TwinLinkCommon.h"
 
 #include "TwinLinkTickSystem.h"
@@ -32,8 +32,6 @@ void UTwinLinkFacilityInfoSystem::Initialize(FSubsystemCollectionBase& Collectio
 
     // 施設カテゴリ類初期化
     InitializeCategoryMap();
-
-
 }
 
 void UTwinLinkFacilityInfoSystem::Deinitialize() {
@@ -42,7 +40,6 @@ void UTwinLinkFacilityInfoSystem::Deinitialize() {
 void UTwinLinkFacilityInfoSystem::AddFacilityInfo(
     const FString& InName, const FString& InCategory, const FString& InFeatureID, const FString& InImageFileName, const FString& InDescription, const FString& InSpotInfo, std::optional<FVector> Entrance) {
     UE_TWINLINK_LOG(LogTemp, Log, TEXT("TwinLink AddFacilityInfo : %s"), *Filepath);
-
 
     // 表示用カテゴリ名を識別用カテゴリ名に変換
     const auto CategoryName = ReverseCategoryDisplayNameMap.Find(InCategory);
@@ -102,9 +99,9 @@ void UTwinLinkFacilityInfoSystem::ExportFacilityInfo() {
         StringBuf =
             CSVContents.CreateBodyContents(
                 TArray<FString>{
-                *(Name),
-                *Category, *FeatureID, *ImageFileName,
-                *Description, *SpotInfo, *EntranceStr});
+            *(Name),
+                * Category, * FeatureID, * ImageFileName,
+                * Description, * SpotInfo, * EntranceStr});
 
         CSVExporter.AddBodyContents(StringBuf);
     }
@@ -226,7 +223,6 @@ void UTwinLinkFacilityInfoSystem::MoveCharactersNearTheFacility(const TWeakObjec
             NewPosition, FacilityCenter);
 
     WorldViewer->SetLocation(NewPosition, NewRotation, 2.0f);
-
 }
 
 TWeakObjectPtr<UPrimitiveComponent> UTwinLinkFacilityInfoSystem::FindFacility(const TWeakObjectPtr<UTwinLinkFacilityInfo>& FacilityInfo) {
@@ -284,8 +280,30 @@ TWeakObjectPtr<UTwinLinkFacilityInfo> UTwinLinkFacilityInfoSystem::FindFacilityI
     return nullptr;
 }
 
-void UTwinLinkFacilityInfoSystem::InitializeCategoryMap() {
+TArray<UStaticMeshComponent*> UTwinLinkFacilityInfoSystem::GetStaticMeshComponents(const FString& Key) {
+    if (StaticMeshComponentMap.IsEmpty()) {
+        const auto CityModel = Cast<APLATEAUInstancedCityModel>(FTwinLinkModule::Get().GetCityModel());
+        TArray<UPLATEAUCityObjectGroup*> CityObjects;
+        CityModel->GetComponents<UPLATEAUCityObjectGroup>(CityObjects);
+        for (const auto& CityObject : CityObjects) {
+            FString Name = CityModel->GetCityObjectInfo(CityObject).ID;//CityObject->GetName();
+            TArray<UStaticMeshComponent*> Array;
+            if (StaticMeshComponentMap.Contains(Name)) {
+                StaticMeshComponentMap[Name].Add(Cast<UStaticMeshComponent>(CityObject));
+                continue;
+            }
+            Array.Add(Cast<UStaticMeshComponent>(CityObject));
+            StaticMeshComponentMap.Add(Name, Array);
+        }
+    }
 
+    if (StaticMeshComponentMap.Contains(Key)) {
+        return StaticMeshComponentMap[Key];
+    }
+    return TArray<UStaticMeshComponent*>();
+}
+
+void UTwinLinkFacilityInfoSystem::InitializeCategoryMap() {
     // 必要に応じて外部ファイルを読み込むようにする
 
     CategoryDisplayNameMap = {

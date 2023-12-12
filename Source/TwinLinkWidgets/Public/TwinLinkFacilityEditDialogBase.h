@@ -70,7 +70,7 @@ public:
      * @return
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
-    FString CreateImageFilePath(const FString& InFileName);
+        FString CreateImageFilePath(const FString& InFileName);
 
 
     /**
@@ -101,6 +101,12 @@ public:
         void OnChangedCategoryGroup(const TArray<FString>& Categories);
 
     virtual void BeginDestroy() override;
+    /*
+     * @brief : 自身が表示されていたら, 現在見ている建物のポインタを返す
+     */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        const UObject* GetSelectedObjectIfVisible();
+
 private:
     TWeakObjectPtr<UTwinLinkFacilityInfo> FacilityInfo;
     FDelegateHandle EvOnChangedHnd;
