@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
 #include "TwinLinkFloorInfoSystem.h"
@@ -23,7 +23,7 @@
 void UTwinLinkFloorInfoSystem::Initialize(FSubsystemCollectionBase& Collection) {
     Collection.InitializeDependency<UTwinLinkTickSystem>();
 
-    BuildingDesingFilePath = 
+    BuildingDesingFilePath =
         TwinLinkPersistentPaths::CreateBuildingDesignFilePath(TEXT("BuildingDesign.csv"));
 
     ImportBuildingDesign();
@@ -53,10 +53,11 @@ void UTwinLinkFloorInfoSystem::Initialize(FSubsystemCollectionBase& Collection) 
 void UTwinLinkFloorInfoSystem::Deinitialize() {
 }
 
-void UTwinLinkFloorInfoSystem::SelectedFloor(const FString& InFeatureID, const FString& InGrpID, const FString& InKey) {
+void UTwinLinkFloorInfoSystem::SelectedFloor(const FString& InFeatureID, const FString& InGrpID, const FString& InKey, UStaticMeshComponent* FloorComponent) {
     SelectedFeatureID = InFeatureID;
     SelectedGrpID = InGrpID;
     SelectedKey = InKey;
+    SelectedFloorComponent = FloorComponent;
 }
 
 FString UTwinLinkFloorInfoSystem::GetKeyBySelectedFloor() {
@@ -67,10 +68,26 @@ FString UTwinLinkFloorInfoSystem::GetGrpIDBySelectedFloor() {
     return SelectedGrpID;
 }
 
+UStaticMeshComponent* UTwinLinkFloorInfoSystem::GetSelectedFloorComponent() const {
+    return SelectedFloorComponent;
+}
+
+UTwinLinkFloorInfo* UTwinLinkFloorInfoSystem::GetInfoByUV(const FVector2D& UV) const {
+    for (const auto& [_, Collection] : FloorInfoCollectionMap) {
+        for (const auto& [Key, Info] : *Collection) {
+            if (Info->GetUV() == UV)
+                return Info;
+        }
+    }
+
+    return nullptr;
+}
+
 bool UTwinLinkFloorInfoSystem::CheckAddableFloorInfo(
     const FString& InName,
     const FString& InCategory,
     const FVector& InLocation,
+    const FVector2D& InUV,
     const FString& InImageFileName,
     const FString& InGuideText,
     const FString& InOpningHoursText) {
@@ -79,6 +96,7 @@ bool UTwinLinkFloorInfoSystem::CheckAddableFloorInfo(
         InName,
         InCategory,
         InLocation,
+        InUV,
         InImageFileName,
         InGuideText,
         InOpningHoursText);
@@ -94,10 +112,11 @@ bool UTwinLinkFloorInfoSystem::CheckValidFloorInfo(
     const FString& InName,
     const FString& InCategory,
     const FVector& InLocation,
+    const FVector2D& InUV,
     const FString& InImageFileName,
     const FString& InGuideText,
     const FString& InOpningHoursText) {
-    return UTwinLinkFloorInfo::IsValid(InName, InCategory, InLocation, InImageFileName, InGuideText, InOpningHoursText);
+    return UTwinLinkFloorInfo::IsValid(InName, InCategory, InLocation, InUV, InImageFileName, InGuideText, InOpningHoursText);
 }
 
 void UTwinLinkFloorInfoSystem::AddFloorInfo(
@@ -105,21 +124,24 @@ void UTwinLinkFloorInfoSystem::AddFloorInfo(
     const FString& InName,
     const FString& InCategory,
     const FVector& InLocation,
+    const FVector2D& InUV,
     const FString& InImageFileName,
     const FString& InGuideText,
     const FString& InOpningHoursText) {
 
     // 登録済みのカテゴリかチェック
-    check(DisplayCategoryMap.Find(InCategory) != nullptr);
-
-    // 整合性チェック
-    check(UTwinLinkFloorInfo::IsValid(
+    if (DisplayCategoryMap.Find(InCategory) == nullptr ||
+        !UTwinLinkFloorInfo::IsValid(
         InName,
         InCategory,
         InLocation,
+        InUV,
         InImageFileName,
         InGuideText,
-        InOpningHoursText));
+        InOpningHoursText)) {
+        UE_TWINLINK_LOG(LogTemp, Error, TEXT("Invalid data element in floow info"));
+        return;
+    }
 
     // データ作成
     UTwinLinkFloorInfo* Info = NewObject<UTwinLinkFloorInfo>();
@@ -127,13 +149,14 @@ void UTwinLinkFloorInfoSystem::AddFloorInfo(
         InName,
         InCategory,
         InLocation,
+        InUV,
         InImageFileName,
         InGuideText,
         InOpningHoursText);
 
     // 存在しなければ対応するコレクションを作成、あればそのコレクションを使用する
     TObjectPtr<UTwinLinkFloorInfoCollection>* CollectionPtrPtr = FloorInfoCollectionMap.Find(Key);
-    TObjectPtr<UTwinLinkFloorInfoCollection> CollectionPtr = nullptr;
+    TObjectPtr<UTwinLinkFloorInfoCollection> CollectionPtr;
     if (CollectionPtrPtr == nullptr) {
         CollectionPtr = FloorInfoCollectionMap.Add(
             Key, NewObject<UTwinLinkFloorInfoCollection>());
@@ -163,7 +186,7 @@ void UTwinLinkFloorInfoSystem::ExportFloorInfo() {
     TwinLinkCSVContents::Standard CSVContents(VersionInfo);
     CSVExporter.SetHeaderContents(
         CSVContents.CreateHeaderContents(
-            TEXT("name, category, pos_x, pos_y, pos_z, imageFileName, description, spot_info")));
+        TEXT("name, category, pos_x, pos_y, pos_z, uv_x, uv_y, imageFileName, description, spot_info")));
 
     FString StringBuf;
 
@@ -181,16 +204,18 @@ void UTwinLinkFloorInfoSystem::ExportFloorInfo() {
             const auto Name = Val->GetName();
             const auto Category = Val->GetCategory();
             const auto Location = Val->GetLocation();
+            const auto UV = Val->GetUV();
             const auto ImageFileName = Val->GetImageFileName();
             const auto GuideText = Val->GetGuideText();
             const auto OpningHoursText = Val->GetOpningHoursText();
             StringBuf =
                 CSVContents.CreateBodyContents(
                     TArray<FString> {
-                    *Name, *Category,
+                *Name, * Category,
                     FString::SanitizeFloat(Location.X), FString::SanitizeFloat(Location.Y), FString::SanitizeFloat(Location.Z),
-                    *ImageFileName,
-                    *GuideText, *OpningHoursText});
+                    FString::SanitizeFloat(UV.X), FString::SanitizeFloat(UV.Y),
+                    * ImageFileName,
+                    * GuideText, * OpningHoursText});
 
             CSVExporter.AddBodyContents(StringBuf);
         }
@@ -234,7 +259,7 @@ void UTwinLinkFloorInfoSystem::ImportFloorInfo() {
                 return true;
 
             DirectoryPathCollection.Add(FilenameOrDirectory);
-            return true; 
+            return true;
         });
 
     check(isSuc);
@@ -342,7 +367,7 @@ bool UTwinLinkFloorInfoSystem::EditBuildingDesign(const FString& Key, const TWea
         return false;
     if (*DataPtr != BuidlingDesignInfo.Get())   // キーとデータが紐づいていない
         return false;
-    
+
     (*DataPtr)->Setup(ImageFileName);
 
     ExportBuildingDesign();
@@ -361,7 +386,7 @@ bool UTwinLinkFloorInfoSystem::RemoveBuildingDesign(const FString& Key, const TW
 
     BuidlingDesignInfoPtr->EvOnDeleted.Broadcast();
     BuidingDesingInfoMap.Remove(Key);
-    
+
     ExportBuildingDesign();
 
     return true;
@@ -374,7 +399,7 @@ void UTwinLinkFloorInfoSystem::ExportBuildingDesign() {
     TwinLinkCSVContents::Standard CSVContents(VersionInfo);
     CSVExporter.SetHeaderContents(
         CSVContents.CreateHeaderContents(
-            TEXT("key, image_file_name")));
+        TEXT("key, image_file_name")));
 
     FString StringBuf;
     for (const auto& BuildingDesingInfo : BuidingDesingInfoMap) {
@@ -384,8 +409,8 @@ void UTwinLinkFloorInfoSystem::ExportBuildingDesign() {
         StringBuf =
             CSVContents.CreateBodyContents(
                 FString::Printf(TEXT("%s,%s"),
-                    *Key,
-                    *ImageFileName));
+                *Key,
+                *ImageFileName));
 
         CSVExporter.AddBodyContents(StringBuf);
     }
@@ -435,12 +460,13 @@ void UTwinLinkFloorInfoSystem::ImportBuildingDesign() {
 }
 
 bool UTwinLinkFloorInfoSystem::EditFloorInfo(
-    const TWeakObjectPtr<UTwinLinkFloorInfo>& FloorInfo, const FString& Name, 
-    const FString& Category, const FString& ImageFileName, 
+    const TWeakObjectPtr<UTwinLinkFloorInfo>& FloorInfo, const FString& Name,
+    const FString& Category, const FString& ImageFileName,
     const FString& Guide, const FString& SpotInfo) {
     check(FloorInfo.IsValid());
     const auto Location = FloorInfo->GetLocation();
-    FloorInfo->Setup(Name, Category, Location, ImageFileName, Guide, SpotInfo);
+    const auto UV = FloorInfo->GetUV();
+    FloorInfo->Setup(Name, Category, Location, UV, ImageFileName, Guide, SpotInfo);
     return false;
 }
 

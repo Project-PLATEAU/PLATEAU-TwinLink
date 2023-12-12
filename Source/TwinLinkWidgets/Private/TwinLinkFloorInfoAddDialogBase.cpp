@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
 #include "TwinLinkFloorInfoAddDialogBase.h"
@@ -18,9 +18,9 @@ void UTwinLinkFloorInfoAddDialogBase::NativeDestruct() {
     UTwinLinkWidgetBase::NativeDestruct();
 }
 
-void UTwinLinkFloorInfoAddDialogBase::Setup(const FVector& InLocationVector) {
+void UTwinLinkFloorInfoAddDialogBase::Setup(const FVector& InLocationVector, const FVector2D& InUV) {
     Location = InLocationVector;
-
+    UV = InUV;
     const auto InfoSys = TwinLinkSubSystemHelper::GetInstance<UTwinLinkFloorInfoSystem>();
     check(InfoSys.IsValid());
 
@@ -45,6 +45,7 @@ bool UTwinLinkFloorInfoAddDialogBase::CheckAddableFloorInfo(
         InName,
         InCategory,
         Location,
+        UV,
         InImageFileName,
         InGuideText,
         InOpningHoursText);
@@ -63,6 +64,7 @@ void UTwinLinkFloorInfoAddDialogBase::AddFloorInfo(const FString& InName, const 
         InName,
         InCategory,
         Location,
+        UV,
         InImageFileName,
         InGuideText,
         InOpningHoursText));
@@ -72,6 +74,7 @@ void UTwinLinkFloorInfoAddDialogBase::AddFloorInfo(const FString& InName, const 
         InName,
         SystemCategory,
         Location,
+        UV,
         InImageFileName,
         InGuideText,
         InOpningHoursText);

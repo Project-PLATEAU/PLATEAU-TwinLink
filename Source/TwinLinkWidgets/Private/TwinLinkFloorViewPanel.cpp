@@ -143,7 +143,7 @@ void UTwinLinkFloorViewPanel::FloorViewChange(TObjectPtr<UUserWidget> Element) {
     check(FloorInfoSys.IsValid());
     FloorInfoSys->SelectedFloor(
         LinkComponents["Exterior"]->GetName(),
-        LinkComponents[*Key]->GetName(), *Key);
+        LinkComponents[*Key]->GetName(), *Key, LinkComponents[*Key].Get());
 
     // 階層切替が行われたことをブループリントに通知する
     // (本当はUTwinLinkFloorInfoSystemを経由しないで実装したかったが利用先の設計的に受け取れないことが分かったので妥協)
@@ -199,8 +199,8 @@ void UTwinLinkFloorViewPanel::FloorViewChange(TObjectPtr<UUserWidget> Element) {
 
     const auto WorldViewer = TwinLinkActorEx::FindFirstActorInWorld<ATwinLinkWorldViewer>(GetWorld());
     const auto Box = Cast<UStaticMeshComponent>(LinkComponents[*Key])->Bounds.GetBox();
-    const auto Distance = FMath::Abs(Box.Max.Z + 10000.0f - Box.GetCenter().Z);
-    const auto Dir = FVector(WorldViewer->GetActorForwardVector().X, WorldViewer->GetActorForwardVector().Y, 0.0f).GetSafeNormal();
+    const auto Distance = FMath::Abs(Box.Max.Z + 13000.0f - Box.GetCenter().Z);
+    const auto Dir = FVector(1.0f, 0.0f, 0.0f).GetSafeNormal();
 
     FVector V0 = Box.GetCenter();
     FVector V1 = V0 + (-Dir * Distance);

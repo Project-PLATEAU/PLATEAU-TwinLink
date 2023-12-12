@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
 #include "TwinLinkFloorInfoEditDialogBase.h"
@@ -91,6 +91,7 @@ bool UTwinLinkFloorInfoEditDialogBase::CheckAddableFloorInfo(
         InName,
         InCategory,
         FloorInfo->GetLocation(),
+        FloorInfo->GetUV(),
         InImageFileName,
         InGuideText,
         InOpningHoursText);

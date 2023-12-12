@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -45,7 +45,7 @@ public:
      * @param InGrpID 
      * @param Key 
     */
-    void SelectedFloor(const FString& FeatureID, const FString& InGrpID, const FString& Key);
+    void SelectedFloor(const FString& FeatureID, const FString& InGrpID, const FString& Key, UStaticMeshComponent* FloorComponent);
 
     /**
      * @brief 選択フロアのキーを取得する
@@ -62,6 +62,19 @@ public:
     FString GetGrpIDBySelectedFloor();
 
     /**
+     * @brief 選択フロアのComponentを取得する
+    */
+    UFUNCTION(BlueprintCallable)
+    UStaticMeshComponent* GetSelectedFloorComponent() const;
+
+    /**
+     * @brief UVに対応するInfoを取得する
+    */
+    UFUNCTION(BlueprintCallable)
+    UTwinLinkFloorInfo* GetInfoByUV(const FVector2D& UV) const;
+
+
+    /**
      * @brief 追加可能な施設情報かチェックする
      * @param Name
      * @return
@@ -70,6 +83,7 @@ public:
         const FString& InName,
         const FString& InCategory,
         const FVector& InLocation,
+        const FVector2D& InUV,
         const FString& InImageFileName,
         const FString& InGuideText,
         const FString& InOpningHoursText);
@@ -83,6 +97,7 @@ public:
         const FString& InName,
         const FString& InCategory,
         const FVector& InLocation,
+        const FVector2D& InUV,
         const FString& InImageFileName,
         const FString& InGuideText,
         const FString& InOpningHoursText);
@@ -96,6 +111,7 @@ public:
         const FString& InName,
         const FString& InCategory,
         const FVector& InLocation,
+        const FVector2D& InUV,
         const FString& InImageFileName,
         const FString& InGuideText,
         const FString& InOpningHoursText);
@@ -255,4 +271,5 @@ private:
     FString SelectedGrpID;
     /** 選択されている階層情報 **/
     FString SelectedKey;
+    UStaticMeshComponent* SelectedFloorComponent;
 };

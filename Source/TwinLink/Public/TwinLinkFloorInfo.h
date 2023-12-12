@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -31,6 +31,7 @@ public:
         const FString& InName,
         const FString& InCategory,
         const FVector& InLocation,
+        const FVector2D& InUV,
         const FString& InImageFileName,
         const FString& InGuideText,
         const FString& InOpningHoursText);
@@ -41,6 +42,7 @@ public:
         const FString& InName,
         const FString& InCategory,
         const FVector& InLocation,
+        const FVector2D& InUV,
         const FString& InImageFileName,
         const FString& InGuideText, 
         const FString& InOpningHoursText);
@@ -75,6 +77,13 @@ public:
     FVector GetLocation() const { return Location; }
 
     /**
+     * @brief UVの取得
+     * @return
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+    FVector2D GetUV() const { return UV; }
+
+    /**
      * @brief 座標の取得
      * ITwinLinkName3DData継承
      * @return
@@ -104,7 +113,7 @@ public:
 
 private:
     /** データ数 **/ 
-    static const int NumDataElement = 8; // FVectorは3として数える
+    static const int NumDataElement = 10; // FVectorは3として数える
 
     /** 施設名 **/
     FString Name;
@@ -114,6 +123,9 @@ private:
 
     /** Location **/
     FVector Location;
+
+    /** 部屋のUV値(部屋ごとにユニークな値がStaticMeshに設定されている) **/
+    FVector2D UV;
 
     /** 拡張子付きのイメージのファイル名 **/
     FString ImageFileName;

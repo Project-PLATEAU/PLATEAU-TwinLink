@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -27,7 +27,7 @@ public:
 
 public:
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
-    void Setup(const FVector& InLocationVector);
+    void Setup(const FVector& InLocationVector, const FVector2D& InUV);
 
     /**
      * @brief 追加可能な情報かチェックする
@@ -66,4 +66,5 @@ public:
 
 private:
     FVector Location;
+    FVector2D UV;
 };
