@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -31,6 +31,9 @@ public:
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
         void SetupTwinLinkFloorViewWithSwitcher(UTwinLinkFloorSwitcher* Switcher);
+
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        void ViewExterior();
 
     /**
      * @brief 階層表示パネル後始末

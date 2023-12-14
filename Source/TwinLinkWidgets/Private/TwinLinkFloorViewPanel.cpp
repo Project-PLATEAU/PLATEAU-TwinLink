@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #include "TwinLinkFloorViewPanel.h"
 #include "TwinLinkCommon.h"
@@ -103,6 +103,10 @@ void UTwinLinkFloorViewPanel::SetupTwinLinkFloorViewWithSwitcher(UTwinLinkFloorS
     FloorViewChangeKey(SelectedFloorKey);
 
     FloorSwitcher->TwinLinkFloorSwitcherSetup(this);
+}
+
+void UTwinLinkFloorViewPanel::ViewExterior() {
+    FloorViewChangeKey("Exterior");
 }
 
 void UTwinLinkFloorViewPanel::FinalizeTwinLinkFloorView() {

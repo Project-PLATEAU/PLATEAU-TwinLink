@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #include "TwinLinkFacilityInfoSystem.h"
 #include "Kismet/GameplayStatics.h"
@@ -209,9 +209,10 @@ void UTwinLinkFacilityInfoSystem::MoveCharactersNearTheFacility(const TWeakObjec
     const auto NavigationBounds = Facility.Get()->GetNavigationBounds();
     const FVector FacilityClosestPoint = NavigationBounds.GetClosestPointTo(WorldViewer->GetActorLocation());
     const FVector FacilityCenter = NavigationBounds.GetCenter();
-    const FVector VecCenterToClosestPoint = FacilityClosestPoint - FacilityCenter;
-    const float DistanceFactor = 5.0f;  // てきとうな値　数値が大きいほど距離が離れる
     const float HighFactor = 3000.0f;
+    const auto FocusSurfacePoint = FVector(FacilityClosestPoint.X, FacilityClosestPoint.Y, FacilityCenter.Z + NavigationBounds.GetExtent().Z * 0.5);
+    const FVector VecCenterToClosestPoint = FocusSurfacePoint - (FVector(FacilityCenter.X, FacilityCenter.Y, 0));
+    const float DistanceFactor = 3.0f;  // てきとうな値　数値が大きいほど距離が離れる
 
     // 座標を設定する
     const FVector NewPosition =
@@ -222,7 +223,7 @@ void UTwinLinkFacilityInfoSystem::MoveCharactersNearTheFacility(const TWeakObjec
         UKismetMathLibrary::FindLookAtRotation(
             NewPosition, FacilityCenter);
 
-    WorldViewer->SetLocation(NewPosition, NewRotation, 2.0f);
+    WorldViewer->SetLocation(NewPosition, NewRotation, 0.5f);
 }
 
 TWeakObjectPtr<UPrimitiveComponent> UTwinLinkFacilityInfoSystem::FindFacility(const TWeakObjectPtr<UTwinLinkFacilityInfo>& FacilityInfo) {

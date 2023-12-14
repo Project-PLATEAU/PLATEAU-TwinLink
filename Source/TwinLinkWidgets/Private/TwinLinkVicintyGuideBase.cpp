@@ -16,6 +16,14 @@ void UTwinLinkVicintyGuideBase::NativeDestruct() {
     UTwinLinkTabContentBase::NativeDestruct();
 }
 
+void UTwinLinkVicintyGuideBase::OnActivated() {
+    ATwinLinkWorldViewer::ChangeTwinLinkViewMode(GetWorld(), ETwinLinkViewMode::FreeAutoView);
+}
+
+void UTwinLinkVicintyGuideBase::ResetWorldViewerStateToOverLook() {
+    ATwinLinkWorldViewer::ChangeTwinLinkViewMode(GetWorld(), ETwinLinkViewMode::FreeAutoView);
+}
+
 void UTwinLinkVicintyGuideBase::SetupMainWindow() {
     const auto WorldViewer = ATwinLinkWorldViewer::GetInstance(GetWorld());
     if (WorldViewer.IsValid() == false)
