@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
 #include "TwinLinkPeopleFlowVisualizerBase.h"
@@ -319,6 +319,34 @@ void UTwinLinkPeopleFlowVisualizerBase::SetMaximumAndMinimumAutomatically() {
     RequestToServer(RequestIDs, CurrentVisualizeTime);
 }
 
+void UTwinLinkPeopleFlowVisualizerBase::SetMaximumAndMinimum(int Max, int Min) {
+    check(CityModelHelper.IsValid());
+
+    // リクエストの結果待ち
+    if (bIsWaitingRequestResult) {
+        UE_TWINLINK_LOG(LogTemp, Log, TEXT("Waiting for the result of the request"));
+        return;
+    }
+    bIsWaitingRequestResult = true;
+
+    MaxPopulation = Max;
+    MinPopulation = Min;
+
+    // 最大値が最小値以下の時 最大値を最小値よりも大きくする(システム動作のため)
+    if (MaxPopulation <= MinPopulation)
+        MaxPopulation = MinPopulation + 1.0;
+
+    UE_TWINLINK_LOG(LogTemp, Log, TEXT("MaxPopulation %f"), MaxPopulation);
+    UE_TWINLINK_LOG(LogTemp, Log, TEXT("MinPopulation %f"), MinPopulation);
+
+    // 初期化済みフラグを立てる
+    bIsInitedMaxMinPopulation = true;
+
+    OnChangedMaximumAndMinimumAutomatically(MinPopulation, MaxPopulation);
+
+    bIsWaitingRequestResult = false;
+}
+
 void UTwinLinkPeopleFlowVisualizerBase::SetVisualizeTime(const FDateTime& Time) {
     CurrentVisualizeTime = Time;
 }
@@ -376,7 +404,7 @@ void UTwinLinkPeopleFlowVisualizerBase::OnSetMaximumAndMinimumAutomatically(cons
 void UTwinLinkPeopleFlowVisualizerBase::RequestInfoFromSpatialID() {
     // 最大値、最小値が計算されていなかったら先に最大値、最小値の計算を行う
     if (bIsInitedMaxMinPopulation == false) {
-        SetMaximumAndMinimumAutomatically();
+        SetMaximumAndMinimum(800, 1);
         return;
     }
 

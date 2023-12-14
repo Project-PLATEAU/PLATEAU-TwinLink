@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -57,6 +57,14 @@ public:
     */
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
     void SetMaximumAndMinimumAutomatically();
+
+    /**
+     * @brief 最大値と最小値を設定する
+     * @param Max Max>Min Max>=0
+     * @param Min Min>=0
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+    void SetMaximumAndMinimum(int Max, int Min);
 
     /**
      * @brief 表示する時間帯を指定する
