@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -29,7 +29,7 @@ protected:
     /**
      * @brief 有効化された時に呼び出される関数
     */
-    virtual void OnActivated() override {};
+    virtual void OnActivated() override;
 
     /**
      * @brief 無効化された時に呼び出される関数

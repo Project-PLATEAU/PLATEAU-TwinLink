@@ -1,8 +1,9 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #include "TwinLinkBuildingGuideBase.h"
 #include "TwinLinkCommon.h"
 
+#include "TwinLinkWorldViewer.h"
 #include "TwinLinkFloorInfoSystem.h"
 #include "TwinLinkFacilityInfoSystem.h"
 #include "TwinLinkFacilityInfo.h"
@@ -28,6 +29,7 @@ bool UTwinLinkBuildingGuideBase::CheckIsSelectedGrpID(const FString& InGrpID) {
 
 void UTwinLinkBuildingGuideBase::OnActivated() {
     UpdateFacilityName();
+    //ATwinLinkWorldViewer::ChangeTwinLinkViewMode(GetWorld(), ETwinLinkViewMode::FreeAutoView);
 }
 
 void UTwinLinkBuildingGuideBase::Setup() {

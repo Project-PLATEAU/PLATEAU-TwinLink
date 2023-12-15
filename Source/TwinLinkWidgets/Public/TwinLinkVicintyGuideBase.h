@@ -29,7 +29,7 @@ protected:
     /**
      * @brief 有効化された時に呼び出される関数
     */
-    virtual void OnActivated() override {};
+    virtual void OnActivated() override;
 
     /**
      * @brief 無効化された時に呼び出される関数
@@ -47,6 +47,12 @@ protected:
     */
     UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
     void OnClickedFacility(const FString& FeatureID);
+
+    /**
+     * @brief 仮で作成 WorldViewerを俯瞰視点に戻す
+    */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+    void ResetWorldViewerStateToOverLook();
 
 private:
     /**

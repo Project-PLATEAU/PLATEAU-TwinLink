@@ -3,6 +3,8 @@
 
 #include "TwinLinkWorldViewer.h"
 
+#include "TwinLink.h"
+
 #include "PLATEAUInstancedCityModel.h"
 #include "PLATEAUCityObjectGroup.h"
 #include "Kismet/GameplayStatics.h"
@@ -13,6 +15,7 @@
 
 #include "Components/CapsuleComponent.h"
 #include "NavSystem/TwinLinkNavSystem.h"
+
 
 namespace {
     void RotateAroundFocusPoint(ATwinLinkWorldViewer* Self, const FVector& FocusPoint, const FRotator& BaseRotator, const FRotator& AddRotator, double OffsetDistance) {
@@ -59,6 +62,14 @@ TWeakObjectPtr<ATwinLinkWorldViewer> ATwinLinkWorldViewer::GetInstance(UWorld* W
     return WorldViewer;
 }
 
+void ATwinLinkWorldViewer::ChangeTwinLinkViewMode(UWorld* World, ETwinLinkViewMode ViewMode) {
+    TObjectPtr<ATwinLinkWorldViewer> Viewer = GetInstance(World).Get();
+
+    if (Viewer) {
+        Viewer->ActivateAutoViewControlButton(ViewMode);
+    }
+}
+
 // Called when the game starts or when spawned
 void ATwinLinkWorldViewer::BeginPlay() {
     Super::BeginPlay();
@@ -67,53 +78,74 @@ void ATwinLinkWorldViewer::BeginPlay() {
     _CapsuleComponent.Get()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
     CurrentAutoViewMode = ETwinLinkViewMode::Manual;
+
+
+    NoInputProcessTime = LimitBeginAutoViewControlModeTime - 10.0f; // デフォルトを放置状態スタートにする
+
 }
 
 // Called every frame
 void ATwinLinkWorldViewer::Tick(float DeltaTime) {
     Super::Tick(DeltaTime);
 
-    // 放置時間の計測
-    bool bIsReqAutomode = false;
-    if (NoInputProcessTime < LimitBeginAutoViewControlModeTime) {
-        NoInputProcessTime += DeltaTime;
-        // 放置時間が自動閲覧モード以降基準に達した
-        if (NoInputProcessTime > LimitBeginAutoViewControlModeTime) {
-            bIsReqAutomode = true;
-        }
+    // マウスの移動を検知する
+    const auto PlayerController = GetLocalViewingPlayerController();
+    const auto CurrentMousePosition = ATwinLinkPlayerController::GetMousePosition(PlayerController).value_or(PreMousePosition);
+    if (FVector2D::DistSquared(PreMousePosition, CurrentMousePosition) > 0.01 * 0.01) {
+        InputedAny(true);
     }
 
-    // 自動閲覧モードの有効化
-    if (bIsReqAutomode) {
-        ActivateAutoViewControlButton(ETwinLinkViewMode::FreeAutoView);
+
+    // 管理者モードでは放置状態に移行しない
+    if (FTwinLinkModule::Get().IsAdminModeEnabled() == false) {
+        // 放置時間の計測
+        bool bIsReqAutomode = false;
+        if (NoInputProcessTime < LimitBeginAutoViewControlModeTime) {
+            NoInputProcessTime += DeltaTime;
+            // 放置時間が自動閲覧モード以降基準に達した
+            if (NoInputProcessTime > LimitBeginAutoViewControlModeTime) {
+                bIsReqAutomode = true;
+            }
+        }
+
+        // 自動閲覧モードの有効化
+        if (bIsReqAutomode) {
+            ActivateAutoViewControlButton(ETwinLinkViewMode::FreeAutoView);
+        }
+    }
+    else {
+        NoInputProcessTime = 0.0f;
     }
 
     // 自動閲覧モードの更新処理　回転
-    if (!CanReceivePlayerInput()) {
-        NoInputProcessTime += DeltaTime;
-
+    if (CurrentAutoViewMode != ETwinLinkViewMode::Manual) {
         // 注視点回転
         switch (CurrentAutoViewMode) {
         case ETwinLinkViewMode::FreeAutoView:
         {
             AutoFreeViewControl.Update(this, DeltaTime);
-
         }
-
-            break;
+        break;
         case ETwinLinkViewMode::LimitedAutoView:
         {
-            if (SingleFocusPoint.has_value()) {
-                const auto Progress = AutoRotateViewProcessTime;
-                RotateAroundFocusPoint(this, SingleFocusPoint.value(),
-                    OffsetRotation, FRotator(0.0, AutoRotationSpeed * Progress, 0.0), OffsetLength);
+            bool bCanAutoView = TargetTransform.has_value() == false;
+            if (bCanAutoView == false) {
+                bCanAutoView = TargetTransform.value().IsCompleted();
             }
-            else {
-                AddControllerYawInput(AutoRotationSpeed * DeltaTime * CameraRotationSpeed);
+
+            if (bCanAutoView) {
+                const auto FocusPoint = CalcFocusPoint();
+                if (FocusPoint.has_value()) {
+                    RotateAroundFocusPoint(this, FocusPoint.value(),
+                        GetNowCameraRotationOrDefault(), FRotator(0.0, AutoRotationSpeed * DeltaTime, 0.0), CalcOffsetLength(FocusPoint));
+                }
+                else {
+                    AddControllerYawInput(AutoRotationSpeed * DeltaTime * CameraRotationSpeed);
+                }
+                AutoRotateViewProcessTime += DeltaTime;
             }
-            AutoRotateViewProcessTime += DeltaTime;
         }
-            break;
+        break;
         }
     }
 
@@ -135,7 +167,6 @@ void ATwinLinkWorldViewer::Tick(float DeltaTime) {
 
     // 遠くのものでもちゃんとヒットするように領域のAabbを貫くような長さをPlayerControllerに設定する
     if (const auto NavSystem = ATwinLinkNavSystem::GetInstance(GetWorld())) {
-        const auto PlayerController = GetLocalViewingPlayerController();
         const auto MousePos = ATwinLinkPlayerController::GetMousePosition(PlayerController);
         if (MousePos.has_value()) {
             const auto Line = ATwinLinkPlayerController::ScreenToWorldRayThroughBoundingBox(PlayerController, *MousePos, NavSystem->GetFieldAabb());
@@ -148,15 +179,25 @@ void ATwinLinkWorldViewer::Tick(float DeltaTime) {
     // 更新されたかチェック
     const auto CurrentLocation = GetActorLocation();
     const auto CurrentRotation = GetActorRotation();
-    if (PreLocation != CurrentLocation || PreRotation != CurrentRotation) {
+    if (PreLocation.value_or(CurrentLocation) != CurrentLocation || 
+        PreRotation.value_or(CurrentRotation) != CurrentRotation) {
         // 更新されたことを通知する
         if (EvOnUpdatedLocationAndRotation.IsBound()) {
             EvOnUpdatedLocationAndRotation.Broadcast();
         }
 
-        PreLocation = CurrentLocation;
-        PreRotation = CurrentRotation;
+        // 入力が何かあったことにする
+        if (CurrentAutoViewMode == ETwinLinkViewMode::Manual) {
+            //InputedAny(true);
+        }
     }
+
+    // 前フレーム座標を更新する
+    PreLocation = CurrentLocation;
+    PreRotation = CurrentRotation;
+
+    // 前フレームのマウスの座標を更新する
+    PreMousePosition = CurrentMousePosition;
 
 }
 
@@ -212,13 +253,11 @@ FRotator ATwinLinkWorldViewer::GetNowCameraRotationOrDefault() const {
     //return FRotator();
 }
 
-void ATwinLinkWorldViewer::AddFocusPoint() {
+std::optional<FVector> ATwinLinkWorldViewer::CalcFocusPoint() {
     if (!GetLocalViewingPlayerController())
-        return;
+        return std::nullopt;
 
-    if (!CanReceivePlayerInput()) {
-        return;
-    }
+    std::optional<FVector> Ret;
 
     double Altitude = 0.0;
     if (DemCityModel != nullptr) {
@@ -234,7 +273,7 @@ void ATwinLinkWorldViewer::AddFocusPoint() {
     const auto ExtraRadian = FMath::Sin(FMath::DegreesToRadians(LimitDegressFocusRotate));   // あまりにも地面と水平だと回転の半径が大きくなり視点の移動量がかなり大きくなる　操作しづらい
     bool bIsHit = CurrentRotation.Vector().Dot(Ground.GetNormal()) <= ExtraRadian;
     if (bIsHit == false) {
-        return;
+        return std::nullopt;
     }
 
     // 平面と光線のチェック
@@ -245,17 +284,14 @@ void ATwinLinkWorldViewer::AddFocusPoint() {
         FocusPoint += GetActorForwardVector() * 0.001;
     }
 
-    OffsetRotation = CurrentRotation;
-    OffsetLength = FVector::Distance(FocusPoint, CurrentLocation);
-
+    const auto OffsetLength = CalcOffsetLength(FocusPoint);
     if (OffsetLength > LimitDistanceFocusPointToSelf) {
-        return;
+        return std::nullopt;
     }
 
 
     // 注視点を追加
-    SingleFocusPoint = FocusPoint;
-
+    return FocusPoint;
 }
 
 // カメラの前後移動
@@ -268,6 +304,19 @@ void ATwinLinkWorldViewer::MoveForward(const float Value) {
     if (Controller && Value != 0.0f) {
         const auto Rotation = Controller->GetControlRotation();
         const auto Direction = FRotationMatrix(Rotation).GetScaledAxis(EAxis::X);
+        AddMovementInput(Direction, Value * CameraMovementSpeed * GetWorld()->GetDeltaSeconds());
+    }
+}
+
+void ATwinLinkWorldViewer::MoveForwardOnWorldSpace(const float Value) {
+    // 
+    if (!CanReceivePlayerInput()) {
+        return;
+    }
+
+    if (Controller && Value != 0.0f) {
+        const auto Rotation = Controller->GetControlRotation();
+        const auto Direction = FRotator(0, Rotation.Yaw, 0).Vector();
         AddMovementInput(Direction, Value * CameraMovementSpeed * GetWorld()->GetDeltaSeconds());
     }
 }
@@ -307,8 +356,8 @@ void ATwinLinkWorldViewer::TurnXY(const FVector2D Value) {
         return;
     }
 
-    AddFocusPoint();
-    if (SingleFocusPoint.has_value() == false) {
+    //AddFocusPoint();
+    if (CalcFocusPoint().has_value() == false) {
         AddControllerPitchInput(-Value.Y * CameraRotationSpeed);
         AddControllerYawInput(-Value.X * CameraRotationSpeed);
     }
@@ -320,11 +369,11 @@ void ATwinLinkWorldViewer::TurnXY(const FVector2D Value) {
         Pitch = Value.Y * CameraRotationSpeed * Factor;
         Yaw = Value.X * CameraRotationSpeed * Factor;
 
-        const auto FocusPoint = SingleFocusPoint.value();
-        RotateAroundFocusPoint(this, FocusPoint, OffsetRotation, FRotator(Pitch, Yaw, 0.0), OffsetLength);
+        const auto FocusPoint = CalcFocusPoint().value();
+        RotateAroundFocusPoint(this, FocusPoint, GetNowCameraRotationOrDefault(), FRotator(Pitch, Yaw, 0.0), CalcOffsetLength(FocusPoint));
 
         //RotateAroundFocusPoints();
-        ClearFocusPoint();
+        //ClearFocusPoint();
 
     }
 
@@ -421,10 +470,15 @@ void ATwinLinkWorldViewer::ActivateAutoViewControl(ETwinLinkViewMode ViewMode) {
     if (bIsChangeVal == false)
         return;
 
+    if (CityModel == nullptr)
+        return;
+    if (DemCityModel == nullptr)
+        return;
+
     switch (ViewMode) {
     case ETwinLinkViewMode::FreeAutoView:
     {
-        AddFocusPoint();
+        //AddFocusPoint();
         const auto DemCityModelBounds = DemCityModel->GetNavigationBounds();
         const auto OffsetDistance = (DemCityModelBounds.GetExtent().X + DemCityModelBounds.GetExtent().Y) * 0.5;
         const auto FocusPoint = DemCityModelBounds.GetCenter();
@@ -436,14 +490,14 @@ void ATwinLinkWorldViewer::ActivateAutoViewControl(ETwinLinkViewMode ViewMode) {
     break;
     case ETwinLinkViewMode::LimitedAutoView:
     {
-        AddFocusPoint();
+        //AddFocusPoint();
         AutoRotateViewProcessTime = 0.0f;
     }
     break;
     case ETwinLinkViewMode::Manual:
     {
         NoInputProcessTime = 0.0f;
-        ClearFocusPoint();
+        //ClearFocusPoint();
         CurrentAutoViewMode = ETwinLinkViewMode::Manual;
         break;
     }
@@ -465,6 +519,13 @@ bool ATwinLinkWorldViewer::CanReceivePlayerInput() {
     return CurrentAutoViewMode == ETwinLinkViewMode::Manual;
 }
 
+double ATwinLinkWorldViewer::CalcOffsetLength(std::optional<FVector> FocusPoint) {
+    const auto CurrentLocation = GetNowCameraLocationOrZero();
+    const auto CurrentRotation = GetNowCameraRotationOrDefault();
+    const auto OffsetLength = FVector::Distance(FocusPoint.value_or(CurrentLocation + CurrentRotation.Vector()), CurrentLocation);
+    return OffsetLength;
+}
+
 bool ATwinLinkWorldViewer::MoveInfo::Update(float DeltaSec, FVector& OutLocation, FRotator& OutRotation) {
     PassSec = FMath::Max(0.f, PassSec) + DeltaSec;
     if (PassSec >= MoveSec || MoveSec <= 0.f) {
@@ -484,11 +545,8 @@ bool ATwinLinkWorldViewer::MoveInfo::IsCompleted() {
     return PassSec >= MoveSec || MoveSec <= 0.f;
 }
 
-void ATwinLinkWorldViewer::ClearFocusPoint() {
-    SingleFocusPoint = std::nullopt;
-}
-
 void ATwinLinkWorldViewer::SetLocationImpl(const FVector& Position, const FRotator& Rotation) {
+    CharMovementComponent->StopMovementImmediately();   // 現在の移動速度を０にする
     GetController()->ClientSetLocation(Position, Rotation);
 }
 
@@ -531,7 +589,10 @@ void ATwinLinkWorldViewer::FAutoFreeViewControl::Update(ATwinLinkWorldViewer* Wo
         break;
     case 1: // 移動中
         TimeCnt += DeltaTime;
-        if (TimeCnt > MoveSec) {
+        if (FVector::DistSquared(WorldViewer->GetNowCameraLocationOrZero(), WorldViewer->TargetTransform->To.Location) <= 0.01) {
+            TimeCnt = MoveSec;
+        }
+        if (TimeCnt >= MoveSec) {
             SwitchIdxInUpdate++;
             TimeCnt = 0.0f;
         }

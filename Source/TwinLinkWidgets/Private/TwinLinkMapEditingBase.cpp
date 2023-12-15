@@ -3,6 +3,7 @@
 
 #include "TwinLinkMapEditingBase.h"
 #include "TwinLinkCommon.h"
+#include "TwinLinkWorldViewer.h"
 
 void UTwinLinkMapEditingBase::NativeConstruct() {
     UTwinLinkTabContentBase::NativeConstruct();
@@ -12,6 +13,10 @@ void UTwinLinkMapEditingBase::NativeConstruct() {
 void UTwinLinkMapEditingBase::NativeDestruct() {
     Finalize();
     UTwinLinkTabContentBase::NativeDestruct();
+}
+
+void UTwinLinkMapEditingBase::OnActivated() {
+    //ATwinLinkWorldViewer::ChangeTwinLinkViewMode(GetWorld(), ETwinLinkViewMode::FreeAutoView);
 }
 
 void UTwinLinkMapEditingBase::Setup() {

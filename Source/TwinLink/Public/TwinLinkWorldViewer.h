@@ -45,6 +45,8 @@ public:
 
     static TWeakObjectPtr<ATwinLinkWorldViewer> GetInstance(UWorld* World);
 
+    static void ChangeTwinLinkViewMode(UWorld* World, ETwinLinkViewMode ViewMode);
+
 protected:
     // Called when the game starts or when spawned
     virtual void BeginPlay() override;
@@ -91,11 +93,8 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Movement")
         FRotator GetNowCameraRotationOrDefault() const;
 
-    UFUNCTION(BlueprintCallable, Category = "Movement")
-        void AddFocusPoint();
 
-    UFUNCTION(BlueprintCallable, Category = "Movement")
-        void ClearFocusPoint();
+    std::optional<FVector> CalcFocusPoint();
 
     /**
      * @brief 自動回転ボタンを有効にする
@@ -120,6 +119,9 @@ private:
     // BluePrint側から呼び出す処理
     UFUNCTION(BlueprintCallable, Category = "Movement")
         void MoveForward(const float Value);
+
+    UFUNCTION(BlueprintCallable, Category = "Movement")
+        void MoveForwardOnWorldSpace(const float Value);
 
     UFUNCTION(BlueprintCallable, Category = "Movement")
         void MoveRight(const float Value);
@@ -226,20 +228,17 @@ private:
 
     std::optional<MoveInfo> TargetTransform;
 
-    FVector PreLocation;
-    FRotator PreRotation;
+    std::optional<FVector> PreLocation;
+    std::optional<FRotator> PreRotation;
 
     /** 次に適用する自動閲覧モード **/
     ETwinLinkViewMode CurrentAutoViewMode;
 
-    /** 注視点 **/
-    std::optional<FVector> SingleFocusPoint;
-
-    FRotator OffsetRotation;
-    double OffsetLength;
-
     /** 自動回転機能の経過時間 **/
     float AutoRotateViewProcessTime;
+
+    /** 前フレームのマウス座標 **/
+    FVector2D PreMousePosition;
 
     /** 何の入力もない時間 **/
     float NoInputProcessTime;
@@ -258,7 +257,7 @@ private:
         double OffsetDistance;
         FRotator OffsetRotator;
         float TimeCnt;
-        const float MoveSec = 3.0f;
+        const float MoveSec = 0.5f;
     } AutoFreeViewControl;
 
 private:
@@ -272,4 +271,10 @@ private:
      * @return 
     */
     bool CanReceivePlayerInput();
+
+    /**
+     * @brief 注視点から現在のカメラの座標までの距離
+     * @return 
+    */
+    double CalcOffsetLength(std::optional<FVector> FocusPoint);
 };
