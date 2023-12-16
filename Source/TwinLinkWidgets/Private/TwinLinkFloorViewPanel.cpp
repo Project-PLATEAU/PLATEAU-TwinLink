@@ -125,6 +125,17 @@ void UTwinLinkFloorViewPanel::AlignTwinLinkFloorViewElements(const bool IsAdmin)
                 ViewExterior();
         }
     }
+
+    // 表示されているElementリストを更新する
+    VisibleFloorKeys.Reset();
+    for (auto& Key : FloorKeys) {
+        if (IsAdmin || Cast<UTwinLinkFloorViewElement>(ElementWidgets[Key])->IsFloorVisible())
+            VisibleFloorKeys.Add(Key);
+    }
+
+    if (FloorSwitcher != nullptr) {
+        FloorSwitcher->FloorSwitch();
+    }
 }
 
 void UTwinLinkFloorViewPanel::SetupTwinLinkFloorViewWithSwitcher(UTwinLinkFloorSwitcher* Switcher) {
@@ -284,6 +295,16 @@ void UTwinLinkFloorViewPanel::OnChangeFloorVisible(TObjectPtr<UUserWidget> Eleme
         FloorInfoSystem->SetFloorVisible(MapKey, FloorVisible);
         FloorInfoSystem->ExportCommonInfo();
     }
+}
+
+void UTwinLinkFloorViewPanel::FloorViewChangeNextKey(int DeltaIndex) {
+    auto Index = VisibleFloorKeys.Find(GetSelectedFloorKey());
+    // 範囲外に出たら何もせずに終了
+    Index += DeltaIndex;
+    if (Index >= 0 && Index < VisibleFloorKeys.Num()) {
+        const auto& NewKey = VisibleFloorKeys[Index];
+        FloorViewChangeKey(NewKey);
+    };
 }
 
 void UTwinLinkFloorViewPanel::FloorViewChangeKey(const FString& Key) {

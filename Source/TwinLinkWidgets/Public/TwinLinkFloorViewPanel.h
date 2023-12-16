@@ -75,12 +75,17 @@ public:
     /**
      * @brief
     */
-    FString GetSelectedFloorKey() { return SelectedFloorKey; }
+    const FString& GetSelectedFloorKey() const { return SelectedFloorKey; }
 
     /**
      * @brief
     */
-    TArray<FString> GetFloorKeys() { return FloorKeys; }
+    const TArray<FString>& GetVisibleFloorKeys() const { return VisibleFloorKeys; }
+
+    /*
+     * @brief : 現在選択している階層からDeltaIndexだけずれた階層に切り替える(+1 or -1で指定する)
+     */
+    void FloorViewChangeNextKey(int DeltaIndex);
 
     /**
      * @brief 階層表示パネル要素選択時処理
@@ -100,6 +105,9 @@ private:
 
     /** 階層表示パネル要素のソート済みキー配列 **/
     TArray<FString> FloorKeys;
+
+    // FloorKeysのうち. リストに表示されているもののみ抽出したもの.(管理者モードだとFloorKeysと同じ)
+    TArray<FString> VisibleFloorKeys;
 
     /** 選択中階層キー **/
     FString SelectedFloorKey;
