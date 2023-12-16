@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -26,6 +26,12 @@ public:
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
         void SetupTwinLinkFloorView();
 
+    /*
+     * @brief : FloorInfoSystemの情報をもとに階層の非表示設定を行う
+     */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        void AlignTwinLinkFloorViewElements(bool bIsAdmin);
+
     /**
      * @brief 階層表示パネルセットアップ
     */
@@ -46,6 +52,12 @@ public:
      * @param Element
     */
     void FloorViewChange(TObjectPtr<UUserWidget> Element);
+
+    /*
+     * @brief 階層表示切り替え選択時処理
+     * @param どの階層の表示/非表示設定を切り替えたか
+     */
+    void OnChangeFloorVisible(TObjectPtr<UUserWidget> Element, bool FloorVisible);
 
     /**
      * @brief 選択している階層が変更された時に呼ばれる
