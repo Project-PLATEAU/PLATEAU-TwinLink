@@ -21,7 +21,7 @@
 //#include "PLATEAURuntime/Public/PLATEAUInstancedCityModel.h"
 
 namespace {
-    inline const FString CommonInfoFileName = TEXT("CommonInfo.csv");
+    inline const FString CommonInfoFileName = TEXT("CommonFloorInfo.ini");
 }
 
 void UTwinLinkFloorInfoSystem::Initialize(FSubsystemCollectionBase& Collection) {
