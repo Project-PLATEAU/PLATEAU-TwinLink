@@ -18,6 +18,10 @@ ATwinLinkNavSystemPathLocator::ATwinLinkNavSystemPathLocator() {
     PrimaryActorTick.bCanEverTick = true;
 }
 
+ATwinLinkNavSystemPathLocator::~ATwinLinkNavSystemPathLocator() {
+    DeleteWorldViewerControlNode();
+}
+
 void ATwinLinkNavSystemPathLocator::BeginPlay() {
     Super::BeginPlay();
 
@@ -30,6 +34,16 @@ void ATwinLinkNavSystemPathLocator::BeginPlay() {
             Mat->SetScalarParameterValue(FName(TEXT("NightCoef")), NightIntensity);
         }
     }
+    if (const auto Viewer = ATwinLinkNavSystem::GetWorldViewer(GetWorld())) {
+        WorldViewerControlNode = new FWorldViewerControlNode(this);
+        Viewer->AddInputControlNode(WorldViewerControlNode);
+    }
+}
+
+void ATwinLinkNavSystemPathLocator::DeleteWorldViewerControlNode() {
+    if (WorldViewerControlNode)
+        delete WorldViewerControlNode;
+    WorldViewerControlNode = nullptr;
 }
 
 void ATwinLinkNavSystemPathLocator::Tick(float DeltaSeconds) {
@@ -169,6 +183,7 @@ ECollisionChannel ATwinLinkNavSystemPathLocator::GetCollisionChannel() const {
 
 void ATwinLinkNavSystemPathLocator::BeginDestroy() {
     Super::BeginDestroy();
+    DeleteWorldViewerControlNode();
 }
 
 void ATwinLinkNavSystemPathLocator::Destroyed() {
@@ -179,4 +194,12 @@ void ATwinLinkNavSystemPathLocator::Destroyed() {
         //delete WarnTextWidget;
         WarnTextWidget = nullptr;
     }
+}
+
+ATwinLinkNavSystemPathLocator::FWorldViewerControlNode::FWorldViewerControlNode(
+    TWeakObjectPtr<ATwinLinkNavSystemPathLocator> Self) : Target(Self) {
+}
+
+bool ATwinLinkNavSystemPathLocator::FWorldViewerControlNode::IsInputRestricted() const {
+    return Target.IsValid() && Target->IsHidden() == false && Target->IsSelected;
 }

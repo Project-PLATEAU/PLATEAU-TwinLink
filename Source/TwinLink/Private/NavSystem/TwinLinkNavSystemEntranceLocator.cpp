@@ -106,7 +106,7 @@ void ATwinLinkNavSystemEntranceLocator::Tick(float DeltaTime) {
 
     // 見えていない時は何もしない
     if (IsHidden()) {
-        if(IsSelected)
+        if (IsSelected)
             UnSelect();
         return;
     }
@@ -236,8 +236,7 @@ ECollisionChannel ATwinLinkNavSystemEntranceLocator::GetCollisionChannel() const
     return Super::GetCollisionChannel();
 }
 
-bool ATwinLinkNavSystemEntranceLocator::UpdateLocation(const UNavigationSystemV1* NavSys, const FVector& Location)
-{
+bool ATwinLinkNavSystemEntranceLocator::UpdateLocation(const UNavigationSystemV1* NavSys, const FVector& Location) {
     const auto TwinLinkNavSystem = ATwinLinkNavSystem::GetInstance(GetWorld());
     const auto DemCollisionAabb = TwinLinkNavSystem->GetDemCollisionAabb();
     const auto Channel = GetCollisionChannel();
@@ -248,8 +247,7 @@ bool ATwinLinkNavSystemEntranceLocator::UpdateLocation(const UNavigationSystemV1
     End.Z = DemCollisionAabb.Min.Z - 10;
 
     if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, Channel)) {
-        if (HitResult.IsValidBlockingHit())
-        {
+        if (HitResult.IsValidBlockingHit()) {
             return Super::UpdateLocation(NavSys, HitResult.Location);
         }
     }

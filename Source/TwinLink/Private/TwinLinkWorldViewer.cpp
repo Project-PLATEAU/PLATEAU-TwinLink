@@ -37,6 +37,20 @@ namespace {
 
 }
 
+ATwinLinkWorldViewer::FInputControlNode::~FInputControlNode() {
+    Reset();
+}
+
+void ATwinLinkWorldViewer::FInputControlNode::SetParent(TWeakObjectPtr<ATwinLinkWorldViewer> V) {
+    Parent = V;
+}
+
+void ATwinLinkWorldViewer::FInputControlNode::Reset() {
+    if (Parent.IsValid())
+        Parent->RemoveInputControlNode(this);
+    Parent = nullptr;
+}
+
 // Sets default values
 ATwinLinkWorldViewer::ATwinLinkWorldViewer() {
     // Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -179,7 +193,7 @@ void ATwinLinkWorldViewer::Tick(float DeltaTime) {
     // 更新されたかチェック
     const auto CurrentLocation = GetActorLocation();
     const auto CurrentRotation = GetActorRotation();
-    if (PreLocation.value_or(CurrentLocation) != CurrentLocation || 
+    if (PreLocation.value_or(CurrentLocation) != CurrentLocation ||
         PreRotation.value_or(CurrentRotation) != CurrentRotation) {
         // 更新されたことを通知する
         if (EvOnUpdatedLocationAndRotation.IsBound()) {
@@ -213,7 +227,7 @@ void ATwinLinkWorldViewer::SetupPlayerInputComponent(UInputComponent* PlayerInpu
     // 移動コンポーネントを利用する前に取得
     CharMovementComponent = GetCharacterMovement();
     check(CharMovementComponent);
-    
+
     // 空を飛べるようにする
     CharMovementComponent->SetMovementMode(EMovementMode::MOVE_Flying);
 }
@@ -462,7 +476,7 @@ void ATwinLinkWorldViewer::InputedAny(bool bIsActive) {
         if (CurrentAutoViewMode == ETwinLinkViewMode::FreeAutoView) {
             ActivateAutoViewControlButton(ETwinLinkViewMode::Manual);
         }
-    }    
+    }
 }
 
 void ATwinLinkWorldViewer::ActivateAutoViewControl(ETwinLinkViewMode ViewMode) {
@@ -516,7 +530,11 @@ void ATwinLinkWorldViewer::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo
 }
 
 bool ATwinLinkWorldViewer::CanReceivePlayerInput() {
-    return CurrentAutoViewMode == ETwinLinkViewMode::Manual;
+    if (CurrentAutoViewMode != ETwinLinkViewMode::Manual)
+        return false;
+
+    const auto bIsRestricted = InputControlNodes.ContainsByPredicate([](const FInputControlNode* X) { return X && X->IsInputRestricted(); });
+    return bIsRestricted == false;
 }
 
 double ATwinLinkWorldViewer::CalcOffsetLength(std::optional<FVector> FocusPoint) {
@@ -543,6 +561,21 @@ bool ATwinLinkWorldViewer::MoveInfo::Update(float DeltaSec, FVector& OutLocation
 
 bool ATwinLinkWorldViewer::MoveInfo::IsCompleted() {
     return PassSec >= MoveSec || MoveSec <= 0.f;
+}
+
+void ATwinLinkWorldViewer::AddInputControlNode(FInputControlNode* Node) {
+    if (!Node)
+        return;
+
+    InputControlNodes.Add(Node);
+    Node->SetParent(this);
+}
+
+void ATwinLinkWorldViewer::RemoveInputControlNode(FInputControlNode* Node) {
+    if (!Node)
+        return;
+    // Nodeをリストから削除(念のため多重登録が無いかも見る)
+    InputControlNodes.RemoveAll([Node](FInputControlNode* X) { return X == Node; });
 }
 
 void ATwinLinkWorldViewer::SetLocationImpl(const FVector& Position, const FRotator& Rotation) {

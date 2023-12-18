@@ -6,6 +6,7 @@
 
 #include "CoreMinimal.h"
 #include "TwinLinkNavSystemDef.h"
+#include "TwinLinkWorldViewer.h"
 #include "Components/Widget.h"
 #include "GameFramework/Actor.h"
 #include "TwinLinkNavSystemPathLocator.generated.h"
@@ -20,8 +21,11 @@ class TWINLINK_API ATwinLinkNavSystemPathLocator : public AActor {
 public:
     // Sets default values for this actor's properties
     ATwinLinkNavSystemPathLocator();
+    virtual ~ATwinLinkNavSystemPathLocator() override;
+
 protected:
     virtual void BeginPlay() override;
+    void DeleteWorldViewerControlNode();
 public:
     virtual void Tick(float DeltaSeconds) override;
 
@@ -57,6 +61,13 @@ public:
     virtual void BeginDestroy() override;
     virtual void Destroyed() override;
 
+
+    class FWorldViewerControlNode : public ATwinLinkWorldViewer::FInputControlNode {
+    public:
+        FWorldViewerControlNode(TWeakObjectPtr<ATwinLinkNavSystemPathLocator> Self);
+        virtual bool IsInputRestricted() const override;
+        TWeakObjectPtr<ATwinLinkNavSystemPathLocator> Target;
+    };
 protected:
     // 現在の状態
     UPROPERTY(EditAnywhere, Category = TwinLink_Base)
@@ -81,4 +92,5 @@ protected:
     UPROPERTY(EditAnywhere, Category = TwinLink_Debug)
         float DebugNightCoef = -1.f;
 
+    FWorldViewerControlNode* WorldViewerControlNode = nullptr;
 };

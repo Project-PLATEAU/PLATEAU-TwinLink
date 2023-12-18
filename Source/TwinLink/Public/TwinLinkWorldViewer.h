@@ -38,7 +38,31 @@ enum class ETwinLinkViewMode : uint8 {
 UCLASS()
 class TWINLINK_API ATwinLinkWorldViewer : public ACharacter {
     GENERATED_BODY()
+public:
+    /*
+ * EntranceLocatorの参照ノード. EntranceLocatorはSingleton前提
+ */
+    class FInputControlNode {
+    public:
+        FInputControlNode() = default;
+        virtual ~FInputControlNode();
+        /*
+         * @brief : 入力を制限するかどうか
+         */
+        virtual bool IsInputRestricted() const = 0;
 
+        /*
+         * @brief : 親のWorldViewerを設定する
+         */
+        void SetParent(TWeakObjectPtr<ATwinLinkWorldViewer> V);
+
+        /*
+         * @brief : リンクを削除
+         */
+        void Reset();
+    private:
+        TWeakObjectPtr<ATwinLinkWorldViewer> Parent = nullptr;
+    };
 public:
     // Sets default values for this character's properties
     ATwinLinkWorldViewer();
@@ -61,10 +85,10 @@ public:
 public:
     /**
      * @brief CityModelの設定を行う
-     * @param Actor 
+     * @param Actor
     */
     UFUNCTION(BlueprintCallable, Category = "Movement")
-    void SetCityModel(AActor* Actor);
+        void SetCityModel(AActor* Actor);
 
     /**
      * @brief 移動先の設定
@@ -93,7 +117,6 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Movement")
         FRotator GetNowCameraRotationOrDefault() const;
 
-
     std::optional<FVector> CalcFocusPoint();
 
     /**
@@ -102,6 +125,15 @@ public:
     UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
         void ActivateAutoViewControlButton(ETwinLinkViewMode Mode);
 
+    /*
+     * @brief : 入力制御用のノードを追加する
+     */
+    void AddInputControlNode(FInputControlNode* Node);
+
+    /*
+     * @brief : 入力制御用ノードを削除
+     */
+    void RemoveInputControlNode(FInputControlNode* Node);
 private:
     void ATwinLinkWorldViewer::SetLocationImpl(const FVector& Position, const FRotator& Rotation);
 public:
@@ -175,7 +207,7 @@ private:
     UPROPERTY(EditAnywhere, Category = "TwinLink View Movement", meta = (ClampMin = "0", UIMin = "0", ForceUnits = "cm/s"))
         float MaxFlySpeed = 50000.0f;
 
-        /* 飛行中の減速率 */
+    /* 飛行中の減速率 */
     UPROPERTY(EditAnywhere, Category = "TwinLink View Movement", meta = (ClampMin = "0", UIMin = "0"))
         float BrakingDecelerationFlying = 81920.0f;
 
@@ -204,7 +236,7 @@ private:
         float LimitDistanceFocusPointToSelf = 400000.0f;
 
     UPROPERTY()
-    UCharacterMovementComponent* CharMovementComponent;
+        UCharacterMovementComponent* CharMovementComponent;
 
     bool bIsSelectingFacility;
 
@@ -234,6 +266,9 @@ private:
     /** 次に適用する自動閲覧モード **/
     ETwinLinkViewMode CurrentAutoViewMode;
 
+    /** 注視点 **/
+    //std::optional<FVector> SingleFocusPoint;
+
     /** 自動回転機能の経過時間 **/
     float AutoRotateViewProcessTime;
 
@@ -245,13 +280,13 @@ private:
 
     /** 放置状態関係のメンバーや処理をまとめた構造体 **/
     struct FAutoFreeViewControl {
-        void Init(const FVector& InFocusPoint, 
+        void Init(const FVector& InFocusPoint,
             const FVector& InOffsetLocation,
             const FRotator& InOffsetRotator);
         void Update(ATwinLinkWorldViewer* WorldViewer, float DeltaTime);
 
         /** 0,1... Update()で行う処理 **/
-        int SwitchIdxInUpdate; 
+        int SwitchIdxInUpdate;
         FVector FocusPoint;
         FVector OffsetLocation;
         double OffsetDistance;
@@ -268,13 +303,18 @@ private:
 
     /**
      * @brief プレイヤーの入力を受け付けるか
-     * @return 
+     * @return
     */
     bool CanReceivePlayerInput();
 
     /**
      * @brief 注視点から現在のカメラの座標までの距離
-     * @return 
+     * @return
     */
     double CalcOffsetLength(std::optional<FVector> FocusPoint);
+
+    /*
+     * @brief : 入力制限用ノードリスト
+     */
+    TArray<FInputControlNode*> InputControlNodes;
 };
