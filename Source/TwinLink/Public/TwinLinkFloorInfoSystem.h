@@ -21,9 +21,8 @@ DECLARE_EVENT(UTwinLinkFloorInfoSystem, FDelOnChangedBuildingDesign);
  * 施設内階層情報の管理システム
  */
 UCLASS()
-class TWINLINK_API UTwinLinkFloorInfoSystem : public UTwinLinkSubSystemBase
-{
-	GENERATED_BODY()
+class TWINLINK_API UTwinLinkFloorInfoSystem : public UTwinLinkSubSystemBase {
+    GENERATED_BODY()
 
 public:
     /**
@@ -41,23 +40,23 @@ public:
     /**
      * @brief フロアの選択を行う
      * 非推奨　設計の抜け穴として作成したため
-     * @param FeatureID 
-     * @param InGrpID 
-     * @param Key 
+     * @param FeatureID
+     * @param InGrpID
+     * @param Key
     */
     void SelectedFloor(const FString& FeatureID, const FString& InGrpID, const FString& Key, UStaticMeshComponent* FloorComponent);
 
     /**
      * @brief 選択フロアのキーを取得する
      * 非推奨　設計の抜け穴として作成したため
-     * @return 
+     * @return
     */
     FString GetKeyBySelectedFloor();
 
     /**
      * @brief 選択フロアのGrpIDを取得する
      * 非推奨　設計の抜け穴として作成したため
-     * @return 
+     * @return
     */
     FString GetGrpIDBySelectedFloor();
 
@@ -65,13 +64,13 @@ public:
      * @brief 選択フロアのComponentを取得する
     */
     UFUNCTION(BlueprintCallable)
-    UStaticMeshComponent* GetSelectedFloorComponent() const;
+        UStaticMeshComponent* GetSelectedFloorComponent() const;
 
     /**
      * @brief UVに対応するInfoを取得する
     */
     UFUNCTION(BlueprintCallable)
-    UTwinLinkFloorInfo* GetInfoByUV(const FVector2D& UV) const;
+        UTwinLinkFloorInfo* GetInfoByUV(const FVector2D& UV) const;
 
 
     /**
@@ -148,22 +147,22 @@ public:
 
     /**
      * @brief 表示用カテゴリ文字列一覧を取得する
-     * @return 
+     * @return
     */
     TArray<FString> GetCategoryDisplayNameCollection();
 
     /**
      * @brief 設計情報を検索
-     * @param Key 
-     * @return 
+     * @param Key
+     * @return
     */
     TWeakObjectPtr<UTwinLinkBuildingDesignInfo> FindBuildingDesign(const FString& Key);
 
     /**
      * @brief 設計情報の追加リクエスト
      * @param Key GetKeyBySelectedFloor()の値
-     * @param ImageFileName 
-     * @return 
+     * @param ImageFileName
+     * @return
     */
     void AddBuildingDesign(
         const FString& Key,
@@ -171,32 +170,32 @@ public:
 
     /**
      * @brief 設計情報の変更リクエスト
-     * @param BuidlingDesignInfo 
-     * @param ImageFileName 
-     * @return 
+     * @param BuidlingDesignInfo
+     * @param ImageFileName
+     * @return
     */
     bool EditBuildingDesign(
-        const FString& Key, 
-        const TWeakObjectPtr<UTwinLinkBuildingDesignInfo>& BuidlingDesignInfo, 
+        const FString& Key,
+        const TWeakObjectPtr<UTwinLinkBuildingDesignInfo>& BuidlingDesignInfo,
         const FString& ImageFileName);
 
     /**
      * @brief 設計情報の削除リクエスト
      * @param Key GetKeyBySelectedFloor()の値
      * @param BuidlingDesignInfoPtr データのポインターのポインター　Remove後にnullになる
-     * @return 
+     * @return
     */
     bool RemoveBuildingDesign(const FString& Key, const TWeakObjectPtr<UTwinLinkBuildingDesignInfo> BuidlingDesignInfoPtr);
 
     /**
      * @brief 設計情報をエキスポートする
-     * @return 
+     * @return
     */
     void ExportBuildingDesign();
 
     /**
      * @brief 設計情報をインポートする
-     * @return 
+     * @return
     */
     void ImportBuildingDesign();
 
@@ -218,7 +217,7 @@ public:
         const FString& ImageFileName,
         const FString& Guide,
         const FString& SpotInfo);
-	
+
     /**
      * @brief GetFloorInfoCollection()で渡すキーを生成する
      * @param FeatureID 地物ID
@@ -231,21 +230,46 @@ public:
      * @brief 施設情報群を保持する通知機能付きのコレクションを取得する
      * 存在しないキーが指定されて場合は空のコレクションをそのキーに追加する
      * @param Key CreateFloorInfoMapKey() で作成したキー
-     * @return 
+     * @return
     */
     TWeakObjectPtr<UTwinLinkObservableCollection> GetFloorInfoCollection(const FString& Key);
 
+    /**
+     * @brief 施設情報群を保持する通知機能付きのコレクションを取得する
+     * 存在しないキーが指定されている場合は不正値を返す
+     * @param Key CreateFloorInfoMapKey() で作成したキー
+     * @return
+    */
+    TWeakObjectPtr<UTwinLinkFloorInfoCollection> GetFloorInfoCollectionOrDefault(const FString& Key) const;
+
+    /*
+     * @brief : 対象フロアが表示設定されているか
+     */
+    UFUNCTION(BlueprintCallable)
+        bool IsFloorVisible(const FString& Key) const;
+
+    UFUNCTION(BlueprintCallable)
+        void SetFloorVisible(const FString& Key, bool Visible);
 public:
     /** 設計情報が変更された時に呼び出される **/
     FDelOnChangedBuildingDesign EvOnAddedBuildingDesignInfoInstance;
 
+    /*
+     * @brief : 共通情報読み込み
+     */
+    bool ImportCommonInfo();
+
+    /*
+     * @brief : 共通情報書き出し
+     */
+    bool ExportCommonInfo();
 private:
     /** 施設情報機能のバージョン　永続化時に組み込む **/
     const TwinLinkSystemVersionInfo VersionInfo = TwinLinkSystemVersionInfo(0, 0, 0);
 
     /** 設計情報のマップ フロア名キーに扱う **/
     UPROPERTY()
-    TMap<FString, TObjectPtr<UTwinLinkBuildingDesignInfo>> BuidingDesingInfoMap;
+        TMap<FString, TObjectPtr<UTwinLinkBuildingDesignInfo>> BuidingDesingInfoMap;
 
     /** 設計情報永続化時のファイルパス **/
     FString BuildingDesingFilePath;
@@ -255,7 +279,7 @@ private:
 
     /** 施設情報群 **/
     UPROPERTY()
-    TMap<FString, TObjectPtr<UTwinLinkFloorInfoCollection>> FloorInfoCollectionMap;
+        TMap<FString, TObjectPtr<UTwinLinkFloorInfoCollection>> FloorInfoCollectionMap;
 
     /** 建物内施設カテゴリをキーに表示用文字列を値に持つCollection **/
     TMap<FString, FString> DisplayCategoryMap;
@@ -271,5 +295,6 @@ private:
     FString SelectedGrpID;
     /** 選択されている階層情報 **/
     FString SelectedKey;
+private:
     UStaticMeshComponent* SelectedFloorComponent;
 };

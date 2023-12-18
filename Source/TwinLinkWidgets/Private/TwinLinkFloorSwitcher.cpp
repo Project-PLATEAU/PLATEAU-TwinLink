@@ -18,20 +18,14 @@ void UTwinLinkFloorSwitcher::OnClickedDown() {
     if (FloorPanel == nullptr) {
         return;
     }
-    const auto Floor = FloorPanel->GetSelectedFloorKey();
-    const auto Floors = FloorPanel->GetFloorKeys();
-    const auto NextFloor = Floors[Floors.Find(Floor) - 1];
-    FloorPanel->FloorViewChangeKey(NextFloor);
+    FloorPanel->FloorViewChangeNextKey(-1);
 }
 
 void UTwinLinkFloorSwitcher::OnClickedUp() {
     if (FloorPanel == nullptr) {
         return;
     }
-    const auto Floor = FloorPanel->GetSelectedFloorKey();
-    const auto Floors = FloorPanel->GetFloorKeys();
-    const auto NextFloor = Floors[Floors.Find(Floor) + 1];
-    FloorPanel->FloorViewChangeKey(NextFloor);
+    FloorPanel->FloorViewChangeNextKey(+1);
 }
 
 void UTwinLinkFloorSwitcher::FloorSwitch() {
@@ -39,7 +33,7 @@ void UTwinLinkFloorSwitcher::FloorSwitch() {
         return;
     }
     const auto Floor = FloorPanel->GetSelectedFloorKey();
-    const auto Floors = FloorPanel->GetFloorKeys();
+    const auto Floors = FloorPanel->GetVisibleFloorKeys();
     const auto Index = Floors.Find(Floor);
 
     FloorDownButton->Button->SetIsEnabled(Index != 0);

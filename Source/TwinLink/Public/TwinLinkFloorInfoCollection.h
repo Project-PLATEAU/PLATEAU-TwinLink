@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -13,10 +13,9 @@ class UTwinLinkFloorInfo;
  * 施設内情報群を保持するCollectionクラス
  */
 UCLASS(BlueprintType)
-class TWINLINK_API UTwinLinkFloorInfoCollection : public UTwinLinkObservableCollection
-{
-	GENERATED_BODY()
-	
+class TWINLINK_API UTwinLinkFloorInfoCollection : public UTwinLinkObservableCollection {
+    GENERATED_BODY()
+
 protected:
     virtual void OnAdd(UObject* Obj) override;
     virtual void OnRemove(const TWeakObjectPtr<UObject>& Obj) override;
@@ -34,10 +33,17 @@ public:
         return FloorInfoCollection.end();
     }
 
+    UFUNCTION(BlueprintCallable)
+        void SetFloorVisible(bool V);
+
+    UFUNCTION(BlueprintCallable)
+        bool IsFloorVisible() const;
 private:
     /** 視点情報群 **/
     UPROPERTY()
-    TMap<uint32, TObjectPtr<UTwinLinkFloorInfo>> FloorInfoCollection;
+        TMap<uint32, TObjectPtr<UTwinLinkFloorInfo>> FloorInfoCollection;
 
-
+    /** リストに表示するかどうか **/
+    UPROPERTY()
+        bool bFloorVisible = true;
 };

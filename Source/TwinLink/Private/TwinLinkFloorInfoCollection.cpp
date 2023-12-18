@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
 #include "TwinLinkFloorInfoCollection.h"
@@ -40,4 +40,12 @@ TArray<UObject*> UTwinLinkFloorInfoCollection::OnGetCollectionRaw() {
     }
     return RetCollection;
 
+}
+
+void UTwinLinkFloorInfoCollection::SetFloorVisible(bool V) {
+    this->bFloorVisible = V;
+}
+
+bool UTwinLinkFloorInfoCollection::IsFloorVisible() const {
+    return bFloorVisible;
 }

@@ -20,6 +20,10 @@
 //// SDK
 //#include "PLATEAURuntime/Public/PLATEAUInstancedCityModel.h"
 
+namespace {
+    inline const FString CommonInfoFileName = TEXT("CommonFloorInfo.ini");
+}
+
 void UTwinLinkFloorInfoSystem::Initialize(FSubsystemCollectionBase& Collection) {
     Collection.InitializeDependency<UTwinLinkTickSystem>();
 
@@ -132,13 +136,13 @@ void UTwinLinkFloorInfoSystem::AddFloorInfo(
     // 登録済みのカテゴリかチェック
     if (DisplayCategoryMap.Find(InCategory) == nullptr ||
         !UTwinLinkFloorInfo::IsValid(
-        InName,
-        InCategory,
-        InLocation,
-        InUV,
-        InImageFileName,
-        InGuideText,
-        InOpningHoursText)) {
+            InName,
+            InCategory,
+            InLocation,
+            InUV,
+            InImageFileName,
+            InGuideText,
+            InOpningHoursText)) {
         UE_TWINLINK_LOG(LogTemp, Error, TEXT("Invalid data element in floow info"));
         return;
     }
@@ -182,11 +186,14 @@ void UTwinLinkFloorInfoSystem::RemoveFloorInfo(const FString& Key, const TWeakOb
 }
 
 void UTwinLinkFloorInfoSystem::ExportFloorInfo() {
+    // 共通情報をエクスポート
+    ExportCommonInfo();
+
     TwinLinkCSVExporter CSVExporter;
     TwinLinkCSVContents::Standard CSVContents(VersionInfo);
     CSVExporter.SetHeaderContents(
         CSVContents.CreateHeaderContents(
-        TEXT("name, category, pos_x, pos_y, pos_z, uv_x, uv_y, imageFileName, description, spot_info")));
+            TEXT("name, category, pos_x, pos_y, pos_z, uv_x, uv_y, imageFileName, description, spot_info")));
 
     FString StringBuf;
 
@@ -267,8 +274,12 @@ void UTwinLinkFloorInfoSystem::ImportFloorInfo() {
     // 既存のデータをリセット
     FloorInfoCollectionMap.Reset();
 
+    // 共通情報をインポート
+    ImportCommonInfo();
+
     // フォルダー単位で読み込み
     for (const auto& DirectoryPath : DirectoryPathCollection) {
+
         const auto Filepath = FString::Printf(TEXT("%s/%s"), *DirectoryPath, *FileName);
         const auto bIsSuc = CSVImporter.ImportCSV(*Filepath, &CSVContents);
 
@@ -313,6 +324,9 @@ void UTwinLinkFloorInfoSystem::ImportFloorInfo() {
             FloorInfoCollection->Add(FloorInfo);
         }
     }
+
+
+
 }
 
 FString UTwinLinkFloorInfoSystem::ConvertSystemCategoryToDisplayCategoryName(FString Category) {
@@ -399,7 +413,7 @@ void UTwinLinkFloorInfoSystem::ExportBuildingDesign() {
     TwinLinkCSVContents::Standard CSVContents(VersionInfo);
     CSVExporter.SetHeaderContents(
         CSVContents.CreateHeaderContents(
-        TEXT("key, image_file_name")));
+            TEXT("key, image_file_name")));
 
     FString StringBuf;
     for (const auto& BuildingDesingInfo : BuidingDesingInfoMap) {
@@ -409,8 +423,8 @@ void UTwinLinkFloorInfoSystem::ExportBuildingDesign() {
         StringBuf =
             CSVContents.CreateBodyContents(
                 FString::Printf(TEXT("%s,%s"),
-                *Key,
-                *ImageFileName));
+                    *Key,
+                    *ImageFileName));
 
         CSVExporter.AddBodyContents(StringBuf);
     }
@@ -486,4 +500,88 @@ TWeakObjectPtr<UTwinLinkObservableCollection> UTwinLinkFloorInfoSystem::GetFloor
     }
 
     return Ret;
+}
+
+TWeakObjectPtr<UTwinLinkFloorInfoCollection> UTwinLinkFloorInfoSystem::GetFloorInfoCollectionOrDefault(
+    const FString& Key) const {
+    const auto Ret = FloorInfoCollectionMap.Find(Key);
+    if (!Ret)
+        return nullptr;
+
+    return *Ret;
+}
+
+bool UTwinLinkFloorInfoSystem::IsFloorVisible(const FString& Key) const {
+    // デフォがtrueなのでキーが存在しない時もtrue
+    const auto Info = FloorInfoCollectionMap.Find(Key);
+    return !Info || Info->Get()->IsFloorVisible();
+}
+
+void UTwinLinkFloorInfoSystem::SetFloorVisible(const FString& Key, bool Visible) {
+    if (const auto Info = Cast<UTwinLinkFloorInfoCollection>(GetFloorInfoCollection(Key)))
+        Info->SetFloorVisible(Visible);
+}
+
+bool UTwinLinkFloorInfoSystem::ExportCommonInfo() {
+    const auto CommonInfoFilePath = TwinLinkPersistentPaths::CreateFloorInfoFolderPath(*CommonInfoFileName);
+    // フォルダーの作成
+    const auto FolderPath = TwinLinkPersistentPaths::CreateFloorInfoFolderPath();
+    UTwinLinkFileDialogLib::CreateDirectoryTree(FolderPath);
+
+    // エキスポート
+    TArray<FString> HideFloorKeys;
+    for (auto& F : FloorInfoCollectionMap) {
+        if (F.Value->IsFloorVisible())
+            continue;
+        HideFloorKeys.Add(F.Key);
+    }
+
+    TArray<FString> Lines;
+    // 非表示階層の出力
+    {
+        const auto FloorKeys = FString::Join(HideFloorKeys, TEXT(","));
+        Lines.Add(FString::Printf(TEXT("HideFloor:%s"), *FloorKeys));
+    }
+    return FFileHelper::SaveStringArrayToFile(Lines, *CommonInfoFilePath);
+}
+
+bool UTwinLinkFloorInfoSystem::ImportCommonInfo() {
+    const auto CommonInfoFilePath = TwinLinkPersistentPaths::CreateFloorInfoFolderPath(*CommonInfoFileName);
+    //ファイル取得
+    FString TextData;
+    const auto bIsSucLoad = FFileHelper::LoadFileToString(TextData, *CommonInfoFilePath);
+    // ファイルの読み込みに失敗
+    if (bIsSucLoad == false) {
+        return false;
+    }
+
+    //列で分解
+    TArray<FString> RowElements;
+    TextData.ParseIntoArray(RowElements, TEXT("\n"), true);
+
+    // 
+    for (auto& Row : RowElements) {
+        Row.TrimStartAndEndInline();
+        FString Key;
+        FString Value;
+        const auto bFound = Row.Split(TEXT(":"), &Key, &Value, ESearchCase::CaseSensitive, ESearchDir::FromStart);
+        if (!bFound)
+            continue;
+
+        // 非表示設定されているフロア情報
+        // HideFloor : [AAA, BBB, CCC, DDD]
+        if (Key == TEXT("HideFloor")) {
+            TArray<FString> Ids;
+            Value.ParseIntoArray(Ids, TEXT(","));
+
+            for (auto& Id : Ids) {
+                const auto& FloorInfoCollection =
+                    FloorInfoCollectionMap.FindOrAdd(
+                        Id, NewObject<UTwinLinkFloorInfoCollection>());
+                FloorInfoCollection->SetFloorVisible(false);
+            }
+        }
+    }
+
+    return true;
 }

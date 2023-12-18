@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -26,6 +26,12 @@ public:
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
         void SetupTwinLinkFloorView();
 
+    /*
+     * @brief : FloorInfoSystemの情報をもとに階層の非表示設定を行う
+     */
+    UFUNCTION(BlueprintCallable, Category = "TwinLink")
+        void AlignTwinLinkFloorViewElements(bool bIsAdmin);
+
     /**
      * @brief 階層表示パネルセットアップ
     */
@@ -47,6 +53,12 @@ public:
     */
     void FloorViewChange(TObjectPtr<UUserWidget> Element);
 
+    /*
+     * @brief 階層表示切り替え選択時処理
+     * @param どの階層の表示/非表示設定を切り替えたか
+     */
+    void OnChangeFloorVisible(TObjectPtr<UUserWidget> Element, bool FloorVisible);
+
     /**
      * @brief 選択している階層が変更された時に呼ばれる
      * （ただし現状は同じ階層を選択しても呼ばれる）
@@ -63,12 +75,17 @@ public:
     /**
      * @brief
     */
-    FString GetSelectedFloorKey() { return SelectedFloorKey; }
+    const FString& GetSelectedFloorKey() const { return SelectedFloorKey; }
 
     /**
      * @brief
     */
-    TArray<FString> GetFloorKeys() { return FloorKeys; }
+    const TArray<FString>& GetVisibleFloorKeys() const { return VisibleFloorKeys; }
+
+    /*
+     * @brief : 現在選択している階層からDeltaIndexだけずれた階層に切り替える(+1 or -1で指定する)
+     */
+    void FloorViewChangeNextKey(int DeltaIndex);
 
     /**
      * @brief 階層表示パネル要素選択時処理
@@ -88,6 +105,9 @@ private:
 
     /** 階層表示パネル要素のソート済みキー配列 **/
     TArray<FString> FloorKeys;
+
+    // FloorKeysのうち. リストに表示されているもののみ抽出したもの.(管理者モードだとFloorKeysと同じ)
+    TArray<FString> VisibleFloorKeys;
 
     /** 選択中階層キー **/
     FString SelectedFloorKey;

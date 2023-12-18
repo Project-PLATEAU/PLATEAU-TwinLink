@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #include "TwinLinkFloorViewPanel.h"
 #include "TwinLinkCommon.h"
@@ -15,6 +15,11 @@
 #include "Misc/TwinLinkActorEx.h"
 #include "TwinLinkWorldViewer.h"
 
+namespace {
+    // 外観は専用処理が走るのでキーを固定で持っておく
+    inline const FString ExteriorKey = TEXT("Exterior");
+}
+
 void UTwinLinkFloorViewPanel::SetupTwinLinkFloorView() {
     const auto CityModel = FTwinLinkModule::Get().GetFacilityModel();
     if (CityModel == nullptr) {
@@ -30,6 +35,8 @@ void UTwinLinkFloorViewPanel::SetupTwinLinkFloorView() {
     }
     TMap<FString, float> SortFloorKeys;
 
+    const auto FloorInfoSystem = TwinLinkSubSystemHelper::GetInstance<UTwinLinkFloorInfoSystem>();
+    checkf(FloorInfoSystem.IsValid(), TEXT("FloorInfoSystem.IsValid()"));
     for (const auto& CityObject : CityObjects) {
         const auto Obj = CityObject->GetAllRootCityObjects()[0];
         const auto Attribute = Obj.Attributes.AttributeMap.Find("gml:name");
@@ -37,13 +44,24 @@ void UTwinLinkFloorViewPanel::SetupTwinLinkFloorView() {
         const auto Element = CreateWidget<UUserWidget>(GetWorld(), WidgetClass);
         FString Label = Attribute ? Key : TEXT("外観");
 
-        Cast<UTwinLinkFloorViewElement>(Element)->ElementSetup(Label, this);
+        // 外観の場合は特殊処理
+        const auto IsExterior = Key.Equals(ExteriorKey);
+        Cast<UTwinLinkFloorViewElement>(Element)->ElementSetup(Label, this, IsExterior == false);
+        // フロアの表示/非表示設定を読み込む
+        if (FloorInfoSystem.IsValid()) {
+            auto MapKey = FloorInfoSystem->CreateFloorInfoMapKey(CityObject->GetName(), Key);
+            if (const auto FloorInfo = FloorInfoSystem->GetFloorInfoCollectionOrDefault(MapKey).Get()) {
+                auto FloorVisible = FloorInfo->IsFloorVisible();
+                Cast<UTwinLinkFloorViewElement>(Element)->SetFloorVisible(FloorVisible);
+            }
+        }
         LinkComponents.Add(Key, CityObject);
         ElementWidgets.Add(Key, Cast<UUserWidget>(Element));
         const auto Height = Cast<UStaticMeshComponent>(CityObject)->Bounds.GetBox().Min.Z;
         SortFloorKeys.Add(Key, Height);
     }
-
+    // 整列しなおす
+    AlignTwinLinkFloorViewElements(UTwinLinkBlueprintLibrary::IsAdminModeEnabled());
     //Sort
     for (const auto& SortFloorKey : SortFloorKeys) {
         if (SortFloorKey.Key.Equals("Exterior")) {
@@ -89,6 +107,35 @@ void UTwinLinkFloorViewPanel::SetupTwinLinkFloorView() {
     }
 
     FloorViewChangeKey("Exterior");
+}
+
+void UTwinLinkFloorViewPanel::AlignTwinLinkFloorViewElements(const bool IsAdmin) {
+    for (auto& Elem : ElementWidgets) {
+        const auto ViewElement = Cast<UTwinLinkFloorViewElement>(Elem.Value);
+        const auto Visible = ViewElement->IsFloorVisible();
+        ViewElement->SetVisibility(UTwinLinkBlueprintLibrary::AsSlateVisibility(Visible || IsAdmin));
+        ViewElement->OnSetFloorVisible(Visible);
+    }
+
+    // 非管理者モードで現在選択中だった項目が非表示設定になっていたら外観を選択するように戻す
+    if (IsAdmin == false && SelectedFloorKey.IsEmpty() == false) {
+        if (const auto SelectedElem = ElementWidgets.Find(SelectedFloorKey)) {
+            const auto ViewElement = Cast<UTwinLinkFloorViewElement>(*SelectedElem);
+            if (ViewElement->IsFloorVisible() == false)
+                ViewExterior();
+        }
+    }
+
+    // 表示されているElementリストを更新する
+    VisibleFloorKeys.Reset();
+    for (auto& Key : FloorKeys) {
+        if (IsAdmin || Cast<UTwinLinkFloorViewElement>(ElementWidgets[Key])->IsFloorVisible())
+            VisibleFloorKeys.Add(Key);
+    }
+
+    if (FloorSwitcher != nullptr) {
+        FloorSwitcher->FloorSwitch();
+    }
 }
 
 void UTwinLinkFloorViewPanel::SetupTwinLinkFloorViewWithSwitcher(UTwinLinkFloorSwitcher* Switcher) {
@@ -182,7 +229,7 @@ void UTwinLinkFloorViewPanel::FloorViewChange(TObjectPtr<UUserWidget> Element) {
     }
 
     //外観表示中はアセット非表示処理しない
-    if (! Key->Equals("Exterior")) {
+    if (!Key->Equals("Exterior")) {
         for (const auto& Component : LinkComponents) {
             if (Component.Key.Equals("Exterior")) {
                 continue;
@@ -225,6 +272,39 @@ void UTwinLinkFloorViewPanel::FloorViewChange(TObjectPtr<UUserWidget> Element) {
 
     //WorldViewerを移動（対象に向く）
     WorldViewer->SetLocationLookAt(v3PrimedFinal, V0, 0.5f);
+}
+
+void UTwinLinkFloorViewPanel::OnChangeFloorVisible(TObjectPtr<UUserWidget> Element, bool FloorVisible) {
+    const auto Key = ElementWidgets.FindKey(Element);
+    if (!Key)
+        return;
+
+    // 対応するComponentが無い場合も無視
+    if (!LinkComponents.Contains(*Key))
+        return;
+
+    // 外観の表示非表示設定は変えられないようにする
+    if (Key->Equals(ExteriorKey))
+        return;
+
+    const auto& CityObject = LinkComponents[*Key];
+    // 保存するためにFloorInfoSystemに流す
+    const auto FloorInfoSystem = TwinLinkSubSystemHelper::GetInstance<UTwinLinkFloorInfoSystem>();
+    if (FloorInfoSystem.IsValid()) {
+        const auto MapKey = FloorInfoSystem->CreateFloorInfoMapKey(CityObject->GetName(), *Key);
+        FloorInfoSystem->SetFloorVisible(MapKey, FloorVisible);
+        FloorInfoSystem->ExportCommonInfo();
+    }
+}
+
+void UTwinLinkFloorViewPanel::FloorViewChangeNextKey(int DeltaIndex) {
+    auto Index = VisibleFloorKeys.Find(GetSelectedFloorKey());
+    // 範囲外に出たら何もせずに終了
+    Index += DeltaIndex;
+    if (Index >= 0 && Index < VisibleFloorKeys.Num()) {
+        const auto& NewKey = VisibleFloorKeys[Index];
+        FloorViewChangeKey(NewKey);
+    };
 }
 
 void UTwinLinkFloorViewPanel::FloorViewChangeKey(const FString& Key) {
