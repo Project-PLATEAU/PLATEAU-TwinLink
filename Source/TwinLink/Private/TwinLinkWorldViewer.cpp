@@ -18,10 +18,11 @@
 
 
 namespace {
-    void RotateAroundFocusPoint(ATwinLinkWorldViewer* Self, const FVector& FocusPoint, const FRotator& BaseRotator, const FRotator& AddRotator, double OffsetDistance) {
-        const auto LimitX = 85;
+    void RotateAroundFocusPoint(ATwinLinkWorldViewer* Self, const FVector& FocusPoint, const FRotator& BaseRotator, const FRotator& AddRotator, double OffsetDistance, float XAngleLimitMax = 85) {
+        const auto LimitXMax = XAngleLimitMax;
+        const auto LimitXMin = -85;
         const auto OffsetRotationNormalized = BaseRotator.GetNormalized();
-        const auto RotatorX = FMath::Clamp(OffsetRotationNormalized.Pitch + AddRotator.Pitch, -LimitX, LimitX);
+        const auto RotatorX = FMath::Clamp(OffsetRotationNormalized.Pitch + AddRotator.Pitch, LimitXMin, LimitXMax);
         const auto RotatorY = OffsetRotationNormalized.Yaw + AddRotator.Yaw;
         const auto RotatorZ = OffsetRotationNormalized.Roll + AddRotator.Roll;
         const auto Rotator = FRotator(RotatorX, RotatorY, RotatorZ);
@@ -34,7 +35,6 @@ namespace {
 
     TWeakObjectPtr<APLATEAUInstancedCityModel> CityModel;
     TWeakObjectPtr<UPLATEAUCityObjectGroup> DemCityModel;
-
 }
 
 ATwinLinkWorldViewer::FInputControlNode::~FInputControlNode() {
@@ -91,11 +91,12 @@ void ATwinLinkWorldViewer::BeginPlay() {
     TWeakObjectPtr<UCapsuleComponent> _CapsuleComponent = GetComponentByClass<UCapsuleComponent>();
     _CapsuleComponent.Get()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-    CurrentAutoViewMode = ETwinLinkViewMode::Manual;
-
+    StateMachine.Init(this);
 
     NoInputProcessTime = LimitBeginAutoViewControlModeTime - 10.0f; // デフォルトを放置状態スタートにする
 
+    //
+    CurrentCameraMovementSpeed = CameraMovementSpeed;
 }
 
 // Called every frame
@@ -108,7 +109,6 @@ void ATwinLinkWorldViewer::Tick(float DeltaTime) {
     if (FVector2D::DistSquared(PreMousePosition, CurrentMousePosition) > 0.01 * 0.01) {
         InputedAny(true);
     }
-
 
     // 管理者モードでは放置状態に移行しない
     if (FTwinLinkModule::Get().IsAdminModeEnabled() == false) {
@@ -131,37 +131,7 @@ void ATwinLinkWorldViewer::Tick(float DeltaTime) {
         NoInputProcessTime = 0.0f;
     }
 
-    // 自動閲覧モードの更新処理　回転
-    if (CurrentAutoViewMode != ETwinLinkViewMode::Manual) {
-        // 注視点回転
-        switch (CurrentAutoViewMode) {
-        case ETwinLinkViewMode::FreeAutoView:
-        {
-            AutoFreeViewControl.Update(this, DeltaTime);
-        }
-        break;
-        case ETwinLinkViewMode::LimitedAutoView:
-        {
-            bool bCanAutoView = TargetTransform.has_value() == false;
-            if (bCanAutoView == false) {
-                bCanAutoView = TargetTransform.value().IsCompleted();
-            }
-
-            if (bCanAutoView) {
-                const auto FocusPoint = CalcFocusPoint();
-                if (FocusPoint.has_value()) {
-                    RotateAroundFocusPoint(this, FocusPoint.value(),
-                        GetNowCameraRotationOrDefault(), FRotator(0.0, AutoRotationSpeed * DeltaTime, 0.0), CalcOffsetLength(FocusPoint));
-                }
-                else {
-                    AddControllerYawInput(AutoRotationSpeed * DeltaTime * CameraRotationSpeed);
-                }
-                AutoRotateViewProcessTime += DeltaTime;
-            }
-        }
-        break;
-        }
-    }
+    StateMachine.Tick(DeltaTime);
 
     // このクラスのプロパティの値で他のシステムの値を上書きする
     if (bOverrideOtherSystemValues) {
@@ -198,11 +168,6 @@ void ATwinLinkWorldViewer::Tick(float DeltaTime) {
         // 更新されたことを通知する
         if (EvOnUpdatedLocationAndRotation.IsBound()) {
             EvOnUpdatedLocationAndRotation.Broadcast();
-        }
-
-        // 入力が何かあったことにする
-        if (CurrentAutoViewMode == ETwinLinkViewMode::Manual) {
-            //InputedAny(true);
         }
     }
 
@@ -259,12 +224,6 @@ FRotator ATwinLinkWorldViewer::GetNowCameraRotationOrDefault() const {
     if (!GetController())
         return FRotator();
     return GetControlRotation();
-
-    //if (const auto ViewTarget = GetController()->GetViewTarget()) {
-    //    ViewTarget->GetRot
-    //    return ViewTarget->GetActorRotation();
-    //}
-    //return FRotator();
 }
 
 std::optional<FVector> ATwinLinkWorldViewer::CalcFocusPoint() {
@@ -284,14 +243,19 @@ std::optional<FVector> ATwinLinkWorldViewer::CalcFocusPoint() {
     const auto CurrentRotation = GetNowCameraRotationOrDefault();
     const auto CurrentLocation = GetNowCameraLocationOrZero();
 
-    const auto ExtraRadian = FMath::Sin(FMath::DegreesToRadians(LimitDegressFocusRotate));   // あまりにも地面と水平だと回転の半径が大きくなり視点の移動量がかなり大きくなる　操作しづらい
-    bool bIsHit = CurrentRotation.Vector().Dot(Ground.GetNormal()) <= ExtraRadian;
-    if (bIsHit == false) {
+    const auto DotRotVecAndGroundNormal = CurrentRotation.Vector().Dot(Ground.GetNormal());
+    // 地面と平行 ロックしてしまうため調整 仮の注視点を設定
+    if (DotRotVecAndGroundNormal * DotRotVecAndGroundNormal < 0.001 * 0.001) {
+        return CurrentLocation + CurrentRotation.Vector() * (LimitDistanceFocusPointToSelf - 1);
+    }
+
+    // 地面よりも下にいる　この状態でRayを飛ばすと逆方向の地面にヒットするためスキップ
+    if (CurrentLocation.Z <= Altitude) {
         return std::nullopt;
     }
 
     // 平面と光線のチェック
-    FVector FocusPoint = FMath::RayPlaneIntersection(GetNowCameraLocationOrZero(), GetNowCameraRotationOrDefault().Vector(), Ground);
+    FVector FocusPoint = FMath::RayPlaneIntersection(CurrentLocation, CurrentRotation.Vector(), Ground);
 
     // 0除算対策
     if (FocusPoint == CurrentLocation) {
@@ -316,9 +280,7 @@ void ATwinLinkWorldViewer::MoveForward(const float Value) {
     }
 
     if (Controller && Value != 0.0f) {
-        const auto Rotation = Controller->GetControlRotation();
-        const auto Direction = FRotationMatrix(Rotation).GetScaledAxis(EAxis::X);
-        AddMovementInput(Direction, Value * CameraMovementSpeed * GetWorld()->GetDeltaSeconds());
+        StateMachine.MoveForward(Value);
     }
 }
 
@@ -329,9 +291,10 @@ void ATwinLinkWorldViewer::MoveForwardOnWorldSpace(const float Value) {
     }
 
     if (Controller && Value != 0.0f) {
-        const auto Rotation = Controller->GetControlRotation();
-        const auto Direction = FRotator(0, Rotation.Yaw, 0).Vector();
-        AddMovementInput(Direction, Value * CameraMovementSpeed * GetWorld()->GetDeltaSeconds());
+        MoveForwardImpl(Value, true);
+        //const auto Rotation = Controller->GetControlRotation();
+        //const auto Direction = FRotator(0, Rotation.Yaw, 0).Vector();
+        //AddMovementInput(Direction, Value * CurrentCameraMovementSpeed);
     }
 }
 
@@ -343,9 +306,7 @@ void ATwinLinkWorldViewer::MoveRight(const float Value) {
     }
 
     if (Controller && Value != 0.0f) {
-        const auto Rotation = Controller->GetControlRotation();
-        const auto Direction = FRotationMatrix(Rotation).GetScaledAxis(EAxis::Y);
-        AddMovementInput(Direction, Value * CameraMovementSpeed * GetWorld()->GetDeltaSeconds());
+        StateMachine.MoveRight(Value);
     }
 }
 
@@ -358,7 +319,7 @@ void ATwinLinkWorldViewer::MoveUp(const float Value) {
 
     if (Controller && Value != 0.0f) {
         const auto Direction = FVector::UpVector;
-        AddMovementInput(Direction, Value * CameraMovementSpeed * GetWorld()->GetDeltaSeconds());
+        AddMovementInput(Direction, Value * CurrentCameraMovementSpeed);
     }
 }
 
@@ -369,28 +330,7 @@ void ATwinLinkWorldViewer::TurnXY(const FVector2D Value) {
     if (!CanReceivePlayerInput()) {
         return;
     }
-
-    //AddFocusPoint();
-    if (CalcFocusPoint().has_value() == false) {
-        AddControllerPitchInput(-Value.Y * CameraRotationSpeed);
-        AddControllerYawInput(-Value.X * CameraRotationSpeed);
-    }
-    else {
-        double Pitch = 0.0f;
-        double Yaw = 0.0f;
-
-        const auto Factor = 0.5f;
-        Pitch = Value.Y * CameraRotationSpeed * Factor;
-        Yaw = Value.X * CameraRotationSpeed * Factor;
-
-        const auto FocusPoint = CalcFocusPoint().value();
-        RotateAroundFocusPoint(this, FocusPoint, GetNowCameraRotationOrDefault(), FRotator(Pitch, Yaw, 0.0), CalcOffsetLength(FocusPoint));
-
-        //RotateAroundFocusPoints();
-        //ClearFocusPoint();
-
-    }
-
+    StateMachine.TurnXY(Value);
 }
 
 void ATwinLinkWorldViewer::Click() {
@@ -472,15 +412,12 @@ void ATwinLinkWorldViewer::Click() {
 void ATwinLinkWorldViewer::InputedAny(bool bIsActive) {
     if (bIsActive) {
         NoInputProcessTime = 0.0f;
-
-        if (CurrentAutoViewMode == ETwinLinkViewMode::FreeAutoView) {
-            ActivateAutoViewControlButton(ETwinLinkViewMode::Manual);
-        }
+        StateMachine.InputedAny();
     }
 }
 
 void ATwinLinkWorldViewer::ActivateAutoViewControl(ETwinLinkViewMode ViewMode) {
-    const auto bIsChangeVal = ViewMode != CurrentAutoViewMode;
+    const auto bIsChangeVal = StateMachine.IsDiffrentViewMode(ViewMode);
     if (bIsChangeVal == false)
         return;
 
@@ -488,37 +425,9 @@ void ATwinLinkWorldViewer::ActivateAutoViewControl(ETwinLinkViewMode ViewMode) {
         return;
     if (DemCityModel == nullptr)
         return;
-
-    switch (ViewMode) {
-    case ETwinLinkViewMode::FreeAutoView:
-    {
-        //AddFocusPoint();
-        const auto DemCityModelBounds = DemCityModel->GetNavigationBounds();
-        const auto OffsetDistance = (DemCityModelBounds.GetExtent().X + DemCityModelBounds.GetExtent().Y) * 0.5;
-        const auto FocusPoint = DemCityModelBounds.GetCenter();
-        const auto CurrentRotator = GetNowCameraRotationOrDefault();
-        const auto DefaultRotator = FRotator(-45.0f, CurrentRotator.Yaw, CurrentRotator.Roll);
-        const auto DefaultLocation = FocusPoint - DefaultRotator.Vector() * OffsetDistance;
-        AutoFreeViewControl.Init(FocusPoint, DefaultLocation, DefaultRotator);
-    }
-    break;
-    case ETwinLinkViewMode::LimitedAutoView:
-    {
-        //AddFocusPoint();
-        AutoRotateViewProcessTime = 0.0f;
-    }
-    break;
-    case ETwinLinkViewMode::Manual:
-    {
-        NoInputProcessTime = 0.0f;
-        //ClearFocusPoint();
-        CurrentAutoViewMode = ETwinLinkViewMode::Manual;
-        break;
-    }
-    }
-    CurrentAutoViewMode = ViewMode;
-
-
+    
+    StateMachine.ActivateAutoViewControl(ViewMode);
+    EvOnChangedViewMode.Broadcast(ViewMode);
 }
 
 void ATwinLinkWorldViewer::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DebugDisplay, float& YL, float& YPos) {
@@ -529,8 +438,60 @@ void ATwinLinkWorldViewer::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo
 #endif
 }
 
+void ATwinLinkWorldViewer::SetWorldViewerMovementMode(int Idx, float Multiply) {
+    switch (Idx) {
+    case 0:
+        CurrentCameraMovementSpeed = CameraMovementSpeed;
+        break;
+    case 1:
+        CurrentCameraMovementSpeed = CameraMovementSpeed * WalkingCameraMovementSpeedFactor;
+        break;
+    }
+
+    CurrentCameraMovementSpeed *= Multiply;
+}
+
+void ATwinLinkWorldViewer::MoveForwardImpl(float Value, bool bUseWorldSpace) {
+    FVector Direction;
+    const auto Rotation = Controller->GetControlRotation();
+    if (bUseWorldSpace == false) {
+        Direction = FRotationMatrix(Rotation).GetScaledAxis(EAxis::X);
+    }
+    else {
+        Direction = FRotator(0, Rotation.Yaw, 0).Vector();
+    }
+    AddMovementInput(Direction, Value * CurrentCameraMovementSpeed);
+}
+
+void ATwinLinkWorldViewer::MoveRightImpl(float Value) {
+    const auto Rotation = Controller->GetControlRotation();
+    const auto Direction = FRotationMatrix(Rotation).GetScaledAxis(EAxis::Y);
+    AddMovementInput(Direction, Value * CurrentCameraMovementSpeed);
+}
+
+void ATwinLinkWorldViewer::TurnXYImpl(const FVector2D Value, bool bUseFocusPoint) {
+    if (bUseFocusPoint) {
+        const auto FocusPoint = CalcFocusPoint();
+        if (FocusPoint.has_value()) {
+            double Pitch = 0.0f;
+            double Yaw = 0.0f;
+
+            const auto Factor = 100.0f;
+            Pitch = Value.Y * CameraRotationSpeed * Factor * GetWorld()->DeltaTimeSeconds;
+            Yaw = Value.X * CameraRotationSpeed * Factor * GetWorld()->DeltaTimeSeconds;
+
+            RotateAroundFocusPoint(this, FocusPoint.value(), GetNowCameraRotationOrDefault(), FRotator(Pitch, Yaw, 0.0), CalcOffsetLength(FocusPoint), LimitAngleFocusPointRotate);
+        }
+    }
+    else {
+        AddControllerPitchInput(-Value.Y * CameraRotationSpeed);
+        AddControllerYawInput(-Value.X * CameraRotationSpeed);
+    }
+
+}
+
 bool ATwinLinkWorldViewer::CanReceivePlayerInput() {
-    if (CurrentAutoViewMode != ETwinLinkViewMode::Manual)
+    if (StateMachine.CanReceivePlayerInput() == false)
         return false;
 
     const auto bIsRestricted = InputControlNodes.ContainsByPredicate([](const FInputControlNode* X) { return X && X->IsInputRestricted(); });
@@ -561,6 +522,10 @@ bool ATwinLinkWorldViewer::MoveInfo::Update(float DeltaSec, FVector& OutLocation
 
 bool ATwinLinkWorldViewer::MoveInfo::IsCompleted() {
     return PassSec >= MoveSec || MoveSec <= 0.f;
+}
+
+bool ATwinLinkWorldViewer::IsWalkMode() {
+    return StateMachine.GetCurrentMode() == ETwinLinkViewMode::ManualWalk;
 }
 
 void ATwinLinkWorldViewer::AddInputControlNode(FInputControlNode* Node) {
@@ -598,6 +563,29 @@ void ATwinLinkWorldViewer::SetLocation(const FVector& Position, const FRotator& 
 
 void ATwinLinkWorldViewer::SetLocation(const FVector& Position, const FVector& RotationEuler, float MoveSec) {
     SetLocation(Position, FRotator::MakeFromEuler(RotationEuler), MoveSec);
+}
+
+void ATwinLinkWorldViewer::Deploy(const FVector& TargetPosition, const FRotator& Rotation) {
+    const auto CurrentLocation = GetNowCameraLocationOrZero();
+    const auto CurrentRotation = GetNowCameraRotationOrDefault();
+
+    const auto TargetRotation = Rotation;
+
+    const auto VecViewerToImpactPoint = TargetPosition - CurrentLocation;
+    const auto SqrLen = VecViewerToImpactPoint.SquaredLength();
+    if (SqrLen > 0.001) {
+        float Radius, Height;
+        GetComponentsBoundingCylinder(Radius, Height);
+        const auto Extent = FMath::Max(Radius * 2.0, Height) + 1;
+        const auto Len = VecViewerToImpactPoint.Length();
+        const auto TargetLocation = CurrentLocation + VecViewerToImpactPoint.GetUnsafeNormal() * (Len - Extent);
+
+        SetLocation(TargetLocation, TargetRotation, 0.5f);
+    }
+    else {
+        SetLocation(CurrentLocation, TargetRotation, 0.5f);
+    }
+
 }
 
 void ATwinLinkWorldViewer::SetLocationLookAt(const FVector& Position, const FVector& LookAt, float MoveSec) {
@@ -640,3 +628,117 @@ void ATwinLinkWorldViewer::FAutoFreeViewControl::Update(ATwinLinkWorldViewer* Wo
     }
 }
 
+void ATwinLinkWorldViewer::ViewModeStateMachine::Init(ATwinLinkWorldViewer* WorldViewer) {
+    FreeAutoViewStateInst.Init(WorldViewer);
+    LimitedAutoViewStateInst.Init(WorldViewer);
+    ManualStateInst.Init(WorldViewer);
+    ManualWalkStateInst.Init(WorldViewer);
+
+    ChangeMode(ETwinLinkViewMode::Manual);
+}
+
+void ATwinLinkWorldViewer::ViewModeStateMachine::ChangeMode(ETwinLinkViewMode ViewMode) {
+    CurrentAutoViewMode = ViewMode;
+
+    switch (ViewMode) {
+    case ETwinLinkViewMode::FreeAutoView:
+        CurrentState = &FreeAutoViewStateInst;
+        break;
+    case ETwinLinkViewMode::LimitedAutoView:
+        CurrentState = &LimitedAutoViewStateInst;
+        break;
+    case ETwinLinkViewMode::Manual:
+        CurrentState = &ManualStateInst;
+        break;
+    case ETwinLinkViewMode::ManualWalk:
+        CurrentState = &ManualWalkStateInst;
+        break;
+    default:
+        break;
+    }
+}
+
+void ATwinLinkWorldViewer::FreeAutoViewState::Tick(float DeltaTime) {
+    AutoFreeViewControl.Update(Viewer, DeltaTime);
+}
+
+void ATwinLinkWorldViewer::FreeAutoViewState::ActivateAutoViewControl() {
+    TWeakObjectPtr<UCapsuleComponent> _CapsuleComponent = Viewer->GetComponentByClass<UCapsuleComponent>();
+    _CapsuleComponent.Get()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+    const auto DemCityModelBounds = DemCityModel->GetNavigationBounds();
+    const auto OffsetDistance = (DemCityModelBounds.GetExtent().X + DemCityModelBounds.GetExtent().Y) * 0.5;
+    const auto FocusPoint = DemCityModelBounds.GetCenter();
+    const auto CurrentRotator = Viewer->GetNowCameraRotationOrDefault();
+    const auto DefaultRotator = FRotator(-45.0f, CurrentRotator.Yaw, CurrentRotator.Roll);
+    const auto DefaultLocation = FocusPoint - DefaultRotator.Vector() * OffsetDistance;
+    AutoFreeViewControl.Init(FocusPoint, DefaultLocation, DefaultRotator);
+}
+
+void ATwinLinkWorldViewer::FreeAutoViewState::InputedAny() {
+    Viewer->ActivateAutoViewControlButton(ETwinLinkViewMode::Manual);
+}
+
+void ATwinLinkWorldViewer::LimitedAutoViewState::Tick(float DeltaTime) {
+    bool bCanAutoView = Viewer->TargetTransform.has_value() == false;
+    if (bCanAutoView == false) {
+        bCanAutoView = Viewer->TargetTransform.value().IsCompleted();
+    }
+
+    if (bCanAutoView) {
+        const auto FocusPoint = Viewer->CalcFocusPoint();
+        if (FocusPoint.has_value()) {
+            RotateAroundFocusPoint(Viewer, FocusPoint.value(),
+                Viewer->GetNowCameraRotationOrDefault(), 
+                FRotator(0.0, Viewer->AutoRotationSpeed * DeltaTime, 0.0), 
+                Viewer->CalcOffsetLength(FocusPoint), Viewer->LimitAngleFocusPointRotate);
+        }
+        else {
+            Viewer->AddControllerYawInput(Viewer->AutoRotationSpeed * Viewer->CameraRotationSpeed);
+        }
+        AutoRotateViewProcessTime += DeltaTime;
+    }
+}
+
+void ATwinLinkWorldViewer::LimitedAutoViewState::ActivateAutoViewControl() {
+    AutoRotateViewProcessTime = 0.0f;
+    TWeakObjectPtr<UCapsuleComponent> _CapsuleComponent = Viewer->GetComponentByClass<UCapsuleComponent>();
+    _CapsuleComponent.Get()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
+void ATwinLinkWorldViewer::ManualState::ActivateAutoViewControl() {
+    Viewer->NoInputProcessTime = 0.0f;
+    TWeakObjectPtr<UCapsuleComponent> _CapsuleComponent = Viewer->GetComponentByClass<UCapsuleComponent>();
+    _CapsuleComponent.Get()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
+void ATwinLinkWorldViewer::ManualState::MoveForward(float Value) {
+    Viewer->MoveForwardImpl(Value);
+}
+
+void ATwinLinkWorldViewer::ManualState::MoveRight(float Value) {
+    Viewer->MoveRightImpl(Value);
+}
+
+void ATwinLinkWorldViewer::ManualState::TurnXY(const FVector2D Value) {
+    Viewer->TurnXYImpl(Value, true);
+}
+
+void ATwinLinkWorldViewer::ManualWalkState::ActivateAutoViewControl() {
+    Viewer->NoInputProcessTime = 0.0f;
+
+    TWeakObjectPtr<UCapsuleComponent> _CapsuleComponent = Viewer->GetComponentByClass<UCapsuleComponent>();
+    _CapsuleComponent.Get()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+}
+
+void ATwinLinkWorldViewer::ManualWalkState::MoveForward(float Value) {
+    Viewer->MoveForwardImpl(Value, true);
+}
+
+void ATwinLinkWorldViewer::ManualWalkState::MoveRight(float Value) {
+    Viewer->MoveRightImpl(Value);
+}
+
+void ATwinLinkWorldViewer::ManualWalkState::TurnXY(const FVector2D Value) {
+    Viewer->TurnXYImpl(FVector2D(-Value.X, Value.Y), false);
+}
