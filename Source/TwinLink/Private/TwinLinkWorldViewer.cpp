@@ -178,6 +178,9 @@ void ATwinLinkWorldViewer::Tick(float DeltaTime) {
     // 前フレームのマウスの座標を更新する
     PreMousePosition = CurrentMousePosition;
 
+    // 移動入力の検出状態を元に戻す
+    bInputedMovement = false;
+
 }
 
 // Called to bind functionality to input
@@ -292,9 +295,6 @@ void ATwinLinkWorldViewer::MoveForwardOnWorldSpace(const float Value) {
 
     if (Controller && Value != 0.0f) {
         MoveForwardImpl(Value, true);
-        //const auto Rotation = Controller->GetControlRotation();
-        //const auto Direction = FRotator(0, Rotation.Yaw, 0).Vector();
-        //AddMovementInput(Direction, Value * CurrentCameraMovementSpeed);
     }
 }
 
@@ -461,12 +461,14 @@ void ATwinLinkWorldViewer::MoveForwardImpl(float Value, bool bUseWorldSpace) {
         Direction = FRotator(0, Rotation.Yaw, 0).Vector();
     }
     AddMovementInput(Direction, Value * CurrentCameraMovementSpeed);
+    bInputedMovement = true;
 }
 
 void ATwinLinkWorldViewer::MoveRightImpl(float Value) {
     const auto Rotation = Controller->GetControlRotation();
     const auto Direction = FRotationMatrix(Rotation).GetScaledAxis(EAxis::Y);
     AddMovementInput(Direction, Value * CurrentCameraMovementSpeed);
+    bInputedMovement = true;
 }
 
 void ATwinLinkWorldViewer::TurnXYImpl(const FVector2D Value, bool bUseFocusPoint) {
@@ -578,9 +580,37 @@ void ATwinLinkWorldViewer::Deploy(const FVector& TargetPosition, const FRotator&
         GetComponentsBoundingCylinder(Radius, Height);
         const auto Extent = FMath::Max(Radius * 2.0, Height) + 1;
         const auto Len = VecViewerToImpactPoint.Length();
-        const auto TargetLocation = CurrentLocation + VecViewerToImpactPoint.GetUnsafeNormal() * (Len - Extent);
+        const auto VecViewerToImpactPointNormal = VecViewerToImpactPoint.GetUnsafeNormal();
+        const auto TargetLocation = CurrentLocation + VecViewerToImpactPointNormal * (Len - Extent);
 
-        SetLocation(TargetLocation, TargetRotation, 0.5f);
+        FCollisionShape CollisionShape;
+        CollisionShape.SetSphere(Extent);
+
+        // 配置可能な位置可能な位置に配置する
+        // 指定座標から元に位置に向かって配置可能か順にテストする
+        bool bIsHit = true;
+        int SweepTestCnt = 0;
+        const auto MaxSweepTestCnt = 10;
+        FVector AvoidOffset;
+        FVector RealTargetLocation;
+        while (bIsHit && SweepTestCnt < MaxSweepTestCnt) {
+            AvoidOffset = -VecViewerToImpactPointNormal * Extent * SweepTestCnt;
+            RealTargetLocation = TargetLocation + AvoidOffset;
+            bIsHit = GetWorld()->OverlapAnyTestByChannel(
+                RealTargetLocation,
+                FQuat::Identity, ECollisionChannel::ECC_Visibility, CollisionShape);
+
+            // 配置可能な位置を見つけた
+            if (bIsHit == false) {
+                break;
+            }
+            SweepTestCnt++;
+        }
+
+        // 配置可能な位置を見つけた
+        if (bIsHit == false) {
+            SetLocation(RealTargetLocation, TargetRotation, 0.5f);
+        }
     }
     else {
         SetLocation(CurrentLocation, TargetRotation, 0.5f);
@@ -724,9 +754,48 @@ void ATwinLinkWorldViewer::ManualState::TurnXY(const FVector2D Value) {
     Viewer->TurnXYImpl(Value, true);
 }
 
+void ATwinLinkWorldViewer::ManualWalkState::Tick(float DeltaTime) {
+    const auto CurrentLocation = Viewer->GetNowCameraLocationOrZero();
+    const auto _PreLocation = Viewer->PreLocation.value_or(FVector::Zero());
+    // 0とみなす距離
+    const auto SqrDistanceZero = 1.0;
+
+    // Stuckしていると判断する時間
+    const auto CriterionStuckTime = 5.0f;
+
+    // スタックしていないw
+    if (AnyInputMovementAndNotMovementProcessTime < CriterionStuckTime) {
+        // 入力がある状態を検出
+        if (Viewer->bInputedMovement) {
+            if (FVector::DistSquared(CurrentLocation, _PreLocation) < SqrDistanceZero) {
+                AnyInputMovementAndNotMovementProcessTime += DeltaTime;
+
+                // スタックした
+                if (AnyInputMovementAndNotMovementProcessTime > CriterionStuckTime) {
+                    TWeakObjectPtr<UCapsuleComponent> _CapsuleComponent = Viewer->GetComponentByClass<UCapsuleComponent>();
+                    _CapsuleComponent.Get()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+                }
+            }
+        }
+        else {
+            AnyInputMovementAndNotMovementProcessTime = 0.0f;
+        }
+    }
+    // スタック中
+    else {
+        // 動けた
+        if (FVector::DistSquared(CurrentLocation, _PreLocation) > SqrDistanceZero) {
+            AnyInputMovementAndNotMovementProcessTime = CriterionStuckTime * 0.8f;   // 連続してスタックする可能性があるのでカウントを完全には回復しない
+            TWeakObjectPtr<UCapsuleComponent> _CapsuleComponent = Viewer->GetComponentByClass<UCapsuleComponent>();
+            _CapsuleComponent.Get()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);                        
+        }
+    }
+
+}
+
 void ATwinLinkWorldViewer::ManualWalkState::ActivateAutoViewControl() {
     Viewer->NoInputProcessTime = 0.0f;
-
+    AnyInputMovementAndNotMovementProcessTime = 0.0f;
     TWeakObjectPtr<UCapsuleComponent> _CapsuleComponent = Viewer->GetComponentByClass<UCapsuleComponent>();
     _CapsuleComponent.Get()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 }

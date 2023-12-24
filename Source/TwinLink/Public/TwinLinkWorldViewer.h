@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -297,6 +297,8 @@ private:
 
     /** 何の入力もない時間 **/
     float NoInputProcessTime;
+    /** 移動入力が行われたか **/
+    bool bInputedMovement;
 
     /** 放置状態関係のメンバーや処理をまとめた構造体 **/
     struct FAutoFreeViewControl {
@@ -367,11 +369,17 @@ private:
     class ManualWalkState : public IViewModeState {
     public:
         // Inherited via IViewModeState
+        void Tick(float DeltaTime) override;
         void ActivateAutoViewControl() override;
         bool CanReceivePlayerInput() override { return true; };
         void MoveForward(float Value) override;
         void MoveRight(float Value) override;
         void TurnXY(const FVector2D Value) override;
+
+    private:
+        // 移動入力が継続して行われているかつ座標を変化していない時間
+        float AnyInputMovementAndNotMovementProcessTime;
+
     };
 
     class ViewModeStateMachine {
