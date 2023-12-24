@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -101,6 +101,15 @@ public:
     */
     void SetLocation(const FVector& Position, const FRotator& Rotation, float MoveSec = 0.f);
     void SetLocation(const FVector& Position, const FVector& RotationEuler, float MoveSec = 0.f);
+
+
+    /**
+     * @brief 配置可能な位置を取得することを試みる
+     * @param NewPosition 
+     * @param TargetPosition 
+     * @return 成功時 true
+    */
+    bool TryGetDeployPosition(FVector* const NewPosition, const FVector& TargetPosition);
 
     /**
      * @brief 指定位置に配置するように移動する

@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
 #include "TwinLinkWalkModePanelBase.h"
@@ -137,13 +137,20 @@ bool UTwinLinkWalkModePanelBase::BindClickEvnet() {
         if (bIsReadyWalkMode == false)
             return;
 
-        bIsReadyWalkMode = false;
-
         const auto CurrentRotation = Viewer->GetNowCameraRotationOrDefault();
         const auto TargetRotation = FRotator(0, CurrentRotation.Yaw, 0);
-        Viewer->Deploy(Hit.ImpactPoint, TargetRotation);
-        Viewer->ActivateAutoViewControlButton(ETwinLinkViewMode::ManualWalk);
-        Viewer->SetWorldViewerMovementMode(1, 1.0); // 定数修正
+        FVector NewPosition;
+        const auto bIsSuc = Viewer->TryGetDeployPosition(&NewPosition, Hit.ImpactPoint);
+        if (bIsSuc) {
+            bIsReadyWalkMode = false;
+
+            Viewer->Deploy(Hit.ImpactPoint, TargetRotation);
+            Viewer->ActivateAutoViewControlButton(ETwinLinkViewMode::ManualWalk);
+            Viewer->SetWorldViewerMovementMode(1, 1.0); // 定数修正
+        }
+        else {
+            OnFailedDeplayWalkModeViewer(TEXT("配置可能な場所がみつかりませんでした。\n幅のある道路などでもう一度試してみてください。"));
+        }
         });
 
     return true;

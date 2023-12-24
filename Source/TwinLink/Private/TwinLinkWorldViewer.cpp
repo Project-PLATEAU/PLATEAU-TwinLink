@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
 #include "TwinLinkWorldViewer.h"
@@ -567,55 +567,55 @@ void ATwinLinkWorldViewer::SetLocation(const FVector& Position, const FVector& R
     SetLocation(Position, FRotator::MakeFromEuler(RotationEuler), MoveSec);
 }
 
-void ATwinLinkWorldViewer::Deploy(const FVector& TargetPosition, const FRotator& Rotation) {
+bool ATwinLinkWorldViewer::TryGetDeployPosition(FVector* const NewPosition, const FVector& TargetPosition) {
     const auto CurrentLocation = GetNowCameraLocationOrZero();
-    const auto CurrentRotation = GetNowCameraRotationOrDefault();
-
-    const auto TargetRotation = Rotation;
 
     const auto VecViewerToImpactPoint = TargetPosition - CurrentLocation;
-    const auto SqrLen = VecViewerToImpactPoint.SquaredLength();
-    if (SqrLen > 0.001) {
-        float Radius, Height;
-        GetComponentsBoundingCylinder(Radius, Height);
-        const auto Extent = FMath::Max(Radius * 2.0, Height) + 1;
-        const auto Len = VecViewerToImpactPoint.Length();
-        const auto VecViewerToImpactPointNormal = VecViewerToImpactPoint.GetUnsafeNormal();
-        const auto TargetLocation = CurrentLocation + VecViewerToImpactPointNormal * (Len - Extent);
+    
+    const auto Capsule = GetCapsuleComponent();
+    const auto Radius = Capsule->GetScaledCapsuleRadius();
+    const auto HalfHeight = Capsule->GetScaledCapsuleHalfHeight();
+    const auto Extent = FMath::Max(Radius, HalfHeight) + 1;
+    const auto VecViewerToImpactPointLength = VecViewerToImpactPoint.Length();
+    const auto DistanceToTargetLocation = FMath::Max(VecViewerToImpactPointLength - Extent, 0);   // 現在位置よりは下がらないようにする
+    const auto VecViewerToImpactPointNormal = VecViewerToImpactPoint.GetUnsafeNormal();
+    const auto TargetLocation = CurrentLocation + VecViewerToImpactPointNormal * DistanceToTargetLocation;
 
-        FCollisionShape CollisionShape;
-        CollisionShape.SetSphere(Extent);
+    FCollisionShape CollisionShape;
+    CollisionShape.SetCapsule(Radius, HalfHeight);
 
-        // 配置可能な位置可能な位置に配置する
-        // 指定座標から元に位置に向かって配置可能か順にテストする
-        bool bIsHit = true;
-        int SweepTestCnt = 0;
-        const auto MaxSweepTestCnt = 10;
-        FVector AvoidOffset;
-        FVector RealTargetLocation;
-        while (bIsHit && SweepTestCnt < MaxSweepTestCnt) {
-            AvoidOffset = -VecViewerToImpactPointNormal * Extent * SweepTestCnt;
-            RealTargetLocation = TargetLocation + AvoidOffset;
-            bIsHit = GetWorld()->OverlapAnyTestByChannel(
-                RealTargetLocation,
-                FQuat::Identity, ECollisionChannel::ECC_Visibility, CollisionShape);
-
-            // 配置可能な位置を見つけた
-            if (bIsHit == false) {
-                break;
-            }
-            SweepTestCnt++;
-        }
+    // 配置可能な位置可能な位置に配置する
+    // 指定座標から元に位置に向かって配置可能か順にテストする
+    bool bIsHit = true;
+    int SweepTestCnt = 0;
+    const auto MaxSweepTestCnt = 10;
+    FVector AvoidOffset;
+    FVector RealTargetLocation;
+    while (bIsHit && SweepTestCnt < MaxSweepTestCnt) {
+        AvoidOffset = -VecViewerToImpactPointNormal * Extent * SweepTestCnt;
+        RealTargetLocation = TargetLocation + AvoidOffset;
+        bIsHit = GetWorld()->OverlapAnyTestByChannel(
+            RealTargetLocation,
+            FQuat::Identity, ECollisionChannel::ECC_Visibility, CollisionShape);
 
         // 配置可能な位置を見つけた
         if (bIsHit == false) {
-            SetLocation(RealTargetLocation, TargetRotation, 0.5f);
+            break;
         }
-    }
-    else {
-        SetLocation(CurrentLocation, TargetRotation, 0.5f);
+        SweepTestCnt++;
     }
 
+    // 配置可能な位置を見つけた
+    if (bIsHit == false) {
+        *NewPosition = RealTargetLocation;
+        return true;
+    }
+
+    return false;
+}
+
+void ATwinLinkWorldViewer::Deploy(const FVector& TargetPosition, const FRotator& Rotation) {
+    SetLocation(TargetPosition, Rotation, 0.5f);
 }
 
 void ATwinLinkWorldViewer::SetLocationLookAt(const FVector& Position, const FVector& LookAt, float MoveSec) {
