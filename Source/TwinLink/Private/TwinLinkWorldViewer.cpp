@@ -68,6 +68,12 @@ ATwinLinkWorldViewer::ATwinLinkWorldViewer() {
     FirstPersonCameraComponent->SetRelativeLocation(GetPawnViewLocation()); // Position the camera
     FirstPersonCameraComponent->bUsePawnControlRotation = true;
 
+    // Setup camera defaults
+    FirstPersonCameraComponent->FieldOfView = 90.0f;
+    FirstPersonCameraComponent->bConstrainAspectRatio = true;
+    FirstPersonCameraComponent->AspectRatio = 1.777778f;
+    FirstPersonCameraComponent->PostProcessBlendWeight = 1.0f;
+
 }
 
 TWeakObjectPtr<ATwinLinkWorldViewer> ATwinLinkWorldViewer::GetInstance(UWorld* World) {
