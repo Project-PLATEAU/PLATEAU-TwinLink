@@ -179,6 +179,10 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Movement")
         void TurnXY(const FVector2D Value);
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+        class UCameraComponent* FirstPersonCameraComponent;
+
+
 private:
     UFUNCTION(BlueprintCallable, Category = "Movement")
         void Click();

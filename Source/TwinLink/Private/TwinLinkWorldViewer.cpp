@@ -13,6 +13,9 @@
 #include "TwinLinkPlayerController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
+#include "Camera/CameraComponent.h"
+#include "CineCameraComponent.h"
+
 #include "Components/CapsuleComponent.h"
 #include "NavSystem/TwinLinkNavSystem.h"
 
@@ -58,6 +61,13 @@ ATwinLinkWorldViewer::ATwinLinkWorldViewer() {
     CharMovementComponent = nullptr;
 
     bIsSelectingFacility = false;
+
+    // Create a CameraComponent	
+    FirstPersonCameraComponent = CreateDefaultSubobject<UCineCameraComponent>(TEXT("FirstPersonCineCamera"));
+    FirstPersonCameraComponent->SetupAttachment(GetCapsuleComponent());
+    FirstPersonCameraComponent->SetRelativeLocation(GetPawnViewLocation()); // Position the camera
+    FirstPersonCameraComponent->bUsePawnControlRotation = true;
+
 }
 
 TWeakObjectPtr<ATwinLinkWorldViewer> ATwinLinkWorldViewer::GetInstance(UWorld* World) {
