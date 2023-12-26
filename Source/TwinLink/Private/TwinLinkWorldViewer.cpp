@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
 #include "TwinLinkWorldViewer.h"
@@ -507,6 +507,16 @@ double ATwinLinkWorldViewer::CalcOffsetLength(std::optional<FVector> FocusPoint)
     return OffsetLength;
 }
 
+FCollisionShape ATwinLinkWorldViewer::CreateCollisionShape() const {
+    const auto Capsule = GetCapsuleComponent();
+    const auto Radius = Capsule->GetScaledCapsuleRadius();
+    const auto HalfHeight = Capsule->GetScaledCapsuleHalfHeight();
+
+    FCollisionShape Shape;
+    Shape.SetCapsule(Radius, HalfHeight);
+    return Shape;
+}
+
 bool ATwinLinkWorldViewer::MoveInfo::Update(float DeltaSec, FVector& OutLocation, FRotator& OutRotation) {
     PassSec = FMath::Max(0.f, PassSec) + DeltaSec;
     if (PassSec >= MoveSec || MoveSec <= 0.f) {
@@ -567,6 +577,54 @@ void ATwinLinkWorldViewer::SetLocation(const FVector& Position, const FVector& R
     SetLocation(Position, FRotator::MakeFromEuler(RotationEuler), MoveSec);
 }
 
+bool ATwinLinkWorldViewer::IsInTheWall(const FVector& Position) const {
+    FCollisionShape CollisionShape = CreateCollisionShape();
+
+    FHitResult HitResult;
+    const auto TestDistance = 100000.0f;  // 1km  1km以内に自身の位置と反対方向を向いた壁が無ければ判定が取れないので増やす
+    static const FVector EndDirs[] = { 
+        FVector::UpVector, FVector::DownVector,
+        FVector::RightVector, FVector::LeftVector,
+        FVector::ForwardVector, FVector::BackwardVector
+    };
+    for (int i = 0; i < sizeof(EndDirs) / sizeof(FVector); i++) {
+        const auto End = Position + EndDirs[i] * TestDistance;
+        FVector StartReturnLineTrace = End;
+
+        //const auto bIsHit = GetWorld()->SweepSingleByChannel(HitResult, Position, End, FQuat::Identity, ECollisionChannel::ECC_Visibility, CollisionShape);
+        FCollisionQueryParams Params = FCollisionQueryParams::DefaultQueryParam;
+        FCollisionResponseParams ResponseParams = FCollisionResponseParams::DefaultResponseParam;
+        const auto bIsHit = GetWorld()->LineTraceSingleByChannel(
+            HitResult, Position, End, ECollisionChannel::ECC_Visibility,
+            Params, ResponseParams);    // 自身の方向を向いた壁を検出
+        if (bIsHit) {
+            StartReturnLineTrace = HitResult.ImpactPoint;
+        }
+
+        bool bIsHitRWall = GetWorld()->LineTraceTestByChannel(StartReturnLineTrace, Position, ECollisionChannel::ECC_Visibility);
+        if (bIsHitRWall) {
+            //// 壁の裏面かチェック
+            //const float DebugRadius = 100.0f;
+            //const float DebugLife = 30.0f;
+            //DrawDebugDirectionalArrow(
+            //    GetWorld(), HitResult.TraceStart, HitResult.ImpactPoint,
+            //    DebugRadius * 100, FColor::Red, false, DebugLife, UINT8_MAX);
+            //DrawDebugDirectionalArrow(
+            //    GetWorld(), HitResult.ImpactPoint, HitResult.ImpactPoint + HitResult.ImpactNormal * 1000,
+            //    DebugRadius * 100, FColor::Blue, false, DebugLife, UINT8_MAX);
+            //DrawDebugSphere(
+            //    GetWorld(), HitResult.TraceStart, DebugRadius, 16,
+            //    FColor::Red, false, DebugLife, UINT8_MAX);
+            //DrawDebugSphere(
+            //    GetWorld(), HitResult.ImpactPoint, DebugRadius, 16,
+            //    FColor::Blue, false, DebugLife, UINT8_MAX);
+            
+            return true;
+        }
+    }
+    return false;
+}
+
 bool ATwinLinkWorldViewer::TryGetDeployPosition(FVector* const NewPosition, const FVector& TargetPosition) {
     const auto CurrentLocation = GetNowCameraLocationOrZero();
 
@@ -586,27 +644,35 @@ bool ATwinLinkWorldViewer::TryGetDeployPosition(FVector* const NewPosition, cons
 
     // 配置可能な位置可能な位置に配置する
     // 指定座標から元に位置に向かって配置可能か順にテストする
-    bool bIsHit = true;
+    bool bIsDeployable = false;
     int SweepTestCnt = 0;
     const auto MaxSweepTestCnt = 10;
     FVector AvoidOffset;
     FVector RealTargetLocation;
-    while (bIsHit && SweepTestCnt < MaxSweepTestCnt) {
+    while (true) {
+        // 試行回数の制限を超えた
+        if (SweepTestCnt >= MaxSweepTestCnt)
+            break;
+
         AvoidOffset = -VecViewerToImpactPointNormal * Extent * SweepTestCnt;
         RealTargetLocation = TargetLocation + AvoidOffset;
-        bIsHit = GetWorld()->OverlapAnyTestByChannel(
+        const auto bIsOverlap = GetWorld()->OverlapAnyTestByChannel(
             RealTargetLocation,
             FQuat::Identity, ECollisionChannel::ECC_Visibility, CollisionShape);
 
-        // 配置可能な位置を見つけた
-        if (bIsHit == false) {
-            break;
+        // 配置しても衝突しない
+        if (bIsOverlap == false) {
+            // 建物内じゃない
+            if (IsInTheWall(RealTargetLocation) == false) {
+                // 配置可能な位置を見つけた
+                break;
+            }
         }
         SweepTestCnt++;
     }
 
-    // 配置可能な位置を見つけた
-    if (bIsHit == false) {
+    // 試行回数以内に配置可能な位置を見つけた
+    if (SweepTestCnt < MaxSweepTestCnt) {
         *NewPosition = RealTargetLocation;
         return true;
     }

@@ -137,11 +137,18 @@ bool UTwinLinkWalkModePanelBase::BindClickEvnet() {
         if (bIsReadyWalkMode == false)
             return;
 
+        const auto CurrentLocation = Viewer->GetNowCameraLocationOrZero();
+
+        if (Viewer->IsInTheWall(CurrentLocation)) {
+            OnFailedDeplayWalkModeViewer(TEXT("現在は壁の中にいます。\n壁の外から歩行者モードを開始してください。"));
+            return;
+        }
+
         const auto CurrentRotation = Viewer->GetNowCameraRotationOrDefault();
         const auto TargetRotation = FRotator(0, CurrentRotation.Yaw, 0);
         FVector NewPosition;
-        const auto bIsSuc = Viewer->TryGetDeployPosition(&NewPosition, Hit.ImpactPoint);
-        if (bIsSuc) {
+        const auto bIsSucGetDeployPos = Viewer->TryGetDeployPosition(&NewPosition, Hit.ImpactPoint);
+        if (bIsSucGetDeployPos) {
             bIsReadyWalkMode = false;
 
             Viewer->Deploy(Hit.ImpactPoint, TargetRotation);

@@ -102,6 +102,12 @@ public:
     void SetLocation(const FVector& Position, const FRotator& Rotation, float MoveSec = 0.f);
     void SetLocation(const FVector& Position, const FVector& RotationEuler, float MoveSec = 0.f);
 
+    /**
+     * @brief 壁の中か確認する
+     * @param Position 
+     * @return 
+    */
+    bool IsInTheWall(const FVector& Position) const;
 
     /**
      * @brief 配置可能な位置を取得することを試みる
@@ -448,6 +454,12 @@ private:
      * @return
     */
     double CalcOffsetLength(std::optional<FVector> FocusPoint);
+
+    /**
+     * @brief 
+     * @return 
+    */
+    FCollisionShape CreateCollisionShape() const;
 
     /*
      * @brief : 入力制限用ノードリスト
