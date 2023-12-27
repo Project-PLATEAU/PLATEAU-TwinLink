@@ -644,7 +644,8 @@ bool ATwinLinkWorldViewer::TryGetDeployPosition(FVector* const NewPosition, cons
     const auto TargetLocation = CurrentLocation + VecViewerToImpactPointNormal * DistanceToTargetLocation;
 
     FCollisionShape CollisionShape;
-    CollisionShape.SetCapsule(Radius, HalfHeight);
+    const auto ExtraScale = 2.0f;
+    CollisionShape.SetCapsule(Radius * ExtraScale, HalfHeight * ExtraScale);
 
     // 配置可能な位置可能な位置に配置する
     // 指定座標から元に位置に向かって配置可能か順にテストする
