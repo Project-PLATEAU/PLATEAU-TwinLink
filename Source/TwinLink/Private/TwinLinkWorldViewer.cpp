@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
 #include "TwinLinkWorldViewer.h"
@@ -80,6 +80,8 @@ void ATwinLinkWorldViewer::ChangeTwinLinkViewMode(UWorld* World, ETwinLinkViewMo
     TObjectPtr<ATwinLinkWorldViewer> Viewer = GetInstance(World).Get();
 
     if (Viewer) {
+        if (!Viewer->StateMachine.IsInited())
+            return;
         Viewer->ActivateAutoViewControlButton(ViewMode);
     }
 }
@@ -92,6 +94,7 @@ void ATwinLinkWorldViewer::BeginPlay() {
     _CapsuleComponent.Get()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
     StateMachine.Init(this);
+    ActivateAutoViewControlButton(ETwinLinkViewMode::FreeAutoView);
 
     NoInputProcessTime = LimitBeginAutoViewControlModeTime - 10.0f; // デフォルトを放置状態スタートにする
 
@@ -124,7 +127,10 @@ void ATwinLinkWorldViewer::Tick(float DeltaTime) {
 
         // 自動閲覧モードの有効化
         if (bIsReqAutomode) {
-            ActivateAutoViewControlButton(ETwinLinkViewMode::FreeAutoView);
+            if (StateMachine.IsInited()) {
+                ActivateAutoViewControlButton(ETwinLinkViewMode::FreeAutoView);
+                return;
+            }
         }
     }
     else {

@@ -399,6 +399,9 @@ private:
 
     class ViewModeStateMachine {
     public:
+        ViewModeStateMachine() 
+            :CurrentState(nullptr) {}
+
         bool IsDiffrentViewMode(ETwinLinkViewMode ViewMode) {
             return ViewMode != CurrentAutoViewMode;
         }
@@ -406,6 +409,7 @@ private:
         bool CanReceivePlayerInput() { return CurrentState->CanReceivePlayerInput(); };
 
         void Init(ATwinLinkWorldViewer* WorldViewer);
+        bool IsInited() { CurrentState != nullptr; }
 
         void Tick(float DeltaTime) { CurrentState->Tick(DeltaTime); };
         void ActivateAutoViewControl(ETwinLinkViewMode ViewMode) { 
