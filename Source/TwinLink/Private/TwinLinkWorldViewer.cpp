@@ -246,6 +246,10 @@ std::optional<FVector> ATwinLinkWorldViewer::CalcFocusPoint() {
     const auto CurrentRotation = GetNowCameraRotationOrDefault();
     const auto CurrentLocation = GetNowCameraLocationOrZero();
 
+    if (LimitAngleFocusPointRotate < CurrentRotation.Pitch) {
+        return std::nullopt;
+    }
+
     const auto DotRotVecAndGroundNormal = CurrentRotation.Vector().Dot(Ground.GetNormal());
     // 地面と平行 ロックしてしまうため調整 仮の注視点を設定
     if (DotRotVecAndGroundNormal * DotRotVecAndGroundNormal < 0.001 * 0.001) {
