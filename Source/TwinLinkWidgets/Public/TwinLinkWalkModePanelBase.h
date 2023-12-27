@@ -71,6 +71,8 @@ public:
     UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
     void OnChangedWalkMode(bool bIsActive);
 
+    UFUNCTION(BlueprintImplementableEvent, Category = "TwinLink")
+    void OnFailedDeplayWalkModeViewer(const FString& Error);
 
 private:
     bool BindClickEvnet();

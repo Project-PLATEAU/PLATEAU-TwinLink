@@ -103,6 +103,21 @@ public:
     void SetLocation(const FVector& Position, const FVector& RotationEuler, float MoveSec = 0.f);
 
     /**
+     * @brief 壁の中か確認する
+     * @param Position 
+     * @return 
+    */
+    bool IsInTheWall(const FVector& Position) const;
+
+    /**
+     * @brief 配置可能な位置を取得することを試みる
+     * @param NewPosition 
+     * @param TargetPosition 
+     * @return 成功時 true
+    */
+    bool TryGetDeployPosition(FVector* const NewPosition, const FVector& TargetPosition);
+
+    /**
      * @brief 指定位置に配置するように移動する
      * @param TargetPosition 
      * @param Rotation 
@@ -297,6 +312,8 @@ private:
 
     /** 何の入力もない時間 **/
     float NoInputProcessTime;
+    /** 移動入力が行われたか **/
+    bool bInputedMovement;
 
     /** 放置状態関係のメンバーや処理をまとめた構造体 **/
     struct FAutoFreeViewControl {
@@ -320,6 +337,7 @@ private:
         void Init(ATwinLinkWorldViewer* WorldViewer) { Viewer = WorldViewer; }
         virtual void Tick(float DeltaTime) {};
         virtual void ActivateAutoViewControl() {};
+        virtual void DeactivateAutoViewControl() {};
         virtual void InputedAny(){};
         virtual bool CanReceivePlayerInput() { return false; };
         virtual void MoveForward(float Value) {};
@@ -367,15 +385,25 @@ private:
     class ManualWalkState : public IViewModeState {
     public:
         // Inherited via IViewModeState
+        void Tick(float DeltaTime) override;
         void ActivateAutoViewControl() override;
+        void DeactivateAutoViewControl() override;
         bool CanReceivePlayerInput() override { return true; };
         void MoveForward(float Value) override;
         void MoveRight(float Value) override;
         void TurnXY(const FVector2D Value) override;
+
+    private:
+        // 移動入力が継続して行われているかつ座標を変化していない時間
+        float AnyInputMovementAndNotMovementProcessTime;
+
     };
 
     class ViewModeStateMachine {
     public:
+        ViewModeStateMachine() 
+            :CurrentState(nullptr) {}
+
         bool IsDiffrentViewMode(ETwinLinkViewMode ViewMode) {
             return ViewMode != CurrentAutoViewMode;
         }
@@ -383,12 +411,17 @@ private:
         bool CanReceivePlayerInput() { return CurrentState->CanReceivePlayerInput(); };
 
         void Init(ATwinLinkWorldViewer* WorldViewer);
+        bool IsInited() { CurrentState != nullptr; }
 
         void Tick(float DeltaTime) { CurrentState->Tick(DeltaTime); };
         void ActivateAutoViewControl(ETwinLinkViewMode ViewMode) { 
+            if (CurrentState != nullptr)
+                CurrentState->DeactivateAutoViewControl();
+
             ChangeMode(ViewMode);
             CurrentState->ActivateAutoViewControl(); 
         };
+
 
         void InputedAny() { CurrentState->InputedAny(); };
 
@@ -431,6 +464,12 @@ private:
      * @return
     */
     double CalcOffsetLength(std::optional<FVector> FocusPoint);
+
+    /**
+     * @brief 
+     * @return 
+    */
+    FCollisionShape CreateCollisionShape() const;
 
     /*
      * @brief : 入力制限用ノードリスト

@@ -80,6 +80,8 @@ void ATwinLinkWorldViewer::ChangeTwinLinkViewMode(UWorld* World, ETwinLinkViewMo
     TObjectPtr<ATwinLinkWorldViewer> Viewer = GetInstance(World).Get();
 
     if (Viewer) {
+        if (!Viewer->StateMachine.IsInited())
+            return;
         Viewer->ActivateAutoViewControlButton(ViewMode);
     }
 }
@@ -92,6 +94,7 @@ void ATwinLinkWorldViewer::BeginPlay() {
     _CapsuleComponent.Get()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
     StateMachine.Init(this);
+    ActivateAutoViewControlButton(ETwinLinkViewMode::FreeAutoView);
 
     NoInputProcessTime = LimitBeginAutoViewControlModeTime - 10.0f; // デフォルトを放置状態スタートにする
 
@@ -124,7 +127,10 @@ void ATwinLinkWorldViewer::Tick(float DeltaTime) {
 
         // 自動閲覧モードの有効化
         if (bIsReqAutomode) {
-            ActivateAutoViewControlButton(ETwinLinkViewMode::FreeAutoView);
+            if (StateMachine.IsInited()) {
+                ActivateAutoViewControlButton(ETwinLinkViewMode::FreeAutoView);
+                return;
+            }
         }
     }
     else {
@@ -177,6 +183,9 @@ void ATwinLinkWorldViewer::Tick(float DeltaTime) {
 
     // 前フレームのマウスの座標を更新する
     PreMousePosition = CurrentMousePosition;
+
+    // 移動入力の検出状態を元に戻す
+    bInputedMovement = false;
 
 }
 
@@ -243,6 +252,10 @@ std::optional<FVector> ATwinLinkWorldViewer::CalcFocusPoint() {
     const auto CurrentRotation = GetNowCameraRotationOrDefault();
     const auto CurrentLocation = GetNowCameraLocationOrZero();
 
+    if (LimitAngleFocusPointRotate < CurrentRotation.Pitch) {
+        return std::nullopt;
+    }
+
     const auto DotRotVecAndGroundNormal = CurrentRotation.Vector().Dot(Ground.GetNormal());
     // 地面と平行 ロックしてしまうため調整 仮の注視点を設定
     if (DotRotVecAndGroundNormal * DotRotVecAndGroundNormal < 0.001 * 0.001) {
@@ -292,9 +305,6 @@ void ATwinLinkWorldViewer::MoveForwardOnWorldSpace(const float Value) {
 
     if (Controller && Value != 0.0f) {
         MoveForwardImpl(Value, true);
-        //const auto Rotation = Controller->GetControlRotation();
-        //const auto Direction = FRotator(0, Rotation.Yaw, 0).Vector();
-        //AddMovementInput(Direction, Value * CurrentCameraMovementSpeed);
     }
 }
 
@@ -461,12 +471,14 @@ void ATwinLinkWorldViewer::MoveForwardImpl(float Value, bool bUseWorldSpace) {
         Direction = FRotator(0, Rotation.Yaw, 0).Vector();
     }
     AddMovementInput(Direction, Value * CurrentCameraMovementSpeed);
+    bInputedMovement = true;
 }
 
 void ATwinLinkWorldViewer::MoveRightImpl(float Value) {
     const auto Rotation = Controller->GetControlRotation();
     const auto Direction = FRotationMatrix(Rotation).GetScaledAxis(EAxis::Y);
     AddMovementInput(Direction, Value * CurrentCameraMovementSpeed);
+    bInputedMovement = true;
 }
 
 void ATwinLinkWorldViewer::TurnXYImpl(const FVector2D Value, bool bUseFocusPoint) {
@@ -503,6 +515,16 @@ double ATwinLinkWorldViewer::CalcOffsetLength(std::optional<FVector> FocusPoint)
     const auto CurrentRotation = GetNowCameraRotationOrDefault();
     const auto OffsetLength = FVector::Distance(FocusPoint.value_or(CurrentLocation + CurrentRotation.Vector()), CurrentLocation);
     return OffsetLength;
+}
+
+FCollisionShape ATwinLinkWorldViewer::CreateCollisionShape() const {
+    const auto Capsule = GetCapsuleComponent();
+    const auto Radius = Capsule->GetScaledCapsuleRadius();
+    const auto HalfHeight = Capsule->GetScaledCapsuleHalfHeight();
+
+    FCollisionShape Shape;
+    Shape.SetCapsule(Radius, HalfHeight);
+    return Shape;
 }
 
 bool ATwinLinkWorldViewer::MoveInfo::Update(float DeltaSec, FVector& OutLocation, FRotator& OutRotation) {
@@ -565,27 +587,112 @@ void ATwinLinkWorldViewer::SetLocation(const FVector& Position, const FVector& R
     SetLocation(Position, FRotator::MakeFromEuler(RotationEuler), MoveSec);
 }
 
-void ATwinLinkWorldViewer::Deploy(const FVector& TargetPosition, const FRotator& Rotation) {
-    const auto CurrentLocation = GetNowCameraLocationOrZero();
-    const auto CurrentRotation = GetNowCameraRotationOrDefault();
+bool ATwinLinkWorldViewer::IsInTheWall(const FVector& Position) const {
+    FCollisionShape CollisionShape = CreateCollisionShape();
 
-    const auto TargetRotation = Rotation;
+    FHitResult HitResult;
+    const auto TestDistance = 100000.0f;  // 1km  1km以内に自身の位置と反対方向を向いた壁が無ければ判定が取れないので増やす
+    static const FVector EndDirs[] = { 
+        FVector::UpVector, FVector::DownVector,
+        FVector::RightVector, FVector::LeftVector,
+        FVector::ForwardVector, FVector::BackwardVector
+    };
+    for (int i = 0; i < sizeof(EndDirs) / sizeof(FVector); i++) {
+        const auto End = Position + EndDirs[i] * TestDistance;
+        FVector StartReturnLineTrace = End;
+
+        //const auto bIsHit = GetWorld()->SweepSingleByChannel(HitResult, Position, End, FQuat::Identity, ECollisionChannel::ECC_Visibility, CollisionShape);
+        FCollisionQueryParams Params = FCollisionQueryParams::DefaultQueryParam;
+        FCollisionResponseParams ResponseParams = FCollisionResponseParams::DefaultResponseParam;
+        const auto bIsHit = GetWorld()->LineTraceSingleByChannel(
+            HitResult, Position, End, ECollisionChannel::ECC_Visibility,
+            Params, ResponseParams);    // 自身の方向を向いた壁を検出
+        if (bIsHit) {
+            StartReturnLineTrace = HitResult.ImpactPoint;
+        }
+
+        bool bIsHitRWall = GetWorld()->LineTraceTestByChannel(StartReturnLineTrace, Position, ECollisionChannel::ECC_Visibility);
+        if (bIsHitRWall) {
+            //// 壁の裏面かチェック
+            //const float DebugRadius = 100.0f;
+            //const float DebugLife = 30.0f;
+            //DrawDebugDirectionalArrow(
+            //    GetWorld(), HitResult.TraceStart, HitResult.ImpactPoint,
+            //    DebugRadius * 100, FColor::Red, false, DebugLife, UINT8_MAX);
+            //DrawDebugDirectionalArrow(
+            //    GetWorld(), HitResult.ImpactPoint, HitResult.ImpactPoint + HitResult.ImpactNormal * 1000,
+            //    DebugRadius * 100, FColor::Blue, false, DebugLife, UINT8_MAX);
+            //DrawDebugSphere(
+            //    GetWorld(), HitResult.TraceStart, DebugRadius, 16,
+            //    FColor::Red, false, DebugLife, UINT8_MAX);
+            //DrawDebugSphere(
+            //    GetWorld(), HitResult.ImpactPoint, DebugRadius, 16,
+            //    FColor::Blue, false, DebugLife, UINT8_MAX);
+            
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ATwinLinkWorldViewer::TryGetDeployPosition(FVector* const NewPosition, const FVector& TargetPosition) {
+    const auto CurrentLocation = GetNowCameraLocationOrZero();
 
     const auto VecViewerToImpactPoint = TargetPosition - CurrentLocation;
-    const auto SqrLen = VecViewerToImpactPoint.SquaredLength();
-    if (SqrLen > 0.001) {
-        float Radius, Height;
-        GetComponentsBoundingCylinder(Radius, Height);
-        const auto Extent = FMath::Max(Radius * 2.0, Height) + 1;
-        const auto Len = VecViewerToImpactPoint.Length();
-        const auto TargetLocation = CurrentLocation + VecViewerToImpactPoint.GetUnsafeNormal() * (Len - Extent);
+    
+    const auto Capsule = GetCapsuleComponent();
+    const auto Radius = Capsule->GetScaledCapsuleRadius();
+    const auto HalfHeight = Capsule->GetScaledCapsuleHalfHeight();
+    const auto Extent = FMath::Max(Radius, HalfHeight) + 1;
+    const auto VecViewerToImpactPointLength = VecViewerToImpactPoint.Length();
+    const auto DistanceToTargetLocation = FMath::Max(VecViewerToImpactPointLength - Extent, 0);   // 現在位置よりは下がらないようにする
+    const auto VecViewerToImpactPointNormal = VecViewerToImpactPoint.GetUnsafeNormal();
+    const auto TargetLocation = CurrentLocation + VecViewerToImpactPointNormal * DistanceToTargetLocation;
 
-        SetLocation(TargetLocation, TargetRotation, 0.5f);
-    }
-    else {
-        SetLocation(CurrentLocation, TargetRotation, 0.5f);
+    FCollisionShape CollisionShape;
+    const auto ExtraScale = 2.0f;
+    CollisionShape.SetCapsule(Radius * ExtraScale, HalfHeight * ExtraScale);
+
+    // 配置可能な位置可能な位置に配置する
+    // 指定座標から元に位置に向かって配置可能か順にテストする
+    bool bIsDeployable = false;
+    int SweepTestCnt = 0;
+    const auto MaxSweepTestCnt = 10;
+    FVector AvoidOffset;
+    FVector RealTargetLocation;
+    while (true) {
+        // 試行回数の制限を超えた
+        if (SweepTestCnt >= MaxSweepTestCnt)
+            break;
+
+        AvoidOffset = -VecViewerToImpactPointNormal * Extent * SweepTestCnt;
+        RealTargetLocation = TargetLocation + AvoidOffset;
+        const auto bIsOverlap = GetWorld()->OverlapAnyTestByChannel(
+            RealTargetLocation,
+            FQuat::Identity, ECollisionChannel::ECC_Visibility, CollisionShape);
+
+        // 配置しても衝突しない
+        if (bIsOverlap == false) {
+            // 建物内じゃない
+            if (IsInTheWall(RealTargetLocation) == false) {
+                // 配置可能な位置を見つけた
+                break;
+            }
+        }
+        SweepTestCnt++;
     }
 
+    // 試行回数以内に配置可能な位置を見つけた
+    if (SweepTestCnt < MaxSweepTestCnt) {
+        *NewPosition = RealTargetLocation;
+        return true;
+    }
+
+    return false;
+}
+
+void ATwinLinkWorldViewer::Deploy(const FVector& TargetPosition, const FRotator& Rotation) {
+    SetLocation(TargetPosition, Rotation, 0.5f);
 }
 
 void ATwinLinkWorldViewer::SetLocationLookAt(const FVector& Position, const FVector& LookAt, float MoveSec) {
@@ -724,11 +831,63 @@ void ATwinLinkWorldViewer::ManualState::TurnXY(const FVector2D Value) {
     Viewer->TurnXYImpl(Value, true);
 }
 
+void ATwinLinkWorldViewer::ManualWalkState::Tick(float DeltaTime) {
+    const auto CurrentLocation = Viewer->GetNowCameraLocationOrZero();
+    const auto _PreLocation = Viewer->PreLocation.value_or(FVector::Zero());
+    // 0とみなす距離
+    const auto SqrDistanceZero = 1.0;
+
+    // Stuckしていると判断する時間
+    const auto CriterionStuckTime = 5.0f;
+
+    // スタックしていないw
+    if (AnyInputMovementAndNotMovementProcessTime < CriterionStuckTime) {
+        // 入力がある状態を検出
+        if (Viewer->bInputedMovement) {
+            if (FVector::DistSquared(CurrentLocation, _PreLocation) < SqrDistanceZero) {
+                AnyInputMovementAndNotMovementProcessTime += DeltaTime;
+
+                // スタックした
+                if (AnyInputMovementAndNotMovementProcessTime > CriterionStuckTime) {
+                    TWeakObjectPtr<UCapsuleComponent> _CapsuleComponent = Viewer->GetComponentByClass<UCapsuleComponent>();
+                    _CapsuleComponent.Get()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+                }
+            }
+        }
+        else {
+            AnyInputMovementAndNotMovementProcessTime = 0.0f;
+        }
+    }
+    // スタック中
+    else {
+        // 動けた
+        if (FVector::DistSquared(CurrentLocation, _PreLocation) > SqrDistanceZero) {
+            AnyInputMovementAndNotMovementProcessTime = CriterionStuckTime * 0.8f;   // 連続してスタックする可能性があるのでカウントを完全には回復しない
+            TWeakObjectPtr<UCapsuleComponent> _CapsuleComponent = Viewer->GetComponentByClass<UCapsuleComponent>();
+            _CapsuleComponent.Get()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);                        
+        }
+    }
+
+}
+
 void ATwinLinkWorldViewer::ManualWalkState::ActivateAutoViewControl() {
     Viewer->NoInputProcessTime = 0.0f;
-
+    AnyInputMovementAndNotMovementProcessTime = 0.0f;
     TWeakObjectPtr<UCapsuleComponent> _CapsuleComponent = Viewer->GetComponentByClass<UCapsuleComponent>();
     _CapsuleComponent.Get()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+}
+
+void ATwinLinkWorldViewer::ManualWalkState::DeactivateAutoViewControl() {
+    TWeakObjectPtr<UCapsuleComponent> _CapsuleComponent = Viewer->GetComponentByClass<UCapsuleComponent>();
+    _CapsuleComponent.Get()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+    const auto DemCityModelBounds = DemCityModel->GetNavigationBounds();
+    const auto OffsetDistance = (DemCityModelBounds.GetExtent().X + DemCityModelBounds.GetExtent().Y) * 0.5;
+    const auto FocusPoint = DemCityModelBounds.GetCenter();
+    const auto CurrentRotator = Viewer->GetNowCameraRotationOrDefault();
+    const auto DefaultRotator = FRotator(-45.0f, CurrentRotator.Yaw, CurrentRotator.Roll);
+    const auto DefaultLocation = FocusPoint - DefaultRotator.Vector() * OffsetDistance;
+    Viewer->SetLocation(DefaultLocation, DefaultRotator, 0.5f);
 }
 
 void ATwinLinkWorldViewer::ManualWalkState::MoveForward(float Value) {
