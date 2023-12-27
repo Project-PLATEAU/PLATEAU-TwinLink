@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
 #include "TwinLinkWorldViewer.h"
@@ -875,6 +875,19 @@ void ATwinLinkWorldViewer::ManualWalkState::ActivateAutoViewControl() {
     AnyInputMovementAndNotMovementProcessTime = 0.0f;
     TWeakObjectPtr<UCapsuleComponent> _CapsuleComponent = Viewer->GetComponentByClass<UCapsuleComponent>();
     _CapsuleComponent.Get()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+}
+
+void ATwinLinkWorldViewer::ManualWalkState::DeactivateAutoViewControl() {
+    TWeakObjectPtr<UCapsuleComponent> _CapsuleComponent = Viewer->GetComponentByClass<UCapsuleComponent>();
+    _CapsuleComponent.Get()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+    const auto DemCityModelBounds = DemCityModel->GetNavigationBounds();
+    const auto OffsetDistance = (DemCityModelBounds.GetExtent().X + DemCityModelBounds.GetExtent().Y) * 0.5;
+    const auto FocusPoint = DemCityModelBounds.GetCenter();
+    const auto CurrentRotator = Viewer->GetNowCameraRotationOrDefault();
+    const auto DefaultRotator = FRotator(-45.0f, CurrentRotator.Yaw, CurrentRotator.Roll);
+    const auto DefaultLocation = FocusPoint - DefaultRotator.Vector() * OffsetDistance;
+    Viewer->SetLocation(DefaultLocation, DefaultRotator, 0.5f);
 }
 
 void ATwinLinkWorldViewer::ManualWalkState::MoveForward(float Value) {

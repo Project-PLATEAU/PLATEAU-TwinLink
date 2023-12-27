@@ -337,6 +337,7 @@ private:
         void Init(ATwinLinkWorldViewer* WorldViewer) { Viewer = WorldViewer; }
         virtual void Tick(float DeltaTime) {};
         virtual void ActivateAutoViewControl() {};
+        virtual void DeactivateAutoViewControl() {};
         virtual void InputedAny(){};
         virtual bool CanReceivePlayerInput() { return false; };
         virtual void MoveForward(float Value) {};
@@ -386,6 +387,7 @@ private:
         // Inherited via IViewModeState
         void Tick(float DeltaTime) override;
         void ActivateAutoViewControl() override;
+        void DeactivateAutoViewControl() override;
         bool CanReceivePlayerInput() override { return true; };
         void MoveForward(float Value) override;
         void MoveRight(float Value) override;
@@ -413,9 +415,13 @@ private:
 
         void Tick(float DeltaTime) { CurrentState->Tick(DeltaTime); };
         void ActivateAutoViewControl(ETwinLinkViewMode ViewMode) { 
+            if (CurrentState != nullptr)
+                CurrentState->DeactivateAutoViewControl();
+
             ChangeMode(ViewMode);
             CurrentState->ActivateAutoViewControl(); 
         };
+
 
         void InputedAny() { CurrentState->InputedAny(); };
 
