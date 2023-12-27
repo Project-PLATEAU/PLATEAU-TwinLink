@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -144,7 +144,7 @@ public:
 
 private:
     /** 施設情報機能のバージョン　永続化時に組み込む **/
-    const TwinLinkSystemVersionInfo VersionInfo = TwinLinkSystemVersionInfo(0, 0, 0);
+    const TwinLinkSystemVersionInfo VersionInfo = TwinLinkSystemVersionInfo(1, 0, 0);
 
     /** 施設情報の永続化時のパス **/
     FString Filepath;
