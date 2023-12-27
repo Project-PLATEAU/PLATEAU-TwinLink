@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -265,7 +265,7 @@ public:
     bool ExportCommonInfo();
 private:
     /** 施設情報機能のバージョン　永続化時に組み込む **/
-    const TwinLinkSystemVersionInfo VersionInfo = TwinLinkSystemVersionInfo(0, 0, 0);
+    const TwinLinkSystemVersionInfo VersionInfo = TwinLinkSystemVersionInfo(1, 0, 0);
 
     /** 設計情報のマップ フロア名キーに扱う **/
     UPROPERTY()

@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -130,7 +130,7 @@ class TWINLINK_API UTwinLinkColorAdjustmentSystem : public UTwinLinkSubSystemBas
     GENERATED_BODY()
 private:
     /** 色彩調整機能のバージョン　永続化時に組み込む **/
-    const TwinLinkSystemVersionInfo VersionInfo = TwinLinkSystemVersionInfo(0, 0, 0);
+    const TwinLinkSystemVersionInfo VersionInfo = TwinLinkSystemVersionInfo(1, 0, 0);
     /** 色彩調整機能の永続化時のパス **/
     FString Filepath;
 public:

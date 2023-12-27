@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -44,7 +44,7 @@ class TWINLINK_API UTwinLinkWeatherDataSubSystem : public UTwinLinkSubSystemBase
     GENERATED_BODY()
 private:
     /** バージョン情報（ダミー） **/
-    const TwinLinkSystemVersionInfo VersionInfo = TwinLinkSystemVersionInfo(0, 0, 0);
+    const TwinLinkSystemVersionInfo VersionInfo = TwinLinkSystemVersionInfo(1, 0, 0);
 public:
     /**
      * @brief スマートポールデータをインポート
