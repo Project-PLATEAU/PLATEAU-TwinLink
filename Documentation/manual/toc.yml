@@ -2,5 +2,9 @@
   href: ../index.md
 - name: 利用を開始する
   items:
-  - name: インストール
-    href: Installation.md
+  - name: 環境構築
+    href: Setup.md
+  - name: 表示データの設定
+    href: DataSettings.md
+  - name: 各機能の利用
+    href: HowToUse.md
