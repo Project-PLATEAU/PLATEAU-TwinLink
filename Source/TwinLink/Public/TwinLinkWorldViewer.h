@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
@@ -411,7 +411,7 @@ private:
         bool CanReceivePlayerInput() { return CurrentState->CanReceivePlayerInput(); };
 
         void Init(ATwinLinkWorldViewer* WorldViewer);
-        bool IsInited() { CurrentState != nullptr; }
+        bool IsInited() { return CurrentState != nullptr; }
 
         void Tick(float DeltaTime) { CurrentState->Tick(DeltaTime); };
         void ActivateAutoViewControl(ETwinLinkViewMode ViewMode) { 

@@ -1,5 +1,7 @@
 #pragma once
 #include <optional>
+
+#include "Kismet/GameplayStatics.h"
 class USceneComponent;
 class TWINLINK_API TwinLinkActorEx {
 public:

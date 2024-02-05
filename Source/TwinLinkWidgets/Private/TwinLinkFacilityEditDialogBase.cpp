@@ -81,7 +81,7 @@ void UTwinLinkFacilityEditDialogBase::RequestEdit(const FString& Name, const FSt
         SpotInfo,
         Entrance.has_value() ? TArray<FVector>{ Entrance.value() } : TArray<FVector>());
 
-    if (IsValid == false) {
+    if (bIsValid == false) {
         UE_TWINLINK_LOG(LogTemp, Log, TEXT("Failed RequestEdit()"));
         OnFailedRequestEdit();
         return;

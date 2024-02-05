@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
+// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
 #include "TwinLinkEditorActorLib.h"
@@ -14,8 +14,8 @@ bool UTwinLinkEditorActorLib::SetupCityModel(UObject* CityModel) {
     }
 
     APLATEAUInstancedCityModel* CastedCityModel = Cast<APLATEAUInstancedCityModel>(CityModel);
-    TArray<UActorComponent*> CityObjectGroups =
-        CastedCityModel->GetComponentsByClass(UPLATEAUCityObjectGroup::StaticClass());
+    TArray<UActorComponent*> CityObjectGroups;
+    CastedCityModel->GetComponents(UPLATEAUCityObjectGroup::StaticClass(), CityObjectGroups);
 
     const auto bIsReceivesDecals = false;
     for (auto& ObjGroups : CityObjectGroups) {

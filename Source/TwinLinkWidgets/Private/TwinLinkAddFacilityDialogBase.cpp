@@ -89,7 +89,7 @@ void UTwinLinkAddFacilityDialogBase::AddFacilityInfo(const FString& InName, cons
         InSpotInfo,
         Entrance.has_value() ? TArray<FVector>{ Entrance.value() } : TArray<FVector>());
 
-    if (IsValid == false) {
+    if (bIsValid == false) {
         OnFailedFacilityInfo();
         return;
     }
