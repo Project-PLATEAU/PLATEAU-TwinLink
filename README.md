@@ -46,9 +46,9 @@ PLATEAU TwinLinkは、「3D都市モデル」、「BIMモデル」、「空間ID
 ## 5. 利用技術
 | 種別              | 名称   | バージョン | 内容 |
 | ----------------- | --------|-------------|-----------------------------|
-| ソフトウェア      | [Unreal Engine](https://www.unrealengine.com/ja/unreal-engine-5) | 5.2 | ツールをプラグインとして組み込むゲームエンジン |
+| ソフトウェア      | [Unreal Engine](https://www.unrealengine.com/ja/unreal-engine-5) | 5.3 | ツールをプラグインとして組み込むゲームエンジン |
 |       | [FME Workbench](https://docs.safe.com/fme/html/FME-Flow/AdminGuide/FME_Workbench.htm) | 2022.2.6 | IFCからCityGMLへの変換で利用 |
-| ライブラリ      | [PLATEAU SDK for Unreal](https://github.com/Project-PLATEAU/PLATEAU-SDK-for-Unreal) | 2.1 | PLATEAUの3D都市モデルデータをUnreal Engineで扱うためのツールキット |
+| ライブラリ      | [PLATEAU SDK for Unreal](https://github.com/Project-PLATEAU/PLATEAU-SDK-for-Unreal) | 2.3 | PLATEAUの3D都市モデルデータをUnreal Engineで扱うためのツールキット |
 |       | [3D空間ID共通ライブラリ](https://github.com/spatial-id/javascript-sdk) | 1.0.0 | 位置情報と空間IDを相互変換及び操作するための共通ライブラリ |
 |       | [shapelib](https://github.com/OSGeo/shapelib) | 1.5 | Shapefile読み書きのためのライブラリ |
 
