@@ -6,6 +6,7 @@
 #include "AssetSelection.h"
 #include "PLATEAUCityModelLoader.h"
 #include "PLATEAUInstancedCityModel.h"
+#include "Kismet/GameplayStatics.h"
 
 void UTwinLinkExtendedModelImporter::Activate() {
     const auto Message = DoImport();
@@ -107,11 +108,10 @@ FString UTwinLinkExtendedModelImporter::DoImport() {
         Settings.FallbackMaterial = OriginalSettings.FallbackMaterial;
         Settings.bAttachMapTile = OriginalSettings.bAttachMapTile;
         Settings.MapTileUrl = OriginalSettings.MapTileUrl;
-        Settings.ZoomLevel = OriginalSettings.ZoomLevel;
+        // パフォーマンス改善のため解像度を下げてインポート
+        Settings.ZoomLevel = OriginalSettings.ZoomLevel - 1;
 
-        if (Package == plateau::dataset::PredefinedCityModelPackage::Building ||
-            Package == plateau::dataset::PredefinedCityModelPackage::Road ||
-            Package == plateau::dataset::PredefinedCityModelPackage::Relief) {
+        if (Package == plateau::dataset::PredefinedCityModelPackage::Relief) {
             Settings.bImport = true;
             Settings.MinLod = 1;
             Settings.MaxLod = 1;
@@ -122,8 +122,20 @@ FString UTwinLinkExtendedModelImporter::DoImport() {
         }
     }
     Loader->ImportSettings = ImportSettings;
+    Loader->ImportFinishedDelegate.AddDynamic(this, &UTwinLinkExtendedModelImporter::OnPostImport);
 
     Loader->LoadAsync(false);
 
     return "";
+}
+
+void UTwinLinkExtendedModelImporter::OnPostImport() {
+    TArray<AActor*> CityModels;
+    UGameplayStatics::GetAllActorsOfClass(CityModel->GetWorld(), APLATEAUInstancedCityModel::StaticClass(), CityModels);
+    for (const auto TargetCityModel : CityModels) {
+        if (Cast<APLATEAUInstancedCityModel>(TargetCityModel)->Loader != Loader)
+            continue;
+
+        TargetCityModel->SetActorLabel(TEXT("ExtendedCityModel"));
+    }
 }

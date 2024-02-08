@@ -6,6 +6,8 @@
 #include "AssetSelection.h"
 #include "PLATEAUCityModelLoader.h"
 #include "PLATEAUInstancedCityModel.h"
+#include "Kismet/GameplayStatics.h"
+#include "Misc/TwinLinkPLATEAUCityModelEx.h"
 
 void UTwinLinkFacilityImporter::Activate() {
     const auto Message = DoImport();
@@ -54,10 +56,21 @@ FString UTwinLinkFacilityImporter::DoImport() {
     Loader->GeoReference = OriginalLoader->GeoReference;
     Loader->Source = OriginalLoader->Source;
     Loader->bImportFromServer = OriginalLoader->bImportFromServer;
-
+    Loader->ImportFinishedDelegate.AddDynamic(this, &UTwinLinkFacilityImporter::OnPostImport);
     Loader->Phase = ECityModelLoadingPhase::Idle;
 
     Loader->LoadGmlAsync(GmlPath);
 
     return "";
+}
+
+void UTwinLinkFacilityImporter::OnPostImport() {
+    TArray<AActor*> CityModels;
+    UGameplayStatics::GetAllActorsOfClass(CityModel->GetWorld(), APLATEAUInstancedCityModel::StaticClass(), CityModels);
+    for (const auto TargetCityModel : CityModels) {
+        if (Cast<APLATEAUInstancedCityModel>(TargetCityModel)->Loader != Loader)
+            continue;
+
+        TargetCityModel->SetActorLabel(TEXT("FocusTarget"));
+    }
 }

@@ -34,6 +34,9 @@ public:
 private:
     FString DoImport();
 
+    UFUNCTION()
+    void OnPostImport();
+
     TObjectPtr<APLATEAUInstancedCityModel> CityModel;
     TObjectPtr<class APLATEAUCityModelLoader> Loader;
     FString GmlPath;
