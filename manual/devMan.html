@@ -1,0 +1,278 @@
+﻿<!DOCTYPE html>
+<!--[if IE]><![endif]-->
+<html>
+
+  <head>
+    <meta charset="utf-8">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+      <title>環境構築手順書 | PLATEAU TwinLink </title>
+      <meta name="viewport" content="width=device-width">
+      <meta name="title" content="環境構築手順書 | PLATEAU TwinLink ">
+    
+    
+      <link rel="shortcut icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../styles/docfx.vendor.min.css">
+      <link rel="stylesheet" href="../styles/docfx.css">
+      <link rel="stylesheet" href="../styles/main.css">
+      <meta property="docfx:navrel" content="../toc.html">
+      <meta property="docfx:tocrel" content="toc.html">
+    
+    <meta property="docfx:rel" content="../">
+    
+  </head>
+  <body data-spy="scroll" data-target="#affix" data-offset="120">
+    <div id="wrapper">
+      <header>
+
+        <nav id="autocollapse" class="navbar navbar-inverse ng-scope" role="navigation">
+          <div class="container">
+            <div class="navbar-header">
+              <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+
+              <a class="navbar-brand" href="../index.html">
+                <img id="logo" class="svg" src="../logo.svg" alt="">
+              </a>
+            </div>
+            <div class="collapse navbar-collapse" id="navbar">
+              <form class="navbar-form navbar-right" role="search" id="search">
+                <div class="form-group">
+                  <input type="text" class="form-control" id="search-query" placeholder="Search" autocomplete="off">
+                </div>
+              </form>
+            </div>
+          </div>
+        </nav>
+
+        <div class="subnav navbar navbar-default">
+          <div class="container hide-when-search" id="breadcrumb">
+            <ul class="breadcrumb">
+              <li></li>
+            </ul>
+          </div>
+        </div>
+      </header>
+      <div class="container body-content">
+
+        <div id="search-results">
+          <div class="search-list">Search Results for <span></span></div>
+          <div class="sr-items">
+            <p><i class="glyphicon glyphicon-refresh index-loading"></i></p>
+          </div>
+          <ul id="pagination" data-first="First" data-prev="Previous" data-next="Next" data-last="Last"></ul>
+        </div>
+      </div>
+      <div role="main" class="container body-content hide-when-search">
+
+        <div class="sidenav hide-when-search">
+          <a class="btn toc-toggle collapse" data-toggle="collapse" href="#sidetoggle" aria-expanded="false" aria-controls="sidetoggle">Show / Hide Table of Contents</a>
+          <div class="sidetoggle collapse" id="sidetoggle">
+            <div id="sidetoc"></div>
+          </div>
+        </div>
+        <div class="article row grid-right">
+          <div class="col-md-10">
+            <article class="content wrap" id="_content" data-uid="">
+<h1 id="環境構築手順書">環境構築手順書</h1>
+
+<h1 id="1-本書について">1 本書について</h1>
+<p>本書では、TwinLinkシステム（以下「本システム」という。）で使用する外部空間IDデータ連携機能の利用環境構築手順について記載しています。本システムの構成や仕様の詳細については以下も参考にしてください。</p>
+<p><a href="https://www.mlit.go.jp/plateau/file/libraries/doc/plateau_tech_doc_0030_ver01.pdf">技術検証レポート</a></p>
+<h1 id="2-動作環境">2 動作環境</h1>
+<p>本システムの動作環境は以下のとおりです。</p>
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th>最小動作環境</th>
+<th>推奨動作環境</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OS</td>
+<td>macOS Monterey 以上</td>
+<td>同左</td>
+</tr>
+<tr>
+<td>CPU</td>
+<td>Intel Core i3 以上 または Apple M1 以上</td>
+<td>Apple M1 以上</td>
+</tr>
+<tr>
+<td>ライブラリ</td>
+<td>docker 　が利用できること, Node.js &gt;= 18.0.0</td>
+<td>同左</td>
+</tr>
+<tr>
+<td>メモリ</td>
+<td>8GB 以上</td>
+<td>8GB 以上</td>
+</tr>
+<tr>
+<td>ネットワーク</td>
+<td>【データ取得】<br>カメラデータを配信する SFTP サーバーが許可している IP アドレスからリクエストできるネットワーク環境が必要<br><br>【集計データ配信】<br>不要</td>
+<td>同左</td>
+</tr>
+</tbody>
+</table>
+<h1 id="3-ビルド手順">3 ビルド手順</h1>
+<p>自身でソースファイルをダウンロードし docker image のビルドを行うことで、実行することができます。<br>
+ソースファイルは
+<a href="https://github.com/eukarya-inc/plateau-spatialid-bim/">こちら</a>
+からダウンロード可能です。</p>
+<p>サーバーは３つあります。</p>
+<ol>
+<li>SFTP サーバーからデータを取得、集計して MongoDB に保存するサーバー</li>
+<li>MongoDB に保存された集計データを配信するサーバー</li>
+<li>MongoDB サーバー</li>
+</ol>
+<p>（1）Docker Image のビルド</p>
+<h2 id="データ取得サーバー-image-のビルド">データ取得サーバー Image のビルド</h2>
+<ol>
+<li>Terminal からソースコードの<code>server</code>ディレクトに移動する</li>
+<li><code>npm run build &amp;&amp; docker build -t batch -f ./Dockerfile.batch .</code></li>
+</ol>
+<h2 id="配信サーバー-image-のビルド">配信サーバー Image のビルド</h2>
+<ol>
+<li>Terminal からソースコードの<code>server</code>ディレクトに移動する</li>
+<li><code>npm run build &amp;&amp; docker build -t server -f ./Dockerfile .</code></li>
+</ol>
+<h2 id="mongodb-サーバーのビルド">MongoDB サーバーのビルド</h2>
+<ol>
+<li>Terminal からソースコードの root ディレクトに移動する</li>
+<li><code>docker compose build</code></li>
+</ol>
+<h1 id="4-準備物一覧">4 準備物一覧</h1>
+<p>アプリケーションを利用するために以下のデータを入手します。
+これらを準備したのち環境変数として設定します。
+またこれら以外に指定できる<a href="plateau-spatialid-bim/blob/develop/server/src/config.ts">環境変数はこちらのソースコード</a>を参照ください。</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>データ種別</th>
+<th>環境変数 key 名</th>
+<th>値サンプル</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>①</td>
+<td>SFTP サーバーの IP アドレス</td>
+<td>SFTP_HOST</td>
+<td>192.168.0.0</td>
+</tr>
+<tr>
+<td>②</td>
+<td>SFTP サーバーの SFTP PORT</td>
+<td>SFTP_PORT</td>
+<td>22</td>
+</tr>
+<tr>
+<td>③</td>
+<td>SFTP サーバーに SFTP 通信できる USER_NAME</td>
+<td>SFTP_USERNAME</td>
+<td>test-user</td>
+</tr>
+<tr>
+<td>④</td>
+<td>SFTP サーバーに SFTP 通信できる PASSPHRASE</td>
+<td>SFTP_PASSPHRASE</td>
+<td>passphrase</td>
+</tr>
+<tr>
+<td>⑤</td>
+<td>SFTP サーバーに SFTP 通信できる秘密鍵(pem 形式)</td>
+<td>SFTP_PRIVATE_KEY</td>
+<td></td>
+</tr>
+<tr>
+<td>⑥</td>
+<td>MongoDB の URI</td>
+<td>MONGO_URI</td>
+<td>mongodb://root:example@127.0.0.1:27017</td>
+</tr>
+<tr>
+<td>⑦</td>
+<td>MongoDB の</td>
+<td>MONGO_DB_NAME</td>
+<td>common</td>
+</tr>
+<tr>
+<td>⑧</td>
+<td>カメラデータと位置情報の JSON データ</td>
+<td>CAMERAS</td>
+<td>[{&quot;id&quot;:&quot;1&quot;,&quot;name&quot;:&quot;西新宿 001&quot;,&quot;lat&quot;:35.691149,&quot;lng&quot;:139.695587,&quot;height&quot;:0}, {&quot;id&quot;:&quot;2&quot;,&quot;name&quot;:&quot;西新宿 002&quot;,&quot;lat&quot;:35.691149,&quot;lng&quot;:139.695587,&quot;height&quot;:0}]</td>
+</tr>
+<tr>
+<td>⑨</td>
+<td>利用するデータベースの種別 (mongo or mock or inMemory)</td>
+<td>DATABASE_TYPE</td>
+<td>mongo</td>
+</tr>
+</tbody>
+</table>
+<h1 id="5-サーバーの起動">5 サーバーの起動</h1>
+<h2 id="mongodb-サーバーの起動">MongoDB サーバーの起動</h2>
+<ol>
+<li>Terminal からソースコードの root ディレクトに移動する</li>
+<li><code>docker compose up -d</code></li>
+</ol>
+<h2 id="データ取得サーバー-の実行">データ取得サーバー の実行</h2>
+<ol>
+<li>Terminal からソースコードの<code>server</code>ディレクトに移動する</li>
+<li>5 の環境変数を設定する</li>
+<li><code>docker run -it batch</code></li>
+</ol>
+<h2 id="配信サーバー-の起動">配信サーバー の起動</h2>
+<ol>
+<li>Terminal からソースコードの<code>server</code>ディレクトに移動する</li>
+<li>5 の環境変数を設定する</li>
+<li><code>docker run -it server</code></li>
+</ol>
+
+</article>
+          </div>
+
+          <div class="hidden-sm col-md-2" role="complementary">
+            <div class="sideaffix">
+              <div class="contribution">
+                <ul class="nav">
+                  <li>
+                    <a href="https://github.com/Synesthesias/PLATEAU-TwinLink/blob/main/Documentation/manual/devMan.md/#L1" class="contribution-link">Edit this page</a>
+                  </li>
+                </ul>
+              </div>
+              <nav class="bs-docs-sidebar hidden-print hidden-xs hidden-sm affix" id="affix">
+                <h5>In this article</h5>
+                <div></div>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <div class="grad-bottom"></div>
+        <div class="footer">
+          <div class="container">
+            <span class="pull-right">
+              <a href="#top">Back to top</a>
+            </span>
+      PLATEAU SDK for Unreal
+      
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <script type="text/javascript" src="../styles/docfx.vendor.min.js"></script>
+    <script type="text/javascript" src="../styles/docfx.js"></script>
+    <script type="text/javascript" src="../styles/main.js"></script>
+  </body>
+</html>

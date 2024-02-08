@@ -1,0 +1,203 @@
+﻿<!DOCTYPE html>
+<!--[if IE]><![endif]-->
+<html>
+
+  <head>
+    <meta charset="utf-8">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+      <title>環境構築手順書 | PLATEAU TwinLink </title>
+      <meta name="viewport" content="width=device-width">
+      <meta name="title" content="環境構築手順書 | PLATEAU TwinLink ">
+    
+    
+      <link rel="shortcut icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../styles/docfx.vendor.min.css">
+      <link rel="stylesheet" href="../styles/docfx.css">
+      <link rel="stylesheet" href="../styles/main.css">
+      <meta property="docfx:navrel" content="../toc.html">
+      <meta property="docfx:tocrel" content="toc.html">
+    
+    <meta property="docfx:rel" content="../">
+    
+  </head>
+  <body data-spy="scroll" data-target="#affix" data-offset="120">
+    <div id="wrapper">
+      <header>
+
+        <nav id="autocollapse" class="navbar navbar-inverse ng-scope" role="navigation">
+          <div class="container">
+            <div class="navbar-header">
+              <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+
+              <a class="navbar-brand" href="../index.html">
+                <img id="logo" class="svg" src="../logo.svg" alt="">
+              </a>
+            </div>
+            <div class="collapse navbar-collapse" id="navbar">
+              <form class="navbar-form navbar-right" role="search" id="search">
+                <div class="form-group">
+                  <input type="text" class="form-control" id="search-query" placeholder="Search" autocomplete="off">
+                </div>
+              </form>
+            </div>
+          </div>
+        </nav>
+
+        <div class="subnav navbar navbar-default">
+          <div class="container hide-when-search" id="breadcrumb">
+            <ul class="breadcrumb">
+              <li></li>
+            </ul>
+          </div>
+        </div>
+      </header>
+      <div class="container body-content">
+
+        <div id="search-results">
+          <div class="search-list">Search Results for <span></span></div>
+          <div class="sr-items">
+            <p><i class="glyphicon glyphicon-refresh index-loading"></i></p>
+          </div>
+          <ul id="pagination" data-first="First" data-prev="Previous" data-next="Next" data-last="Last"></ul>
+        </div>
+      </div>
+      <div role="main" class="container body-content hide-when-search">
+
+        <div class="sidenav hide-when-search">
+          <a class="btn toc-toggle collapse" data-toggle="collapse" href="#sidetoggle" aria-expanded="false" aria-controls="sidetoggle">Show / Hide Table of Contents</a>
+          <div class="sidetoggle collapse" id="sidetoggle">
+            <div id="sidetoc"></div>
+          </div>
+        </div>
+        <div class="article row grid-right">
+          <div class="col-md-10">
+            <article class="content wrap" id="_content" data-uid="">
+<h1 id="環境構築手順書">環境構築手順書</h1>
+
+<h1 id="1-本書について">1 本書について</h1>
+<p>本書では、PLATEAU Twinlink（以下「本ツール」という。）の環境構築手順について記載しています。本システムの構成や仕様の詳細については<a href="https://">技術検証レポート</a>も参考にしてください。</p>
+<h1 id="2-動作環境">2 動作環境</h1>
+<p>本ツールの動作環境は以下のとおりです。</p>
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th>推奨動作環境</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OS</td>
+<td>Microsoft Windows 11</td>
+</tr>
+<tr>
+<td>CPU</td>
+<td>Intel Core i9-12900H 以上</td>
+</tr>
+<tr>
+<td>メモリ</td>
+<td>32GB 以上</td>
+</tr>
+</tbody>
+</table>
+<h1 id="3-インストール手順">3 インストール手順</h1>
+<h2 id="unreal-engine">Unreal Engine</h2>
+<p><a href="https://store.epicgames.com/ja/download">Epic Games Store</a> からEpic Games Launcher をインストール後、Epic Games Launcher を開く。Unreal Engine（①）→ライブラリ（②）→＋（③）を選択し、Unreal Engine 5.3 をインストールしてください。
+<img src="../resources/Setup/Unreal%20Engine%20%E3%81%AE%E3%82%A4%E3%83%B3%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AB.jpg" alt="Unreal Engine のインストール"></p>
+<p>インストールされたUnreal Engine を開き、プロジェクトデフォルトとしてブループリントではなくC++を選択してから作成します。
+<img src="../resources/Setup/C%2B%2B%E3%81%AE%E9%81%B8%E6%8A%9E.jpg" alt="C++の選択"></p>
+<h2 id="plateau-sdkおよびplateau-twinlink">PLATEAU SDKおよびPLATEAU Twinlink</h2>
+<p>PLATEAU SDK、本ツールのリリースページから各プラグインのzip ファイルをダウンロードしてください。作成したプロジェクトのフォルダを開き、Plugins という名前のフォルダを作成後、各zip ファイルを展開して格納します。
+<img src="../resources/Setup/%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E6%A0%BC%E7%B4%8D.jpg" alt="ファイル格納"></p>
+<h1 id="4-unreal-engineのレベル作成手順">4 Unreal Engineのレベル作成手順</h1>
+<h2 id="ゲームモードの設定">ゲームモードの設定</h2>
+<p>「World Settings」→「GameMode Override」の値を「TwinLinkGameMode」に設定します。
+<img src="../resources/Setup/%E3%82%B2%E3%83%BC%E3%83%A0%E3%83%A2%E3%83%BC%E3%83%89%E8%A8%AD%E5%AE%9A.jpg" alt="ゲームモードの設定"></p>
+<h2 id="3d都市モデルのインポート">3D都市モデルのインポート</h2>
+<p>PLATEAU SDK から使用したい3D都市モデルをインポートします。インポート方法については<a href="https://project-plateau.github.io/PLATEAU-SDK-for-Unreal/manual/ImportCityModels.html">PLATEAU SDK のマニュアル</a>を参照してください。</p>
+<h2 id="twinlink-の設定">TwinLink の設定</h2>
+<p>上部メニューから「PLATEAU TwinLink」を選択すると、設定ウィンドウが開きます。</p>
+<p>まずフォーカス対象建築物インポートからLOD4の建築物を以下の手順でインポートします。</p>
+<ol>
+<li>参照ボタンを押した後、エクスプローラからCityGMLファイルを選択します。</li>
+<li>インポートボタンを押します。</li>
+<li>インポートが完了すると「インポート完了」と表示されます。
+<img src="../resources/Setup/%E3%83%95%E3%82%A9%E3%83%BC%E3%82%AB%E3%82%B9%E5%AF%BE%E8%B1%A1%E5%BB%BA%E7%AF%89%E7%89%A9%E3%81%AE%E3%82%A4%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%88.jpg" alt="フォーカス対象建築物"></li>
+</ol>
+<p>描画設定では、以下の項目の設定が可能です。</p>
+<ul>
+<li>環境設定
+<ul>
+<li>環境設定にチェックを入れることで、時間帯と月を指定できます。</li>
+</ul>
+</li>
+<li>カリング設定
+<ul>
+<li>遠距離のオブジェクトを非表示にしたい場合はこの項目にチェックを入れます。</li>
+</ul>
+</li>
+<li>LOD1の広範囲地図の読み込み
+<ul>
+<li>インポートした3D都市モデルより広範囲の地形モデルが追加でインポートされます。</li>
+</ul>
+</li>
+</ul>
+<p>下部の適用ボタンを押すことでチェックが入れられた描画設定が反映されます。
+<img src="../resources/Setup/%E6%8F%8F%E7%94%BB%E8%A8%AD%E5%AE%9A.jpg" alt="描画設定"></p>
+<p>データ生成項目では、3D都市モデルとフォーカス対象建築物（FocusTargetという名前でインポートされています）のアクターを選択して、下部の実行ボタンを押すとツールの実行に必要なデータの生成が行われます。</p>
+<p>生成が完了すると「データの生成が完了しました。」と表示されます。
+<img src="../resources/Setup/%E3%83%87%E3%83%BC%E3%82%BF%E7%94%9F%E6%88%90.jpg" alt="データ生成"></p>
+<p>管理者PIN 設定では、空欄に数字 4 文字を入力し、設定ボタンを押すことで、管理モードに入るための PIN を設定できます。PLATEAU TwinLink ウィンドウを閉じて再生ボタンを押すと、先ほど設定した内容でシーンを再生できます。
+<img src="../resources/Setup/%E7%AE%A1%E7%90%86%E8%80%85PIN%E8%A8%AD%E5%AE%9A.jpg" alt="管理者"></p>
+<h2 id="ビルドアプリの作成">ビルドアプリの作成</h2>
+<p>スタンドアロンで実行可能なexeファイルを生成する方法について記載します。</p>
+<p>プロジェクト設定からGame Default Map を作成したシーンに設定します。
+<img src="../resources/Setup/%E3%83%93%E3%83%AB%E3%83%89%E3%82%A2%E3%83%97%E3%83%AA%E3%81%AE%E4%BD%9C%E6%88%90.jpg" alt="ビルドアプリの作成"></p>
+<p>プラットフォーム→Windows→パッケージ化を選択し、ビルドアプリを作成します。
+<img src="../resources/Setup/%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8.jpg" alt="パッケージ化"></p>
+
+</article>
+          </div>
+
+          <div class="hidden-sm col-md-2" role="complementary">
+            <div class="sideaffix">
+              <div class="contribution">
+                <ul class="nav">
+                  <li>
+                    <a href="https://github.com/Synesthesias/PLATEAU-TwinLink/blob/main/Documentation/manual/Setup.md/#L1" class="contribution-link">Edit this page</a>
+                  </li>
+                </ul>
+              </div>
+              <nav class="bs-docs-sidebar hidden-print hidden-xs hidden-sm affix" id="affix">
+                <h5>In this article</h5>
+                <div></div>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <div class="grad-bottom"></div>
+        <div class="footer">
+          <div class="container">
+            <span class="pull-right">
+              <a href="#top">Back to top</a>
+            </span>
+      PLATEAU SDK for Unreal
+      
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <script type="text/javascript" src="../styles/docfx.vendor.min.js"></script>
+    <script type="text/javascript" src="../styles/docfx.js"></script>
+    <script type="text/javascript" src="../styles/main.js"></script>
+  </body>
+</html>

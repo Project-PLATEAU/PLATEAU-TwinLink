@@ -1,0 +1,664 @@
+{
+  "sitemap": {
+    "fileOptions": {
+      "api/*": {
+        "changefreq": "daily"
+      }
+    },
+    "baseUrl": "https://project-plateau.github.io/PLATEAU-TwinLink/",
+    "changefreq": "weekly"
+  },
+  "source_base_path": "C:/Users/kazum/Synesthesias/MyProject3/Plugins/PLATEAU-TwinLink/Documentation",
+  "xrefmap": "xrefmap.yml",
+  "files": [
+    {
+      "type": "Resource",
+      "output": {
+        "resource": {
+          "relative_path": "index.json"
+        }
+      }
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "index.md",
+      "output": {
+        ".html": {
+          "relative_path": "index.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "manual/DataSettings.md",
+      "output": {
+        ".html": {
+          "relative_path": "manual/DataSettings.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "manual/HowToUse.md",
+      "output": {
+        ".html": {
+          "relative_path": "manual/HowToUse.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "manual/Setup.md",
+      "output": {
+        ".html": {
+          "relative_path": "manual/Setup.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "manual/devMan.md",
+      "output": {
+        ".html": {
+          "relative_path": "manual/devMan.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Toc",
+      "source_relative_path": "manual/toc.yml",
+      "output": {
+        ".html": {
+          "relative_path": "manual/toc.html"
+        },
+        ".json": {
+          "relative_path": "manual/toc.json"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "manual/userMan.md",
+      "output": {
+        ".html": {
+          "relative_path": "manual/userMan.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/DataSettings/アセットの回転移動.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/DataSettings/アセットの回転移動.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/DataSettings/アセットの平行移動.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/DataSettings/アセットの平行移動.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/DataSettings/アセットの配置.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/DataSettings/アセットの配置.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/DataSettings/周辺施設一覧に追加された登録施設.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/DataSettings/周辺施設一覧に追加された登録施設.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/DataSettings/周辺施設情報の登録.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/DataSettings/周辺施設情報の登録.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/DataSettings/店舗情報の登録.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/DataSettings/店舗情報の登録.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/DataSettings/建物の色彩変更.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/DataSettings/建物の色彩変更.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/DataSettings/管理モードへの切り替え.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/DataSettings/管理モードへの切り替え.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/DataSettings/視点の追加.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/DataSettings/視点の追加.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/DataSettings/設定ボタン.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/DataSettings/設定ボタン.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/DataSettings/設計情報の登録.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/DataSettings/設計情報の登録.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/DataSettings/追加された視点.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/DataSettings/追加された視点.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/GISデータのデータ名.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/GISデータのデータ名.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/GISデータの表示切替.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/GISデータの表示切替.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/GISデータの選択.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/GISデータの選択.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/POIの解析画面.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/POIの解析画面.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/ズームレベル.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/ズームレベル.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/フロア選択.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/フロア選択.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/メイン画面.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/メイン画面.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/リアルタイム.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/リアルタイム.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/人流データ.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/人流データ.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/人流データ切替.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/人流データ切替.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/低解像度ヒートマップ.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/低解像度ヒートマップ.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/周辺施設一覧パネル.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/周辺施設一覧パネル.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/周辺案内画面.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/周辺案内画面.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/店舗情報.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/店舗情報.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/建物案内画面.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/建物案内画面.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/日時変更パネル.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/日時変更パネル.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/気象の日時変更.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/気象の日時変更.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/気象の解析画面.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/気象の解析画面.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/気象データの選択.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/気象データの選択.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/移動ルート.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/移動ルート.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/移動方法の切替.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/移動方法の切替.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/空間IDの解析画面.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/空間IDの解析画面.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/経路の解析画面.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/経路の解析画面.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/経路情報エクスポート.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/経路情報エクスポート.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/経路案内画面.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/経路案内画面.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/表示属性リスト.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/表示属性リスト.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/解析画面.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/解析画面.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/設計情報表示.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/設計情報表示.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/都市計画の解析画面.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/都市計画の解析画面.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/HowToUse/高解像度ヒートマップ.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/HowToUse/高解像度ヒートマップ.png"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/Index/概観.jpg",
+      "output": {
+        "resource": {
+          "relative_path": "resources/Index/概観.jpg"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/Setup/C++の選択.jpg",
+      "output": {
+        "resource": {
+          "relative_path": "resources/Setup/C++の選択.jpg"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/Setup/Unreal Engine のインストール.jpg",
+      "output": {
+        "resource": {
+          "relative_path": "resources/Setup/Unreal Engine のインストール.jpg"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/Setup/ゲームモード設定.jpg",
+      "output": {
+        "resource": {
+          "relative_path": "resources/Setup/ゲームモード設定.jpg"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/Setup/データ生成.jpg",
+      "output": {
+        "resource": {
+          "relative_path": "resources/Setup/データ生成.jpg"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/Setup/データ生成及び管理者PIN設定.jpg",
+      "output": {
+        "resource": {
+          "relative_path": "resources/Setup/データ生成及び管理者PIN設定.jpg"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/Setup/パッケージ.jpg",
+      "output": {
+        "resource": {
+          "relative_path": "resources/Setup/パッケージ.jpg"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/Setup/ビルドアプリの作成.jpg",
+      "output": {
+        "resource": {
+          "relative_path": "resources/Setup/ビルドアプリの作成.jpg"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/Setup/ファイル格納.jpg",
+      "output": {
+        "resource": {
+          "relative_path": "resources/Setup/ファイル格納.jpg"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/Setup/フォーカス対象建築物のインポート.jpg",
+      "output": {
+        "resource": {
+          "relative_path": "resources/Setup/フォーカス対象建築物のインポート.jpg"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/Setup/描画設定.jpg",
+      "output": {
+        "resource": {
+          "relative_path": "resources/Setup/描画設定.jpg"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/Setup/管理者PIN設定.jpg",
+      "output": {
+        "resource": {
+          "relative_path": "resources/Setup/管理者PIN設定.jpg"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/logo.svg",
+      "output": {
+        "resource": {
+          "relative_path": "resources/logo.svg"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Toc",
+      "source_relative_path": "toc.yml",
+      "output": {
+        ".html": {
+          "relative_path": "toc.html"
+        },
+        ".json": {
+          "relative_path": "toc.json"
+        }
+      },
+      "version": ""
+    }
+  ],
+  "groups": [
+    {
+      "xrefmap": "xrefmap.yml"
+    }
+  ]
+}
