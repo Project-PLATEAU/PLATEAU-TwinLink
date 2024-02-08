@@ -56,7 +56,6 @@ void UTwinLinkPeopleFlowApi::OnResponseReceived(FHttpRequestPtr Request, FHttpRe
     bool bConnectionSuccessfully) {
     auto Result = ParseResponse(Response, bConnectionSuccessfully);
     OnReceivedPeopleFlowResponse.Broadcast(Result);
-    UE_LOG(LogTemp, Display, TEXT("Response %s"), *Response->GetContentAsString());
 }
 
 FTWinLinkPeopleFlowApiResult UTwinLinkPeopleFlowApi::ParseResponse(const FHttpResponsePtr& Response,

@@ -8,3 +8,10 @@
     href: DataSettings.md
   - name: 各機能の利用方法（ユーザー用画面）
     href: HowToUse.md
+- name: 人流データサーバ
+  items:
+  - name: 環境構築手順書
+    href: devMan.md
+  - name: 操作マニュアル
+    href: userMan.md
+

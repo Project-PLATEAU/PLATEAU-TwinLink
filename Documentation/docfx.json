@@ -31,7 +31,7 @@
             }
         ],
         "sitemap": {
-            "baseUrl": "https://Synesthesias.github.io/PlateauUESDK",
+            "baseUrl": "https://project-plateau.github.io/PLATEAU-TwinLink",
             "changefreq": "weekly",
             "fileOptions": {
                 "api/*": {

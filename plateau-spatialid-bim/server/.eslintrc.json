@@ -1,0 +1,89 @@
+{
+  "root": true,
+  "env": {
+    "node": true
+  },
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": "./tsconfig.eslint.json"
+  },
+  "plugins": ["@typescript-eslint", "import", "unused-imports"],
+  "extends": [
+    "airbnb",
+    "eslint:recommended",
+    "plugin:import/errors",
+    "plugin:import/warnings",
+    "plugin:import/typescript",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended",
+    "prettier"
+  ],
+  "settings": {
+    "import/parsers": {
+      "@typescript-eslint/parser": [".ts"]
+    },
+    "import/resolver": {
+      "typescript": {
+        "alwaysTryTypes": true,
+        "project": "tsconfig.json"
+      }
+    }
+  },
+  "rules": {
+    // 不要な変数があると可読性が下がるため
+    "@typescript-eslint/no-unused-vars": [
+      "warn",
+      {
+        "vars": "all",
+        "args": "after-used",
+        "argsIgnorePattern": "_",
+        "ignoreRestSiblings": false,
+        "varsIgnorePattern": "_"
+      }
+    ],
+    // @typescript-eslint/no-unused-varsに任せる
+    "no-unused-vars": ["off"],
+    // 拡張子なしでimportする
+    "import/extensions": [
+      "error",
+      "ignorePackages",
+      {
+        "js": "never",
+        "ts": "never"
+      }
+    ],
+    // 相対パスでのimportを許可
+    "import/no-unresolved": ["off"],
+    // 昇順でimportする
+    "import/order": [
+      "warn",
+      {
+        "alphabetize": { "order": "asc", "caseInsensitive": true }
+      }
+    ],
+    // 不要なimportを削除する
+    "unused-imports/no-unused-imports": "error",
+    // console出力を許可
+    "no-console": ["off"],
+    // @typescript-eslint/no-use-before-defineに任せる
+    "no-use-before-define": ["off"],
+    // 循環参照があると、依存関係が破綻するため
+    "import/no-cycle": ["warn"],
+    // default-exportだと、importする側で命名を上書きできてしまうため
+    "import/prefer-default-export": ["off"],
+    "import/no-default-export": ["warn"],
+    // 汎用functionを利用するので柔軟性を確保するために無効
+    "@typescript-eslint/explicit-module-boundary-types": ["off"],
+    "import/no-extraneous-dependencies": [
+      "off",
+      {
+        "packageDir": ".",
+        "devDependencies": false,
+        "optionalDependencies": true,
+        "peerDependencies": true,
+        "bundledDependencies": true
+      }
+    ],
+    "consistent-return": ["off"]
+  }
+}

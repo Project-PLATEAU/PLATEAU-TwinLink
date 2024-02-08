@@ -25,7 +25,11 @@
 PLATEAU SDK、本ツールのリリースページから各プラグインのzip ファイルをダウンロードしてください。作成したプロジェクトのフォルダを開き、Plugins という名前のフォルダを作成後、各zip ファイルを展開して格納します。
 ![ファイル格納](../resources/Setup/ファイル格納.jpg)
 
-# 4 ビルド手順
+# 4 Unreal Engineのレベル作成手順
+## ゲームモードの設定
+「World Settings」→「GameMode Override」の値を「TwinLinkGameMode」に設定します。
+![ゲームモードの設定](../resources/Setup/ゲームモード設定.jpg)
+
 ## 3D都市モデルのインポート
 PLATEAU SDK から使用したい3D都市モデルをインポートします。インポート方法については[PLATEAU SDK のマニュアル](https://project-plateau.github.io/PLATEAU-SDK-for-Unreal/manual/ImportCityModels.html)を参照してください。
 
@@ -52,13 +56,13 @@ PLATEAU SDK から使用したい3D都市モデルをインポートします。
 ![描画設定](../resources/Setup/描画設定.jpg)
 
 
-データ生成項目では、3D 都市モデルと管理対象建築物（LOD4）のアクターを選択して、下部の実行ボタンを押すとツールの実行に必要なデータの生成が行われます。
+データ生成項目では、3D都市モデルとフォーカス対象建築物（FocusTargetという名前でインポートされています）のアクターを選択して、下部の実行ボタンを押すとツールの実行に必要なデータの生成が行われます。
 
 生成が完了すると「データの生成が完了しました。」と表示されます。
 ![データ生成](../resources/Setup/データ生成.jpg)
 
-管理者PIN 設定では、空欄に数字4 文字を入力し、設定ボタンを押すことで、管理モードに入るためのPIN を設定できます。PLATEAU TwinLink ウィンドウを閉じて再生ボタンを押すと、先ほど設定した内容でシーンを再生できます。
-![データ生成](../resources/Setup/データ生成.jpg)
+管理者PIN 設定では、空欄に数字 4 文字を入力し、設定ボタンを押すことで、管理モードに入るための PIN を設定できます。PLATEAU TwinLink ウィンドウを閉じて再生ボタンを押すと、先ほど設定した内容でシーンを再生できます。
+![管理者](../resources/Setup/管理者PIN設定.jpg)
 
 
 ## ビルドアプリの作成
