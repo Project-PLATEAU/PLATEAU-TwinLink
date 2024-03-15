@@ -8,35 +8,36 @@
 | 項目 | 推奨動作環境 |
 | - | - |
 | OS | Microsoft Windows 11 |
-| CPU | Intel Core i9-12900H 以上 |
-| メモリ | 32GB 以上 |
+| CPU | Intel Core i9-12900H以上 |
+| GPU | NVIDIA GeForce RTX3080 Ti Laptop以上 |
+| メモリ | 32GB以上 |
 
 # 3 インストール手順
 ## Unreal Engine
-[Epic Games Store](https://store.epicgames.com/ja/download) からEpic Games Launcher をインストール後、Epic Games Launcher を開く。Unreal Engine（①）→ライブラリ（②）→＋（③）を選択し、Unreal Engine 5.3 をインストールしてください。
+[Epic Games Store](https://store.epicgames.com/ja/download)からEpic Games Launcherをインストール後、Epic Games Launcherを開きます。Unreal Engine（①）→ライブラリ（②）→＋（③）を選択し、Unreal Engine 5.3をインストールしてください。
 ![Unreal Engine のインストール](../resources/Setup/Unreal%20Engine%20のインストール.jpg)
 
 
-インストールされたUnreal Engine を開き、プロジェクトデフォルトとしてブループリントではなくC++を選択してから作成します。
+インストールされたUnreal Engineを開き、プロジェクトデフォルトとしてブループリントではなくC++を選択してから作成します。
 ![C++の選択](../resources/Setup/C++の選択.jpg)
 
 
-## PLATEAU SDKおよびPLATEAU Twinlink
-PLATEAU SDK、本ツールのリリースページから各プラグインのzip ファイルをダウンロードしてください。作成したプロジェクトのフォルダを開き、Plugins という名前のフォルダを作成後、各zip ファイルを展開して格納します。
+## PLATEAU SDK及びPLATEAU TwinLink
+PLATEAU SDK及び本ツールのリリースページから各プラグインのzipファイルをダウンロードしてください。作成したプロジェクトのフォルダを開き、Pluginsという名前のフォルダを作成後、各zipファイルを展開して格納します。
 ![ファイル格納](../resources/Setup/ファイル格納.jpg)
 
 # 4 Unreal Engineのレベル作成手順
 ## ゲームモードの設定
-「World Settings」→「GameMode Override」の値を「TwinLinkGameMode」に設定します。
+「World Settings」を押下した後、「GameMode Override」の値を「TwinLinkGameMode」に設定します。
 ![ゲームモードの設定](../resources/Setup/ゲームモード設定.jpg)
 
 ## 3D都市モデルのインポート
 PLATEAU SDK から使用したい3D都市モデルをインポートします。インポート方法については[PLATEAU SDK のマニュアル](https://project-plateau.github.io/PLATEAU-SDK-for-Unreal/manual/ImportCityModels.html)を参照してください。
 
-## TwinLink の設定
+## TwinLinkの設定
 上部メニューから「PLATEAU TwinLink」を選択すると、設定ウィンドウが開きます。
 
-まずフォーカス対象建築物インポートからLOD4の建築物を以下の手順でインポートします。
+まず「フォーカス対象建築物インポート」からLOD4の建築物を以下の手順でインポートします。
 
 1. 参照ボタンを押した後、エクスプローラからCityGMLファイルを選択します。
 2. インポートボタンを押します。
@@ -52,25 +53,25 @@ PLATEAU SDK から使用したい3D都市モデルをインポートします。
 - LOD1の広範囲地図の読み込み
     - インポートした3D都市モデルより広範囲の地形モデルが追加でインポートされます。
 
-下部の適用ボタンを押すことでチェックが入れられた描画設定が反映されます。
+下部の「適用」ボタンを押すことでチェックが入れられた描画設定が反映されます。
 ![描画設定](../resources/Setup/描画設定.jpg)
 
 
-データ生成項目では、3D都市モデルとフォーカス対象建築物（FocusTargetという名前でインポートされています）のアクターを選択して、下部の実行ボタンを押すとツールの実行に必要なデータの生成が行われます。
+「データ生成」項目では、3D都市モデルとフォーカス対象建築物（FocusTargetという名前でインポートされています）のアクターを選択し、下部の実行ボタンを押すとツールの実行に必要なデータの生成が行われます。
 
 生成が完了すると「データの生成が完了しました。」と表示されます。
 ![データ生成](../resources/Setup/データ生成.jpg)
 
-管理者PIN 設定では、空欄に数字 4 文字を入力し、設定ボタンを押すことで、管理モードに入るための PIN を設定できます。PLATEAU TwinLink ウィンドウを閉じて再生ボタンを押すと、先ほど設定した内容でシーンを再生できます。
+管理者PIN設定では、空欄に数字4文字を入力し、設定ボタンを押すことで、管理モードに入るためのPINを設定できます。PLATEAU TwinLinkウィンドウを閉じて再生ボタンを押すと、先ほど設定した内容でシーンを再生できます。
 ![管理者](../resources/Setup/管理者PIN設定.jpg)
 
 
 ## ビルドアプリの作成
 スタンドアロンで実行可能なexeファイルを生成する方法について記載します。
 
-プロジェクト設定からGame Default Map を作成したシーンに設定します。
+プロジェクト設定からGame Default Mapを作成したシーンに設定します。
 ![ビルドアプリの作成](../resources/Setup/ビルドアプリの作成.jpg)
 
 
-プラットフォーム→Windows→パッケージ化を選択し、ビルドアプリを作成します。
+プラットフォーム→Windows→パッケージ化の順に選択し、ビルドアプリを作成します。
 ![パッケージ化](../resources/Setup/パッケージ.jpg)
