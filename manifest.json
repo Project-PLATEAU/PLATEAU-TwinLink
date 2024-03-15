@@ -8,7 +8,7 @@
     "baseUrl": "https://project-plateau.github.io/PLATEAU-TwinLink/",
     "changefreq": "weekly"
   },
-  "source_base_path": "C:/Users/kazum/Synesthesias/temp/PLATEAU-TwinLink/Documentation",
+  "source_base_path": "C:/Users/kazum/Synesthesias/PLATEAU-TwinLink-Dev/Plugins/PLATEAU-TwinLink/Documentation",
   "xrefmap": "xrefmap.yml",
   "files": [
     {
