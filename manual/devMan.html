@@ -95,62 +95,59 @@
 <tbody>
 <tr>
 <td>OS</td>
-<td>macOS Monterey 以上</td>
+<td>macOS Monterey以上</td>
 <td>同左</td>
 </tr>
 <tr>
 <td>CPU</td>
-<td>Intel Core i3 以上 または Apple M1 以上</td>
-<td>Apple M1 以上</td>
+<td>Intel Core i3以上またはApple M1以上</td>
+<td>同左</td>
 </tr>
 <tr>
 <td>ライブラリ</td>
-<td>docker 　が利用できること, Node.js &gt;= 18.0.0</td>
+<td>docker及びNode.js 18.0.0以上</td>
 <td>同左</td>
 </tr>
 <tr>
 <td>メモリ</td>
-<td>8GB 以上</td>
-<td>8GB 以上</td>
+<td>8GB以上</td>
+<td>同左</td>
 </tr>
 <tr>
 <td>ネットワーク</td>
-<td>【データ取得】<br>カメラデータを配信する SFTP サーバーが許可している IP アドレスからリクエストできるネットワーク環境が必要<br><br>【集計データ配信】<br>不要</td>
+<td>【データ取得】<br>カメラデータを配信するSFTPサーバーが許可しているIPアドレスからリクエストできるネットワーク環境が必要<br><br>【集計データ配信】<br>不要</td>
 <td>同左</td>
 </tr>
 </tbody>
 </table>
 <h1 id="3-ビルド手順">3 ビルド手順</h1>
-<p>自身でソースファイルをダウンロードし docker image のビルドを行うことで、実行することができます。<br>
-ソースファイルは
-<a href="https://github.com/eukarya-inc/plateau-spatialid-bim/">こちら</a>
-からダウンロード可能です。</p>
+<p>自身でソースファイルをダウンロードしdocker imageのビルドを行うことで、実行することができます。<br>
+ソースファイルは<a href="https://github.com/Project-PLATEAU/PLATEAU-TwinLink/tree/main/plateau-spatialid-bim">こちら</a>をご利用ください。</p>
 <p>サーバーは３つあります。</p>
 <ol>
-<li>SFTP サーバーからデータを取得、集計して MongoDB に保存するサーバー</li>
-<li>MongoDB に保存された集計データを配信するサーバー</li>
-<li>MongoDB サーバー</li>
+<li>SFTPサーバーからデータを取得、集計してMongoDBに保存するサーバー</li>
+<li>MongoDBに保存された集計データを配信するサーバー</li>
+<li>MongoDBサーバー</li>
 </ol>
-<p>（1）Docker Image のビルド</p>
-<h2 id="データ取得サーバー-image-のビルド">データ取得サーバー Image のビルド</h2>
+<h2 id="データ取得サーバーimageのビルド">データ取得サーバーImageのビルド</h2>
 <ol>
-<li>Terminal からソースコードの<code>server</code>ディレクトに移動する</li>
+<li>Terminalからソースコードの<code>server</code>ディレクトに移動します。</li>
 <li><code>npm run build &amp;&amp; docker build -t batch -f ./Dockerfile.batch .</code></li>
 </ol>
-<h2 id="配信サーバー-image-のビルド">配信サーバー Image のビルド</h2>
+<h2 id="配信サーバーimageのビルド">配信サーバーImageのビルド</h2>
 <ol>
-<li>Terminal からソースコードの<code>server</code>ディレクトに移動する</li>
+<li>Terminalからソースコードの<code>server</code>ディレクトに移動します。</li>
 <li><code>npm run build &amp;&amp; docker build -t server -f ./Dockerfile .</code></li>
 </ol>
-<h2 id="mongodb-サーバーのビルド">MongoDB サーバーのビルド</h2>
+<h2 id="mongodbサーバーのビルド">MongoDBサーバーのビルド</h2>
 <ol>
-<li>Terminal からソースコードの root ディレクトに移動する</li>
+<li>Terminalからソースコードのrootディレクトに移動します。</li>
 <li><code>docker compose build</code></li>
 </ol>
 <h1 id="4-準備物一覧">4 準備物一覧</h1>
 <p>アプリケーションを利用するために以下のデータを入手します。
 これらを準備したのち環境変数として設定します。
-またこれら以外に指定できる<a href="plateau-spatialid-bim/blob/develop/server/src/config.ts">環境変数はこちらのソースコード</a>を参照ください。</p>
+またこれら以外に指定できる<a href="https://github.com/Project-PLATEAU/PLATEAU-TwinLink/tree/main/plateau-spatialid-bim/server/src/config.ts">環境変数はこちらのソースコード</a>を参照ください。</p>
 <table>
 <thead>
 <tr>
@@ -163,76 +160,76 @@
 <tbody>
 <tr>
 <td>①</td>
-<td>SFTP サーバーの IP アドレス</td>
+<td>SFTPサーバーのIPアドレス</td>
 <td>SFTP_HOST</td>
 <td>192.168.0.0</td>
 </tr>
 <tr>
 <td>②</td>
-<td>SFTP サーバーの SFTP PORT</td>
+<td>SFTPサーバーのSFTP PORT</td>
 <td>SFTP_PORT</td>
 <td>22</td>
 </tr>
 <tr>
 <td>③</td>
-<td>SFTP サーバーに SFTP 通信できる USER_NAME</td>
+<td>SFTPサーバーにSFTP通信できるUSER_NAME</td>
 <td>SFTP_USERNAME</td>
 <td>test-user</td>
 </tr>
 <tr>
 <td>④</td>
-<td>SFTP サーバーに SFTP 通信できる PASSPHRASE</td>
+<td>SFTPサーバーにSFTP通信できるPASSPHRASE</td>
 <td>SFTP_PASSPHRASE</td>
 <td>passphrase</td>
 </tr>
 <tr>
 <td>⑤</td>
-<td>SFTP サーバーに SFTP 通信できる秘密鍵(pem 形式)</td>
+<td>SFTPサーバーにSFTP通信できる秘密鍵(pem形式)</td>
 <td>SFTP_PRIVATE_KEY</td>
 <td></td>
 </tr>
 <tr>
 <td>⑥</td>
-<td>MongoDB の URI</td>
+<td>MongoDBのURI</td>
 <td>MONGO_URI</td>
 <td>mongodb://root:example@127.0.0.1:27017</td>
 </tr>
 <tr>
 <td>⑦</td>
-<td>MongoDB の</td>
+<td>MongoDBのデータベース名</td>
 <td>MONGO_DB_NAME</td>
 <td>common</td>
 </tr>
 <tr>
 <td>⑧</td>
-<td>カメラデータと位置情報の JSON データ</td>
+<td>カメラデータと位置情報のJSONデータ</td>
 <td>CAMERAS</td>
 <td>[{&quot;id&quot;:&quot;1&quot;,&quot;name&quot;:&quot;西新宿 001&quot;,&quot;lat&quot;:35.691149,&quot;lng&quot;:139.695587,&quot;height&quot;:0}, {&quot;id&quot;:&quot;2&quot;,&quot;name&quot;:&quot;西新宿 002&quot;,&quot;lat&quot;:35.691149,&quot;lng&quot;:139.695587,&quot;height&quot;:0}]</td>
 </tr>
 <tr>
 <td>⑨</td>
-<td>利用するデータベースの種別 (mongo or mock or inMemory)</td>
+<td>利用するデータベースの種別 (mongo/mock/inMemory)</td>
 <td>DATABASE_TYPE</td>
 <td>mongo</td>
 </tr>
 </tbody>
 </table>
 <h1 id="5-サーバーの起動">5 サーバーの起動</h1>
-<h2 id="mongodb-サーバーの起動">MongoDB サーバーの起動</h2>
+<h2 id="mongodbサーバーの起動">MongoDBサーバーの起動</h2>
 <ol>
-<li>Terminal からソースコードの root ディレクトに移動する</li>
+<li>Terminalからソースコードのrootディレクトに移動します。</li>
 <li><code>docker compose up -d</code></li>
 </ol>
-<h2 id="データ取得サーバー-の実行">データ取得サーバー の実行</h2>
+<h2 id="データ取得サーバーの実行">データ取得サーバーの実行</h2>
 <ol>
-<li>Terminal からソースコードの<code>server</code>ディレクトに移動する</li>
-<li>5 の環境変数を設定する</li>
+<li>Terminalからソースコードの<code>server</code>ディレクトに移動します。</li>
+<li>⑤の環境変数を設定します。</li>
 <li><code>docker run -it batch</code></li>
 </ol>
-<h2 id="配信サーバー-の起動">配信サーバー の起動</h2>
+<h2 id="配信サーバーの起動">配信サーバーの起動</h2>
 <ol>
-<li>Terminal からソースコードの<code>server</code>ディレクトに移動する</li>
-<li>5 の環境変数を設定する</li>
+<li>Terminalからソースコードの<code>server</code>ディレクトに移動する</li>
+<li>⑤の環境変数を設定する</li>
 <li><code>docker run -it server</code></li>
 </ol>
 
@@ -244,7 +241,7 @@
               <div class="contribution">
                 <ul class="nav">
                   <li>
-                    <a href="https://github.com/Synesthesias/PLATEAU-TwinLink/blob/main/Documentation/manual/devMan.md/#L1" class="contribution-link">Edit this page</a>
+                    <a href="https://github.com/Synesthesias/PLATEAU-TwinLink/blob/fix/document/Documentation/manual/devMan.md/#L1" class="contribution-link">Edit this page</a>
                   </li>
                 </ul>
               </div>
