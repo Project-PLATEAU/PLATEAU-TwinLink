@@ -97,32 +97,36 @@
 </tr>
 <tr>
 <td>CPU</td>
-<td>Intel Core i9-12900H 以上</td>
+<td>Intel Core i9-12900H以上</td>
+</tr>
+<tr>
+<td>GPU</td>
+<td>NVIDIA GeForce RTX3080 Ti Laptop以上</td>
 </tr>
 <tr>
 <td>メモリ</td>
-<td>32GB 以上</td>
+<td>32GB以上</td>
 </tr>
 </tbody>
 </table>
 <h1 id="3-インストール手順">3 インストール手順</h1>
 <h2 id="unreal-engine">Unreal Engine</h2>
-<p><a href="https://store.epicgames.com/ja/download">Epic Games Store</a> からEpic Games Launcher をインストール後、Epic Games Launcher を開く。Unreal Engine（①）→ライブラリ（②）→＋（③）を選択し、Unreal Engine 5.3 をインストールしてください。
+<p><a href="https://store.epicgames.com/ja/download">Epic Games Store</a>からEpic Games Launcherをインストール後、Epic Games Launcherを開きます。Unreal Engine（①）→ライブラリ（②）→＋（③）を選択し、Unreal Engine 5.3をインストールしてください。
 <img src="../resources/Setup/Unreal%20Engine%20%E3%81%AE%E3%82%A4%E3%83%B3%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AB.jpg" alt="Unreal Engine のインストール"></p>
-<p>インストールされたUnreal Engine を開き、プロジェクトデフォルトとしてブループリントではなくC++を選択してから作成します。
+<p>インストールされたUnreal Engineを開き、プロジェクトデフォルトとしてブループリントではなくC++を選択してから作成します。
 <img src="../resources/Setup/C%2B%2B%E3%81%AE%E9%81%B8%E6%8A%9E.jpg" alt="C++の選択"></p>
-<h2 id="plateau-sdkおよびplateau-twinlink">PLATEAU SDKおよびPLATEAU Twinlink</h2>
-<p>PLATEAU SDK、本ツールのリリースページから各プラグインのzip ファイルをダウンロードしてください。作成したプロジェクトのフォルダを開き、Plugins という名前のフォルダを作成後、各zip ファイルを展開して格納します。
+<h2 id="plateau-sdk及びplateau-twinlink">PLATEAU SDK及びPLATEAU TwinLink</h2>
+<p>PLATEAU SDK及び本ツールのリリースページから各プラグインのzipファイルをダウンロードしてください。作成したプロジェクトのフォルダを開き、Pluginsという名前のフォルダを作成後、各zipファイルを展開して格納します。
 <img src="../resources/Setup/%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E6%A0%BC%E7%B4%8D.jpg" alt="ファイル格納"></p>
 <h1 id="4-unreal-engineのレベル作成手順">4 Unreal Engineのレベル作成手順</h1>
 <h2 id="ゲームモードの設定">ゲームモードの設定</h2>
-<p>「World Settings」→「GameMode Override」の値を「TwinLinkGameMode」に設定します。
+<p>「World Settings」を押下した後、「GameMode Override」の値を「TwinLinkGameMode」に設定します。
 <img src="../resources/Setup/%E3%82%B2%E3%83%BC%E3%83%A0%E3%83%A2%E3%83%BC%E3%83%89%E8%A8%AD%E5%AE%9A.jpg" alt="ゲームモードの設定"></p>
 <h2 id="3d都市モデルのインポート">3D都市モデルのインポート</h2>
 <p>PLATEAU SDK から使用したい3D都市モデルをインポートします。インポート方法については<a href="https://project-plateau.github.io/PLATEAU-SDK-for-Unreal/manual/ImportCityModels.html">PLATEAU SDK のマニュアル</a>を参照してください。</p>
-<h2 id="twinlink-の設定">TwinLink の設定</h2>
+<h2 id="twinlinkの設定">TwinLinkの設定</h2>
 <p>上部メニューから「PLATEAU TwinLink」を選択すると、設定ウィンドウが開きます。</p>
-<p>まずフォーカス対象建築物インポートからLOD4の建築物を以下の手順でインポートします。</p>
+<p>まず「フォーカス対象建築物インポート」からLOD4の建築物を以下の手順でインポートします。</p>
 <ol>
 <li>参照ボタンを押した後、エクスプローラからCityGMLファイルを選択します。</li>
 <li>インポートボタンを押します。</li>
@@ -147,18 +151,18 @@
 </ul>
 </li>
 </ul>
-<p>下部の適用ボタンを押すことでチェックが入れられた描画設定が反映されます。
+<p>下部の「適用」ボタンを押すことでチェックが入れられた描画設定が反映されます。
 <img src="../resources/Setup/%E6%8F%8F%E7%94%BB%E8%A8%AD%E5%AE%9A.jpg" alt="描画設定"></p>
-<p>データ生成項目では、3D都市モデルとフォーカス対象建築物（FocusTargetという名前でインポートされています）のアクターを選択して、下部の実行ボタンを押すとツールの実行に必要なデータの生成が行われます。</p>
+<p>「データ生成」項目では、3D都市モデルとフォーカス対象建築物（FocusTargetという名前でインポートされています）のアクターを選択し、下部の実行ボタンを押すとツールの実行に必要なデータの生成が行われます。</p>
 <p>生成が完了すると「データの生成が完了しました。」と表示されます。
 <img src="../resources/Setup/%E3%83%87%E3%83%BC%E3%82%BF%E7%94%9F%E6%88%90.jpg" alt="データ生成"></p>
-<p>管理者PIN 設定では、空欄に数字 4 文字を入力し、設定ボタンを押すことで、管理モードに入るための PIN を設定できます。PLATEAU TwinLink ウィンドウを閉じて再生ボタンを押すと、先ほど設定した内容でシーンを再生できます。
+<p>管理者PIN設定では、空欄に数字4文字を入力し、設定ボタンを押すことで、管理モードに入るためのPINを設定できます。PLATEAU TwinLinkウィンドウを閉じて再生ボタンを押すと、先ほど設定した内容でシーンを再生できます。
 <img src="../resources/Setup/%E7%AE%A1%E7%90%86%E8%80%85PIN%E8%A8%AD%E5%AE%9A.jpg" alt="管理者"></p>
 <h2 id="ビルドアプリの作成">ビルドアプリの作成</h2>
 <p>スタンドアロンで実行可能なexeファイルを生成する方法について記載します。</p>
-<p>プロジェクト設定からGame Default Map を作成したシーンに設定します。
+<p>プロジェクト設定からGame Default Mapを作成したシーンに設定します。
 <img src="../resources/Setup/%E3%83%93%E3%83%AB%E3%83%89%E3%82%A2%E3%83%97%E3%83%AA%E3%81%AE%E4%BD%9C%E6%88%90.jpg" alt="ビルドアプリの作成"></p>
-<p>プラットフォーム→Windows→パッケージ化を選択し、ビルドアプリを作成します。
+<p>プラットフォーム→Windows→パッケージ化の順に選択し、ビルドアプリを作成します。
 <img src="../resources/Setup/%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8.jpg" alt="パッケージ化"></p>
 
 </article>
