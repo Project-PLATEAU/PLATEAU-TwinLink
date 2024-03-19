@@ -109,7 +109,10 @@
 </tr>
 </tbody>
 </table>
-<h1 id="3-インストール手順">3 インストール手順</h1>
+<h1 id="3-データの準備">3 データの準備</h1>
+<p>本ツールの動作には、LOD4の建築物モデルが必要です。LOD4建築物モデルとは、<a href="https://www.mlit.go.jp/plateau/file/libraries/doc/plateau_doc_0003_ver03.pdf">3D都市モデル整備のためのBIM活用マニュアル</a>に従って作成されたIFCファイルを<a href="https://github.com/Project-PLATEAU/PLATEAU-IFC-to-CityGML2.0-LOD4">IFC to CityGML</a>で変換したものです。詳細については<a href="https://github.com/Project-PLATEAU/PLATEAU-IFC-to-CityGML2.0-LOD4">IFC to CityGML</a>のページをご参照ください。</p>
+<p>LOD4建築物モデルは新規に作成する以外にも、<a href="https://www.geospatial.jp/ckan/organization/toshi?q=LOD4&amp;sort=metadata_modified+desc">オープンデータ</a>として提供されている既存のファイルを活用することができます。</p>
+<h1 id="4-インストール手順">4 インストール手順</h1>
 <h2 id="unreal-engine">Unreal Engine</h2>
 <p><a href="https://store.epicgames.com/ja/download">Epic Games Store</a>からEpic Games Launcherをインストール後、Epic Games Launcherを開きます。Unreal Engine（①）→ライブラリ（②）→＋（③）を選択し、Unreal Engine 5.3をインストールしてください。
 <img src="../resources/Setup/Unreal%20Engine%20%E3%81%AE%E3%82%A4%E3%83%B3%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AB.jpg" alt="Unreal Engine のインストール"></p>
@@ -118,7 +121,7 @@
 <h2 id="plateau-sdk及びplateau-twinlink">PLATEAU SDK及びPLATEAU TwinLink</h2>
 <p>PLATEAU SDK及び本ツールのリリースページから各プラグインのzipファイルをダウンロードしてください。作成したプロジェクトのフォルダを開き、Pluginsという名前のフォルダを作成後、各zipファイルを展開して格納します。
 <img src="../resources/Setup/%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E6%A0%BC%E7%B4%8D.jpg" alt="ファイル格納"></p>
-<h1 id="4-unreal-engineのレベル作成手順">4 Unreal Engineのレベル作成手順</h1>
+<h1 id="5-unreal-engineのレベル作成手順">5 Unreal Engineのレベル作成手順</h1>
 <h2 id="ゲームモードの設定">ゲームモードの設定</h2>
 <p>「World Settings」を押下した後、「GameMode Override」の値を「TwinLinkGameMode」に設定します。
 <img src="../resources/Setup/%E3%82%B2%E3%83%BC%E3%83%A0%E3%83%A2%E3%83%BC%E3%83%89%E8%A8%AD%E5%AE%9A.jpg" alt="ゲームモードの設定"></p>
@@ -173,7 +176,7 @@
               <div class="contribution">
                 <ul class="nav">
                   <li>
-                    <a href="https://github.com/Synesthesias/PLATEAU-TwinLink/blob/main/Documentation/manual/Setup.md/#L1" class="contribution-link">Edit this page</a>
+                    <a href="https://github.com/Project-PLATEAU/PLATEAU-TwinLink/blob/main/Documentation/manual/Setup.md/#L1" class="contribution-link">Edit this page</a>
                   </li>
                 </ul>
               </div>
