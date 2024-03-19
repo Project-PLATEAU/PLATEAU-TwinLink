@@ -12,7 +12,12 @@
 | GPU | NVIDIA GeForce RTX3080 Ti Laptop以上 |
 | メモリ | 32GB以上 |
 
-# 3 インストール手順
+# 3 データの準備
+本ツールの動作には、LOD4の建築物モデルが必要です。LOD4建築物モデルとは、[3D都市モデル整備のためのBIM活用マニュアル](https://www.mlit.go.jp/plateau/file/libraries/doc/plateau_doc_0003_ver03.pdf)に従って作成されたIFCファイルを[IFC to CityGML](https://github.com/Project-PLATEAU/PLATEAU-IFC-to-CityGML2.0-LOD4)で変換したものです。詳細については[IFC to CityGML](https://github.com/Project-PLATEAU/PLATEAU-IFC-to-CityGML2.0-LOD4)のページをご参照ください。
+
+LOD4建築物モデルは新規に作成する以外にも、[オープンデータ](https://www.geospatial.jp/ckan/organization/toshi?q=LOD4&sort=metadata_modified+desc)として提供されている既存のファイルを活用することができます。
+
+# 4 インストール手順
 ## Unreal Engine
 [Epic Games Store](https://store.epicgames.com/ja/download)からEpic Games Launcherをインストール後、Epic Games Launcherを開きます。Unreal Engine（①）→ライブラリ（②）→＋（③）を選択し、Unreal Engine 5.3をインストールしてください。
 ![Unreal Engine のインストール](../resources/Setup/Unreal%20Engine%20のインストール.jpg)
@@ -26,7 +31,7 @@
 PLATEAU SDK及び本ツールのリリースページから各プラグインのzipファイルをダウンロードしてください。作成したプロジェクトのフォルダを開き、Pluginsという名前のフォルダを作成後、各zipファイルを展開して格納します。
 ![ファイル格納](../resources/Setup/ファイル格納.jpg)
 
-# 4 Unreal Engineのレベル作成手順
+# 5 Unreal Engineのレベル作成手順
 ## ゲームモードの設定
 「World Settings」を押下した後、「GameMode Override」の値を「TwinLinkGameMode」に設定します。
 ![ゲームモードの設定](../resources/Setup/ゲームモード設定.jpg)
