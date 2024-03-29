@@ -11,7 +11,7 @@ PLATEAU TwinLinkは、「3D都市モデル」、「BIMモデル」、「空間ID
 
 本ツールは、不動産販売や住民説明の現場において、模型や映像、パンフレット等を使ったこれまでのプロモーションツールと比較し、一般消費者や一般住民に対して内容をより分かりやすく、魅力的に伝えることができるようになることを目指して開発されたものです。
 
-詳細については[技術検証レポート](https://)を参照してください。
+詳細については[技術検証レポート](https://www.mlit.go.jp/plateau/file/libraries/doc/plateau_tech_doc_0070_ver01.pdf)を参照してください。
 
 ## 3. 利用手順
 本ツールの構築手順及び利用手順については[利用チュートリアル](https://project-plateau.github.io/PLATEAU-TwinLink)を参照してください。
@@ -83,5 +83,5 @@ PLATEAU TwinLinkは、「3D都市モデル」、「BIMモデル」、「空間ID
 
 ## 10. 参考資料
 - PLATEAU WebサイトのUse Caseページ「3D都市モデル、BIMモデル、空間IDを統合した都市開発支援ツールの開発」: https://www.mlit.go.jp/plateau/use-case/dt23-05/
-- 技術検証レポート: https://
+- 技術検証レポート: https://www.mlit.go.jp/plateau/file/libraries/doc/plateau_tech_doc_0070_ver01.pdf
 - 利用チュートリアル： https://project-plateau.github.io/PLATEAU-TwinLink
