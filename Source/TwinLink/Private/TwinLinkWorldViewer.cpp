@@ -207,8 +207,11 @@ void ATwinLinkWorldViewer::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 }
 
 void ATwinLinkWorldViewer::SetCityModel(AActor* Actor) {
+    if (Actor == nullptr)
+        return;
     CityModel = Cast<APLATEAUInstancedCityModel>(Actor);
-
+    if (CityModel == nullptr)
+        return;
     // 地面を取得
     TArray<UPLATEAUCityObjectGroup*> CityObjGroups;
     CityModel->GetComponents<UPLATEAUCityObjectGroup>(CityObjGroups, true);
