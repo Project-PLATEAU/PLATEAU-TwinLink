@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #include "TwinLinkColorAdjustmentSystem.h"
 #include "PLATEAUInstancedCityModel.h"
@@ -47,18 +47,7 @@ void UTwinLinkColorAdjustmentSystem::ExtractMaterial() {
     }
 
     //エミッシブ強度調整
-    TArray<TObjectPtr<AActor>> Actors;
-    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), Actors);
-    for (const auto& Actor : Actors) {
-        const auto SkyLight = Actor->GetComponentByClass(USkyLightComponent::StaticClass());
-        if (SkyLight != nullptr) {
-            const auto Component = Cast<USceneComponent>(Actor->GetComponentByClass(UDirectionalLightComponent::StaticClass()));
-            //ライトのYが+の場合は夜と判定
-            const auto Night = Component->GetRelativeRotation().Pitch > 0;
-            EmissibeStrength = Night ? 100 : 1000000;
-            break;
-        }
-    }
+    EmissibeStrength = TwinLinkGraphicsEnv::GetEmissiveBoostFromEnv(GetWorld()) * 100.0f;
 
     Filepath = TwinLinkPersistentPaths::CreateViewPointFilePath(TEXT("ColorAdjustmentInfo.csv"));
 
