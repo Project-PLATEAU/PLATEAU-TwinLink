@@ -39,13 +39,21 @@ void UTwinLinkFloorViewPanel::SetupTwinLinkFloorView() {
     checkf(FloorInfoSystem.IsValid(), TEXT("FloorInfoSystem.IsValid()"));
     for (const auto& CityObject : CityObjects) {
         const auto Obj = CityObject->GetAllRootCityObjects()[0];
+        auto IsExterior = false;
+        // 仮新仕様　建物は外観として扱う
+        if (Obj.Type == EPLATEAUCityObjectsType::COT_Building)
+            IsExterior = true;
         const auto Attribute = Obj.Attributes.AttributeMap.Find("gml:name");
-        FString Key = Attribute ? Attribute->StringValue : "Exterior";
+        // 旧仕様 Attributeが無い場合は外観として扱う
+        if (Attribute == nullptr) {
+            IsExterior = true;
+        }
+        FString Key = (!IsExterior) ? Attribute->StringValue : "Exterior";
         const auto Element = CreateWidget<UUserWidget>(GetWorld(), WidgetClass);
-        FString Label = Attribute ? Key : TEXT("外観");
+        FString Label = (!IsExterior) ? Key : TEXT("外観");
 
         // 外観の場合は特殊処理
-        const auto IsExterior = Key.Equals(ExteriorKey);
+        //const auto IsExterior = Key.Equals(ExteriorKey);
         Cast<UTwinLinkFloorViewElement>(Element)->ElementSetup(Label, this, IsExterior == false);
         // フロアの表示/非表示設定を読み込む
         if (FloorInfoSystem.IsValid()) {
