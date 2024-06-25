@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
 #include "TwinLinkFacilityImporter.h"
@@ -71,6 +71,7 @@ void UTwinLinkFacilityImporter::OnPostImport() {
         if (Cast<APLATEAUInstancedCityModel>(TargetCityModel)->Loader != Loader)
             continue;
 
+        Cast<APLATEAUInstancedCityModel>(TargetCityModel)->Loader->Phase = ECityModelLoadingPhase::Finished;
         TargetCityModel->SetActorLabel(TEXT("FocusTarget"));
     }
 }
