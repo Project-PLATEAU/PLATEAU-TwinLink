@@ -34,7 +34,9 @@ namespace {
     }
 
     TWeakObjectPtr<APLATEAUInstancedCityModel> CityModel;
-    TWeakObjectPtr<UPLATEAUCityObjectGroup> DemCityModel;
+    bool bHasDemCityModel;
+    FBox DemCityModelBounds;
+    //TWeakObjectPtr<USceneComponent> DemCityModel;
 }
 
 ATwinLinkWorldViewer::FInputControlNode::~FInputControlNode() {
@@ -217,9 +219,12 @@ void ATwinLinkWorldViewer::SetCityModel(AActor* Actor) {
     CityModel->GetComponents<UPLATEAUCityObjectGroup>(CityObjGroups, true);
     for (const auto& CityObjGroup : CityObjGroups) {
         const auto bIsGround = CityObjGroup->GetName().StartsWith(TEXT("DEM_"), ESearchCase::IgnoreCase);
-        if (bIsGround) {
-            DemCityModel = CityObjGroup;
-            break;
+        if (bIsGround)
+        {
+            bHasDemCityModel = true;
+            DemCityModelBounds += CityObjGroup->GetNavigationBounds();
+            //DemCityModel = CityObjGroup->GetAttachParent();
+            //break;
         }
     }
 }
@@ -245,8 +250,8 @@ std::optional<FVector> ATwinLinkWorldViewer::CalcFocusPoint() {
     std::optional<FVector> Ret;
 
     double Altitude = 0.0;
-    if (DemCityModel != nullptr) {
-        Altitude = DemCityModel->GetNavigationBounds().GetCenter().Z;
+    if (bHasDemCityModel) {
+        Altitude = DemCityModelBounds.GetCenter().Z;
     }
     const auto Ground = FPlane(FVector::UpVector, Altitude); // 地面とみなす
 
@@ -436,7 +441,7 @@ void ATwinLinkWorldViewer::ActivateAutoViewControl(ETwinLinkViewMode ViewMode) {
 
     if (CityModel == nullptr)
         return;
-    if (DemCityModel == nullptr)
+    if (bHasDemCityModel == false)
         return;
     
     StateMachine.ActivateAutoViewControl(ViewMode);
@@ -640,7 +645,6 @@ bool ATwinLinkWorldViewer::IsInTheWall(const FVector& Position) const {
 
 bool ATwinLinkWorldViewer::TryGetDeployPosition(FVector* const NewPosition, const FVector& TargetPosition) {
     const auto CurrentLocation = GetNowCameraLocationOrZero();
-
     const auto VecViewerToImpactPoint = TargetPosition - CurrentLocation;
     
     const auto Capsule = GetCapsuleComponent();
@@ -776,7 +780,6 @@ void ATwinLinkWorldViewer::FreeAutoViewState::ActivateAutoViewControl() {
     TWeakObjectPtr<UCapsuleComponent> _CapsuleComponent = Viewer->GetComponentByClass<UCapsuleComponent>();
     _CapsuleComponent.Get()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-    const auto DemCityModelBounds = DemCityModel->GetNavigationBounds();
     const auto OffsetDistance = (DemCityModelBounds.GetExtent().X + DemCityModelBounds.GetExtent().Y) * 0.5;
     const auto FocusPoint = DemCityModelBounds.GetCenter();
     const auto CurrentRotator = Viewer->GetNowCameraRotationOrDefault();
@@ -884,7 +887,6 @@ void ATwinLinkWorldViewer::ManualWalkState::DeactivateAutoViewControl() {
     TWeakObjectPtr<UCapsuleComponent> _CapsuleComponent = Viewer->GetComponentByClass<UCapsuleComponent>();
     _CapsuleComponent.Get()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-    const auto DemCityModelBounds = DemCityModel->GetNavigationBounds();
     const auto OffsetDistance = (DemCityModelBounds.GetExtent().X + DemCityModelBounds.GetExtent().Y) * 0.5;
     const auto FocusPoint = DemCityModelBounds.GetCenter();
     const auto CurrentRotator = Viewer->GetNowCameraRotationOrDefault();
