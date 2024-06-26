@@ -1,8 +1,10 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
+
+#include "GenericPlatform/GenericPlatformMisc.h"
 
 // 汎用マクロ
 
@@ -103,3 +105,16 @@ public:
     UFUNCTION(BlueprintCallable, Category = "TwinLink")
         static float GetNightIntensity(UWorld* World);
 };
+
+TWINLINK_API class TwinLinkModelHelper {
+public:
+
+    static TArray<TObjectPtr<class UPLATEAUCityObjectGroup>> GetDemModels(AActor* Actor);
+    static void ForeachDemModels(AActor* Actor, const TFunction<bool(TObjectPtr<UPLATEAUCityObjectGroup>)>& func);
+    static void ForeachNotDemModels(AActor* Actor, const TFunction<bool(TObjectPtr<UPLATEAUCityObjectGroup>)>& func);
+
+private:
+    static bool IsDemModel(UPLATEAUCityObjectGroup* mdl);
+
+};
+

@@ -215,17 +215,10 @@ void ATwinLinkWorldViewer::SetCityModel(AActor* Actor) {
     if (CityModel == nullptr)
         return;
     // 地面を取得
-    TArray<UPLATEAUCityObjectGroup*> CityObjGroups;
-    CityModel->GetComponents<UPLATEAUCityObjectGroup>(CityObjGroups, true);
-    for (const auto& CityObjGroup : CityObjGroups) {
-        const auto bIsGround = CityObjGroup->GetName().StartsWith(TEXT("DEM_"), ESearchCase::IgnoreCase);
-        if (bIsGround)
-        {
-            bHasDemCityModel = true;
-            DemCityModelBounds += CityObjGroup->GetNavigationBounds();
-            //DemCityModel = CityObjGroup->GetAttachParent();
-            //break;
-        }
+    auto demMdls = TwinLinkModelHelper::GetDemModels(CityModel.Get());
+    for (const auto& demMdl : demMdls) {
+        bHasDemCityModel = true;
+        DemCityModelBounds += demMdl->GetNavigationBounds();
     }
 }
 

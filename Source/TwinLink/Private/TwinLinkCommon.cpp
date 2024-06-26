@@ -4,6 +4,12 @@
 #include "Kismet/GameplayStatics.h"
 #include "Components/SkyLightComponent.h"
 #include "Components/DirectionalLightComponent.h"
+#include "GenericPlatform/GenericPlatformMisc.h"
+
+#include "PLATEAUInstancedCityModel.h"
+#include "PLATEAUCityObjectGroup.h"
+
+#include "Misc/TwinLinkPLATEAUCityModelEx.h"
 
 #include "TwinLinkWorldViewer.h"
 
@@ -53,4 +59,49 @@ float TwinLinkGraphicsEnv::GetNightIntensity(UWorld* World) {
         }
     }
     return 0.0;
+}
+
+TArray<TObjectPtr<class UPLATEAUCityObjectGroup>> TwinLinkModelHelper::GetDemModels(AActor* Actor) {
+    TArray<TObjectPtr<class UPLATEAUCityObjectGroup>> CityDemModels;
+    TArray<UPLATEAUCityObjectGroup*> CityObjGroups;
+    Actor->GetComponents<UPLATEAUCityObjectGroup>(CityObjGroups, true);
+    for (const auto& CityObjGroup : CityObjGroups) {
+        if (IsDemModel(CityObjGroup)) {
+            CityDemModels.Add(CityObjGroup);
+        }
+    }
+    CityDemModels.Shrink();
+    return CityDemModels;
+}
+
+void TwinLinkModelHelper::ForeachDemModels(AActor* Actor, const TFunction<bool(TObjectPtr<UPLATEAUCityObjectGroup>)>& func) {
+    TArray<UPLATEAUCityObjectGroup*> CityObjGroups;
+    Actor->GetComponents<UPLATEAUCityObjectGroup>(CityObjGroups, true);
+    for (const auto& CityObjGroup : CityObjGroups) {
+        if (IsDemModel(CityObjGroup)) {
+            if (!func(CityObjGroup)) {
+                break;
+            }
+        }
+    }
+}
+
+void TwinLinkModelHelper::ForeachNotDemModels(AActor* Actor, const TFunction<bool(TObjectPtr<UPLATEAUCityObjectGroup>)>& func) {
+    TArray<UPLATEAUCityObjectGroup*> CityObjGroups;
+    Actor->GetComponents<UPLATEAUCityObjectGroup>(CityObjGroups, true);
+    for (const auto& CityObjGroup : CityObjGroups) {
+        if (!IsDemModel(CityObjGroup)) {
+            if (!func(CityObjGroup)) {
+                break;
+            }
+        }
+    }
+}
+
+bool TwinLinkModelHelper::IsDemModel(UPLATEAUCityObjectGroup* mdl) {
+    //const auto bIsDem = mdl->GetName().StartsWith(TEXT("DEM_"), ESearchCase::IgnoreCase);
+    const auto bIsDem = 
+        FTwinLinkPLATEAUCityModelEx::ParseMeshType(mdl->GetName()) == 
+        FTwinLinkFindCityModelMeshType::Dem;
+    return bIsDem;
 }
