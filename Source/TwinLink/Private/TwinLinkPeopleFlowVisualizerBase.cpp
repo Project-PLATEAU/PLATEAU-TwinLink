@@ -30,33 +30,22 @@ namespace {
      * @param CityModel 
      * @return 
      */
-    const FBox CombineDemCityObjectGroupBounds(const APLATEAUInstancedCityModel& CityModel) {
+    const bool CombineDemCityObjectGroupBounds(const APLATEAUInstancedCityModel& CityModel, FBox* outBox) {
         const UPLATEAUCityObjectGroup* DemCityObj = nullptr;
+        bool bHasDem = false;
         FBox bounds;
         TArray<UPLATEAUCityObjectGroup*> CityObjGroups;
         CityModel.GetComponents<UPLATEAUCityObjectGroup>(CityObjGroups, true);
         for (const auto& CityObjGroup : CityObjGroups) {
             const auto bIsGround = CityObjGroup->GetName().StartsWith(TEXT("DEM_"), ESearchCase::IgnoreCase);
             if (bIsGround) {
+                bHasDem = true;
                 bounds += CityObjGroup->GetNavigationBounds();
             }
         }
 
-        return bounds;
-    }
-
-
-    /**
-     * @brief 高度を取得する
-     * @param CityModel
-     * @return
-    */
-    double GetAltitudeFromCityObjGroups(const APLATEAUInstancedCityModel& CityModel) {
-        double Altitude = INFINITY;
-        const auto DemCityObjBounds = CombineDemCityObjectGroupBounds(CityModel);
-        Altitude = DemCityObjBounds.GetCenter().Z;
-        check(Altitude != INFINITY);
-        return Altitude;
+        *outBox = bounds;
+        return bHasDem;
     }
 
     /**
@@ -840,13 +829,17 @@ void UTwinLinkPeopleFlowVisualizerBase::FCityModelHelper::Init(APLATEAUInstanced
     GeoReference = &CityModel->GeoReference;
 
     // 地形のメッシュを取得
-    const auto DemCityObjBounds = CombineDemCityObjectGroupBounds(*CityModel);
+    FBox bounds;
+    const auto bHasDem = CombineDemCityObjectGroupBounds(*CityModel, &bounds);
+    if (bHasDem == false) {
+        UE_TWINLINK_LOG(LogTemp, Error, TEXT("CityModel do not have dem. 地形モデルが存在しない。"));
+    }
 
     // 地形のエリアを算出
-    DemCenter = DemCityObjBounds.GetCenter();
-    DemExtent = DemCityObjBounds.GetExtent();
+    DemCenter = bounds.GetCenter();
+    DemExtent = bounds.GetExtent();
 
-    Altitude = DemCityObjBounds.GetExtent().Z;
+    Altitude = bounds.GetExtent().Z;
     UE_TWINLINK_LOG(LogTemp, Log, TEXT("Altitude %f"), Altitude);
 
     // 高さのある建物にもヒートマップを描画したいので高さの値のみ別で設定

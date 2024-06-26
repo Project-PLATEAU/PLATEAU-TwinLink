@@ -220,6 +220,10 @@ void ATwinLinkWorldViewer::SetCityModel(AActor* Actor) {
         bHasDemCityModel = true;
         DemCityModelBounds += demMdl->GetNavigationBounds();
     }
+
+    if (bHasDemCityModel == false) {
+        UE_TWINLINK_LOG(LogTemp, Error, TEXT("CityModel do not have dem. 地形モデルが存在しない。"));
+    }
 }
 
 FVector ATwinLinkWorldViewer::GetNowCameraLocationOrZero() const {
