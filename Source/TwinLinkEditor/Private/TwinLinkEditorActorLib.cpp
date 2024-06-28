@@ -1,4 +1,4 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 
 #include "TwinLinkEditorActorLib.h"
@@ -8,6 +8,8 @@
 #include "PLATEAUInstancedCityModel.h"
 #include "PLATEAUCityObjectGroup.h"
 
+#include "Misc/TwinLinkPLATEAUCityModelEx.h"
+
 bool UTwinLinkEditorActorLib::SetupCityModel(UObject* CityModel) {
     if (CityModel == nullptr) {
         return false;
@@ -16,16 +18,14 @@ bool UTwinLinkEditorActorLib::SetupCityModel(UObject* CityModel) {
     APLATEAUInstancedCityModel* CastedCityModel = Cast<APLATEAUInstancedCityModel>(CityModel);
     TArray<UActorComponent*> CityObjectGroups;
     CastedCityModel->GetComponents(UPLATEAUCityObjectGroup::StaticClass(), CityObjectGroups);
-
-    const auto bIsReceivesDecals = false;
-    for (auto& ObjGroups : CityObjectGroups) {
-        UPLATEAUCityObjectGroup* CastedCityObjectGroup = Cast<UPLATEAUCityObjectGroup>(ObjGroups);
-        if (CastedCityObjectGroup == nullptr) {
-            continue;
-        }
-        const auto bIsDem = CastedCityObjectGroup->GetName().StartsWith("Dem_", ESearchCase::IgnoreCase);
-        if (bIsDem == false) {
-            CastedCityObjectGroup->SetReceivesDecals(false);
+    auto type = FTwinLinkPLATEAUCityModelEx::ParseMeshType(CastedCityModel->GetName());
+    for (auto& CityObjectGroup : CityObjectGroups) {
+        auto Type = FTwinLinkPLATEAUCityModelEx::ParseMeshType(CityObjectGroup->GetName());
+        if (Type != FTwinLinkFindCityModelMeshType::Dem) {
+            auto a = Cast<UPLATEAUCityObjectGroup>(CityObjectGroup);
+            if (a == nullptr)
+                continue;
+            a->SetReceivesDecals(false);
         }
     }
 

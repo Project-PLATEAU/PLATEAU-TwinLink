@@ -1,9 +1,15 @@
-// Copyright (C) 2023, MLIT Japan. All rights reserved.
+﻿// Copyright (C) 2023, MLIT Japan. All rights reserved.
 
 #include "TwinLinkCommon.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/SkyLightComponent.h"
 #include "Components/DirectionalLightComponent.h"
+#include "GenericPlatform/GenericPlatformMisc.h"
+
+#include "PLATEAUInstancedCityModel.h"
+#include "PLATEAUCityObjectGroup.h"
+
+#include "Misc/TwinLinkPLATEAUCityModelEx.h"
 
 #include "TwinLinkWorldViewer.h"
 
@@ -34,19 +40,8 @@ TWeakObjectPtr<ACharacter> TwinLinkWorldViewerHelper::GetInstance(UWorld* World)
 float TwinLinkGraphicsEnv::GetEmissiveBoostFromEnv(UWorld* World) {
     float EmissiveBoost = 1.0;
     //エミッシブ強度調整
-    TArray<TObjectPtr<AActor>> Actors;
-    UGameplayStatics::GetAllActorsOfClass(World, AActor::StaticClass(), Actors);
-    for (const auto& Actor : Actors) {
-        const auto SkyLight = Actor->GetComponentByClass(USkyLightComponent::StaticClass());
-        if (SkyLight != nullptr) {
-            const auto Component = Cast<USceneComponent>(Actor->GetComponentByClass(UDirectionalLightComponent::StaticClass()));
-            //ライトのYが+の場合は夜と判定
-            const auto Night = Component->GetRelativeRotation().Pitch > 0;
-            EmissiveBoost = Night ? 1 : 10000;
-            break;
-        }
-    }
-
+    bool bIsNight = GetNightIntensity(World) >= 1.0f * (3.0f / 4.0f);    // 3/4を夜の基準値とする
+    EmissiveBoost = bIsNight ? 1.0 : 10000.0;
     return EmissiveBoost;
 }
 
@@ -57,9 +52,56 @@ float TwinLinkGraphicsEnv::GetNightIntensity(UWorld* World) {
         const auto SkyLight = Actor->GetComponentByClass(USkyLightComponent::StaticClass());
         if (SkyLight != nullptr) {
             const auto Component = Cast<USceneComponent>(Actor->GetComponentByClass(UDirectionalLightComponent::StaticClass()));
+            if (Component == nullptr)
+                continue;
             //ライトのYが+の場合は夜と判定
             return Component->GetRelativeRotation().Pitch > 0 ? 1.0 : 0.0;
         }
     }
     return 0.0;
+}
+
+TArray<TObjectPtr<class UPLATEAUCityObjectGroup>> TwinLinkModelHelper::GetDemModels(AActor* Actor) {
+    TArray<TObjectPtr<class UPLATEAUCityObjectGroup>> CityDemModels;
+    TArray<UPLATEAUCityObjectGroup*> CityObjGroups;
+    Actor->GetComponents<UPLATEAUCityObjectGroup>(CityObjGroups, true);
+    for (const auto& CityObjGroup : CityObjGroups) {
+        if (IsDemModel(CityObjGroup)) {
+            CityDemModels.Add(CityObjGroup);
+        }
+    }
+    CityDemModels.Shrink();
+    return CityDemModels;
+}
+
+void TwinLinkModelHelper::ForeachDemModels(AActor* Actor, const TFunction<bool(TObjectPtr<UPLATEAUCityObjectGroup>)>& func) {
+    TArray<UPLATEAUCityObjectGroup*> CityObjGroups;
+    Actor->GetComponents<UPLATEAUCityObjectGroup>(CityObjGroups, true);
+    for (const auto& CityObjGroup : CityObjGroups) {
+        if (IsDemModel(CityObjGroup)) {
+            if (!func(CityObjGroup)) {
+                break;
+            }
+        }
+    }
+}
+
+void TwinLinkModelHelper::ForeachNotDemModels(AActor* Actor, const TFunction<bool(TObjectPtr<UPLATEAUCityObjectGroup>)>& func) {
+    TArray<UPLATEAUCityObjectGroup*> CityObjGroups;
+    Actor->GetComponents<UPLATEAUCityObjectGroup>(CityObjGroups, true);
+    for (const auto& CityObjGroup : CityObjGroups) {
+        if (!IsDemModel(CityObjGroup)) {
+            if (!func(CityObjGroup)) {
+                break;
+            }
+        }
+    }
+}
+
+bool TwinLinkModelHelper::IsDemModel(UPLATEAUCityObjectGroup* mdl) {
+    //const auto bIsDem = mdl->GetName().StartsWith(TEXT("DEM_"), ESearchCase::IgnoreCase);
+    const auto bIsDem = 
+        FTwinLinkPLATEAUCityModelEx::ParseMeshType(mdl->GetName()) == 
+        FTwinLinkFindCityModelMeshType::Dem;
+    return bIsDem;
 }
